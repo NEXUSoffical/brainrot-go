@@ -122,16 +122,23 @@ function startMovementLoop() {
             playerLat += dLat;
             playerLng += dLng;
 
-            playerMarker.setLatLng([playerLat, playerLng]);
-            map.panTo([playerLat, playerLng], { animate: false });
+            // Safe checks to prevent null reference errors
+            if (playerMarker && typeof playerMarker.setLatLng === 'function') {
+                playerMarker.setLatLng([playerLat, playerLng]);
+            }
+            if (typeof map !== 'undefined' && map && typeof map.panTo === 'function') {
+                map.panTo([playerLat, playerLng], { animate: false });
+            }
 
             if (avatar) {
                 avatar.className = `player-container walking ${facingClass}`;
             }
 
-            // Update HUD coordinates
-            document.getElementById('latVal').innerText = playerLat.toFixed(5);
-            document.getElementById('lngVal').innerText = playerLng.toFixed(5);
+            // Update HUD coordinates safely
+            const latVal = document.getElementById('latVal');
+            const lngVal = document.getElementById('lngVal');
+            if (latVal) latVal.innerText = playerLat.toFixed(5);
+            if (lngVal) lngVal.innerText = playerLng.toFixed(5);
 
             if (typeof cleanUpFarCreatures === 'function') {
                 cleanUpFarCreatures();
