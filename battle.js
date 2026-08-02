@@ -1,4 +1,4 @@
-// battle.js - Full Card Battle Engine Logic (Fixed Scope)
+// battle.js - Full Card Battle Engine Logic with Proper Level Scaling
 
 if (typeof window.currentWildCreature === 'undefined') {
     window.currentWildCreature = null;
@@ -11,26 +11,28 @@ if (typeof window.currentWildCreature === 'undefined') {
 // Initialize the battle when a creature is clicked
 window.initBattle = function(creature) {
     window.currentWildCreature = creature;
-    window.wildHp = 100;
-    window.maxWildHp = 100;
+    
+    const wildLvl = creature.level || 1;
+    window.maxWildHp = creature.maxHp || (50 + (wildLvl - 1) * 12);
+    window.wildHp = window.maxWildHp;
 
-    // Safety check for player data / active fighter
+    // Safety check for player data / active fighter using inventory (matching dex.js)
     if (typeof playerData === 'undefined') {
-        window.playerData = { username: "Player", rotBalance: 500, caught: [], activeFighterIndex: 0 };
+        window.playerData = { username: "Player", rotBalance: 500, inventory: [], activeFighterIndex: 0 };
     }
-    if (!playerData.caught || playerData.caught.length === 0) {
-        playerData.caught = [{ name: "Skibidi", rarity: "common", image: "", level: 1, hp: 50, maxHp: 50 }];
+    if (!playerData.inventory || playerData.inventory.length === 0) {
+        playerData.inventory = [{ name: "Skibidi", rarity: "common", image: "", level: 1, hp: 50, maxHp: 50 }];
         playerData.activeFighterIndex = 0;
     }
 
-    const activeFighter = playerData.caught[playerData.activeFighterIndex] || playerData.caught[0] || { name: "Skibidi", rarity: "common", image: "", level: 1 };
+    const activeFighter = playerData.inventory[playerData.activeFighterIndex] || playerData.inventory[0] || { name: "Skibidi", rarity: "common", image: "", level: 1 };
     const fighterLvl = activeFighter.level || 1;
     window.maxPlayerHp = 50 + (fighterLvl * 15);
     window.playerHp = window.maxPlayerHp;
 
-    // Set names and headers
-    document.getElementById('wildName').innerText = (creature.name || "Unknown").toUpperCase();
-    document.getElementById('wildBadgeName').innerText = creature.name || "Unknown";
+    // Set names and headers with levels
+    document.getElementById('wildName').innerText = `${(creature.name || "Unknown").toUpperCase()} (Lvl ${wildLvl})`;
+    document.getElementById('wildBadgeName').innerText = `${creature.name || "Unknown"} (Lvl ${wildLvl})`;
     document.getElementById('wildRarity').innerText = `RARITY: ${(creature.rarity || 'common').toUpperCase()}`;
     
     // Render Wild Card Graphic
@@ -52,7 +54,7 @@ window.initBattle = function(creature) {
                 <div style="width: 100%; height: 70px; background-color: #ffffff; border-radius: 4px; overflow: hidden; border: 1px solid #444;">
                     <img src="${creature.image || ''}" style="width: 100%; height: 100%; object-fit: cover; mix-blend-mode: multiply; filter: brightness(1.2) contrast(3);" onerror="this.style.display='none';">
                 </div>
-                <span style="font-size: 9px; color: #fff; margin-top: 3px; font-family: monospace; font-weight: bold;">Wild</span>
+                <span style="font-size: 9px; color: #fff; margin-top: 3px; font-family: monospace; font-weight: bold;">Lvl ${wildLvl}</span>
             </div>
         `;
     }
@@ -89,7 +91,7 @@ window.initBattle = function(creature) {
     updateHpBars();
     const battleLog = document.getElementById('battleLog');
     if (battleLog) {
-        battleLog.innerText = `A wild ${creature.name} appeared!`;
+        battleLog.innerText = `A wild Level ${wildLvl} ${creature.name} appeared!`;
     }
 };
 
@@ -109,7 +111,7 @@ function updateHpBars() {
     if (myHpText) myHpText.innerText = `${Math.ceil(window.playerHp)}/${window.maxPlayerHp} HP`;
 }
 
-// Attack Button Action with Animations
+// Attack Button Action with Level-Based Balance & Animations
 window.battleAttack = function() {
     if (window.wildHp <= 0) return;
 
@@ -117,10 +119,11 @@ window.battleAttack = function() {
     const wildCombatant = document.getElementById('wildCombatant');
     
     let activeFighter = null;
-    if (typeof playerData !== 'undefined' && playerData.caught && playerData.caught.length > 0) {
-        activeFighter = playerData.caught[playerData.activeFighterIndex || 0];
+    if (typeof playerData !== 'undefined' && playerData.inventory && playerData.inventory.length > 0) {
+        activeFighter = playerData.inventory[playerData.activeFighterIndex || 0];
     }
     const fighterLvl = activeFighter ? (activeFighter.level || 1) : 1;
+    const wildLvl = window.currentWildCreature ? (window.currentWildCreature.level || 1) : 1;
 
     if (playerCombatant) playerCombatant.classList.add('charge-attack');
 
@@ -129,7 +132,21 @@ window.battleAttack = function() {
         
         if (wildCombatant) wildCombatant.classList.add('hit-knockback');
 
-        const damage = Math.floor(Math.random() * 20) + (10 + (fighterLvl * 5));
+        // Level scaling formula: 
+        // If player level is much lower, damage is heavily penalized (minimum 1 damage).
+        // If player level is higher or equal, damage scales up nicely.
+        let baseDamage = Math.floor(Math.random() * 15) + (5 + (fighterLvl * 3));
+        const levelDiff = fighterLvl - wildLvl;
+        
+        if (levelDiff < 0) {
+            // Severe penalty for fighting higher level opponents
+            const penaltyFactor = Math.max(0.05, 1 + (levelDiff * 0.08)); 
+            baseDamage = Math.max(1, Math.floor(baseDamage * penaltyFactor));
+        } else {
+            baseDamage += levelDiff * 2;
+        }
+
+        const damage = baseDamage;
         window.wildHp -= damage;
         updateHpBars();
         
@@ -145,8 +162,13 @@ window.battleAttack = function() {
             updateHpBars();
             
             if (activeFighter) {
-                activeFighter.level = (activeFighter.level || 1) + 1;
-                playerData.rotBalance += 50;
+                // Bonus level reward based on defeated wild level
+                const levelGain = Math.max(1, Math.floor(wildLvl / 10));
+                activeFighter.level = (activeFighter.level || 1) + levelGain;
+                activeFighter.maxHp = 50 + (activeFighter.level - 1) * 15;
+                activeFighter.hp = activeFighter.maxHp;
+
+                playerData.rotBalance += (wildLvl * 10);
                 if (typeof window.saveGameData === 'function') window.saveGameData();
                 if (battleLog) battleLog.innerText = `Victory! ${activeFighter.name} leveled up to Lvl ${activeFighter.level}!`;
             } else {
@@ -162,11 +184,18 @@ window.battleAttack = function() {
                 if (wildCombatant) wildCombatant.classList.remove('charge-attack');
                 if (playerCombatant) playerCombatant.classList.add('hit-knockback');
 
-                const counterDamage = Math.floor(Math.random() * 10) + 5;
+                // Wild counter-attack scaling: Higher level wild rots hit exponentially harder!
+                let counterDamage = Math.floor(Math.random() * 10) + (5 + (wildLvl * 4));
+                const reverseDiff = wildLvl - fighterLvl;
+                if (reverseDiff > 0) {
+                    counterDamage += reverseDiff * 3; // Brutal extra damage if wild is way higher level
+                }
+
                 window.playerHp -= counterDamage;
                 updateHpBars();
                 
-                if (battleLog) battleLog.innerText = `${window.currentWildCreature ? window.currentWildCreature.name : 'Target'} counter-attacked for ${counterDamage} damage!`;
+                const wildName = window.currentWildCreature ? window.currentWildCreature.name : 'Target';
+                if (battleLog) battleLog.innerText = `${wildName} counter-attacked savagely for ${counterDamage} damage!`;
 
                 setTimeout(() => {
                     if (playerCombatant) playerCombatant.classList.remove('hit-knockback');
@@ -175,7 +204,7 @@ window.battleAttack = function() {
                 if (window.playerHp <= 0) {
                     window.playerHp = 0;
                     updateHpBars();
-                    if (battleLog) battleLog.innerText = `You got knocked out! Fleeing...`;
+                    if (battleLog) battleLog.innerText = `You got completely obliterated by the level gap! Fleeing...`;
                     setTimeout(closeBattle, 1500);
                 }
             }, 300);
@@ -196,7 +225,7 @@ window.battleCatch = function() {
             window.addToDex(window.currentWildCreature);
         }
 
-        if (battleLog) battleLog.innerText = `Successfully captured ${window.currentWildCreature.name}!`;
+        if (battleLog) battleLog.innerText = `Successfully captured Level ${window.currentWildCreature.level} ${window.currentWildCreature.name}!`;
         setTimeout(closeBattle, 1200);
     }
 };
