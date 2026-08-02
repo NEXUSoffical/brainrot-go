@@ -1,4 +1,4 @@
-// gyms.js - Shared World Meme Gyms System
+// gyms.js - Shared World Meme Gyms System (~500m spacing)
 
 let gymMarkers = [];
 let activeGymData = null;
@@ -20,15 +20,15 @@ function initGymSystem() {
   }, 5000);
 }
 
-// Convert coordinates into a shared grid key (roughly 100-meter blocks)
+// Convert coordinates into a shared grid key (~500-meter blocks)
 function getGridKey(lat, lng) {
-  return `gym_${lat.toFixed(3)}_${lng.toFixed(3)}`;
+  return `gym_${lat.toFixed(4)}_${lng.toFixed(4)}`;
 }
 
 async function checkOrCreateNearbyGym(lat, lng) {
-  // Check a slightly wider area around the player for a gym grid cell
-  const gridLat = Math.round(lat * 500) / 500;
-  const gridLng = Math.round(lng * 500) / 500;
+  // Round to create ~500-meter grid cells
+  const gridLat = Math.round(lat * 200) / 200;
+  const gridLng = Math.round(lng * 200) / 200;
   const gymId = getGridKey(gridLat, gridLng);
 
   try {
@@ -36,7 +36,6 @@ async function checkOrCreateNearbyGym(lat, lng) {
     const doc = await gymRef.get();
 
     if (!doc.exists) {
-      // If no gym exists here yet, create one for the world!
       const defaultGym = {
         id: gymId,
         lat: gridLat,
@@ -58,7 +57,6 @@ async function checkOrCreateNearbyGym(lat, lng) {
 }
 
 function renderGymMarker(gymData) {
-  // Prevent duplicate rendering of the same gym
   if (gymMarkers.some(g => g.id === gymData.id)) return;
 
   const gymIcon = L.divIcon({
@@ -106,7 +104,6 @@ window.openGymBattle = async function(gymId) {
 
   activeGymData = doc.data();
   
-  // Trigger your existing battle engine against the gym defender!
   if (typeof window.initBattle === 'function') {
     window.initBattle({
       name: activeGymData.defenderName,
@@ -116,7 +113,6 @@ window.openGymBattle = async function(gymId) {
       maxHp: 50 + (activeGymData.defenderLevel - 1) * 15
     });
     
-    // Override catch button behavior for gym takeover if needed
     const vaultBtn = document.getElementById('vaultCatchBtn');
     if (vaultBtn) {
       vaultBtn.innerText = "👑 CLAIM GYM TERRITORY";
