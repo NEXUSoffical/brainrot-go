@@ -63,7 +63,28 @@ function getRarityColor(rarity) {
   }
 }
 
+// Global function to trigger battle from the popup with strict proximity check
 window.startEncounter = function(name, rarity, reward, imageUrl, level, maxHp) {
+  // Find the exact active entry in our array
+  const matchedEntry = spawnedCreatures.find(c => c.data.name === name && c.data.level === Number(level) && !c.captured);
+  
+  if (matchedEntry) {
+    // Check distance from player to the creature (must be within 30 meters)
+    const pLat = typeof playerLat !== 'undefined' ? playerLat : null;
+    const pLng = typeof playerLng !== 'undefined' ? playerLng : null;
+
+    if (pLat !== null && pLng !== null && typeof map !== 'undefined' && map && typeof map.distance === 'function') {
+      const distanceMeters = map.distance([pLat, pLng], [matchedEntry.lat, matchedEntry.lng]);
+      if (distanceMeters > 30) {
+        alert("You are too far away! Get closer to battle this Brainrot.");
+        return;
+      }
+    }
+    window.currentBattleEntry = matchedEntry;
+  } else {
+    window.currentBattleEntry = null;
+  }
+
   const modal = document.getElementById('battleModal');
   if (modal) {
     modal.style.display = 'flex';
@@ -77,14 +98,6 @@ window.startEncounter = function(name, rarity, reward, imageUrl, level, maxHp) {
 
   const wildBadgeName = document.getElementById('wildBadgeName');
   if (wildBadgeName) wildBadgeName.innerText = `${name} (Lvl ${level})`;
-
-  const matchedEntry = spawnedCreatures.find(c => c.data.name === name && c.data.level === Number(level) && !c.captured);
-  
-  if (matchedEntry) {
-    window.currentBattleEntry = matchedEntry;
-  } else {
-    window.currentBattleEntry = null;
-  }
 
   const matchedCreature = matchedEntry ? matchedEntry.data : {
     name, 
@@ -134,8 +147,9 @@ function spawnSingleCreature(lat, lng) {
     hp: maxHp
   };
   
-  const offsetLat = (Math.random() - 0.5) * 0.0006;
-  const offsetLng = (Math.random() - 0.5) * 0.0006;
+  // Keep spawns close to the player (within ~30-40 meters max)
+  const offsetLat = (Math.random() - 0.5) * 0.0003;
+  const offsetLng = (Math.random() - 0.5) * 0.0003;
   
   const spawnLat = currentLat + offsetLat;
   const spawnLng = currentLng + offsetLng;
@@ -235,14 +249,12 @@ function spawnSingleCreature(lat, lng) {
   spawnedCreatures.push(spawnedEntry);
 }
 
-// 3. Balanced cap limit of max 6 active creatures on screen so you can find clusters
-function spawnBatch(playerLat, playerLng, count = 3) {
-  const maxActive = 6;
-  const currentActive = spawnedCreatures.length;
+// Strict cap limit of max 3 active creatures on screen at a time
+function spawnBatch(playerLat, playerLng, count = 1) {
+  const maxActive = 3;
+  if (spawnedCreatures.length >= maxActive) return;
   
-  if (currentActive >= maxActive) return;
-  
-  const slotsAvailable = maxActive - currentActive;
+  const slotsAvailable = maxActive - spawnedCreatures.length;
   const toSpawn = Math.min(count, slotsAvailable);
 
   for (let i = 0; i < toSpawn; i++) {
@@ -250,7 +262,8 @@ function spawnBatch(playerLat, playerLng, count = 3) {
   }
 }
 
-function cleanUpFarCreatures(pLat, pLng, maxDistanceMeters = 150) {
+// Strict proximity clean-up: remove creatures if player walks more than 25 meters away
+function cleanUpFarCreatures(pLat, pLng, maxDistanceMeters = 25) {
   const currentLat = pLat !== undefined ? pLat : (typeof playerLat !== 'undefined' ? playerLat : null);
   const currentLng = pLng !== undefined ? pLng : (typeof playerLng !== 'undefined' ? playerLng : null);
 
@@ -288,9 +301,9 @@ function initSpawner() {
 
     cleanUpFarCreatures(currentPos.lat, currentPos.lng);
 
-    // Keep up to 6 on screen
-    if (spawnedCreatures.length < 6) {
-      spawnBatch(currentPos.lat, currentPos.lng, 2);
+    // Maintain a maximum of 3 spawns nearby
+    if (spawnedCreatures.length < 3) {
+      spawnBatch(currentPos.lat, currentPos.lng, 1);
       window.activeCreatures = spawnedCreatures;
     }
   }, 3000);
