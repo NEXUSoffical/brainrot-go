@@ -54,9 +54,9 @@ function initPlayer() {
     playerMarker = L.marker([playerLat, playerLng], { icon: playerIcon }).addTo(map);
     map.setView([playerLat, playerLng], 19);
 
-    // Initial batch spawns
+    // Initial batch spawns with correct player coordinates and count
     if (typeof spawnBatch === 'function') {
-        spawnBatch(6);
+        spawnBatch(playerLat, playerLng, 8);
     }
 }
 
