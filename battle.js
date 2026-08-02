@@ -60,6 +60,17 @@ window.initBattle = function(creature) {
     }
 
     // Render Player Card Graphic
+    updatePlayerFighterDisplay(activeFighter, fighterLvl);
+
+    updateHpBars();
+    const battleLog = document.getElementById('battleLog');
+    if (battleLog) {
+        battleLog.innerText = `A wild Level ${wildLvl} ${creature.name} appeared!`;
+    }
+};
+
+// Helper to render active player fighter graphics & info
+function updatePlayerFighterDisplay(activeFighter, fighterLvl) {
     const playerRarityColor = typeof window.getRarityColor === 'function' ? window.getRarityColor(activeFighter.rarity) : '#00ff00';
     const playerCardContainer = document.getElementById('playerCardContainer');
     if (playerCardContainer) {
@@ -87,13 +98,7 @@ window.initBattle = function(creature) {
     if (fighterNameEl) {
         fighterNameEl.innerText = `${activeFighter.name || 'Fighter'} (Lvl ${fighterLvl})`;
     }
-
-    updateHpBars();
-    const battleLog = document.getElementById('battleLog');
-    if (battleLog) {
-        battleLog.innerText = `A wild Level ${wildLvl} ${creature.name} appeared!`;
-    }
-};
+}
 
 // Update HP bars on screen
 function updateHpBars() {
@@ -206,6 +211,79 @@ window.battleAttack = function() {
     }, 300);
 };
 
+// Open a mini selection menu during battle to switch your active fighting rot
+window.openBattleSwitch = function() {
+    if (typeof playerData === 'undefined' || !playerData.inventory || playerData.inventory.length === 0) {
+        alert("You don't have any other rots in your inventory!");
+        return;
+    }
+
+    let switchModal = document.getElementById('battleSwitchModal');
+    if (!switchModal) {
+        switchModal = document.createElement('div');
+        switchModal.id = 'battleSwitchModal';
+        switchModal.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.9); z-index: 999999; display: flex;
+            flex-direction: column; align-items: center; justify-content: center;
+            font-family: monospace; color: #fff; padding: 20px;
+        `;
+        document.body.appendChild(switchModal);
+    }
+
+    let gridHtml = `
+        <div style="background: #111; border: 3px solid #00ccff; border-radius: 15px; padding: 20px; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 0 30px rgba(0,204,255,0.4);">
+            <h3 style="color: #00ccff; margin-bottom: 10px;">CHOOSE YOUR FIGHTER</h3>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; max-height: 250px; overflow-y: auto; margin-bottom: 15px;">
+    `;
+
+    playerData.inventory.forEach((rot, index) => {
+        const isCurrent = playerData.activeFighterIndex === index;
+        gridHtml += `
+            <div onclick="selectNewFighter(${index})" style="background: ${isCurrent ? '#1a3a1a' : '#222'}; border: 2px solid ${isCurrent ? '#00ff00' : '#555'}; border-radius: 8px; padding: 8px; cursor: pointer; text-align: center;">
+                <img src="${rot.image || ''}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;" onerror="this.style.display='none';">
+                <div style="font-size: 0.75rem; font-weight: bold; margin-top: 4px; color: #fff;">${rot.name}</div>
+                <div style="font-size: 0.65rem; color: #00ff00;">Lvl ${rot.level || 1}</div>
+                ${isCurrent ? '<div style="font-size: 0.55rem; color: #00ff00; font-weight: bold;">(ACTIVE)</div>' : ''}
+            </div>
+        `;
+    });
+
+    gridHtml += `
+            </div>
+            <button class="btn-action" style="background: #ff0055; color: #fff;" onclick="document.getElementById('battleSwitchModal').style.display='none'">CANCEL</button>
+        </div>
+    `;
+
+    switchModal.innerHTML = gridHtml;
+    switchModal.style.display = 'flex';
+};
+
+// Switch the active player combatant and update battle stats
+window.selectNewFighter = function(index) {
+    if (typeof playerData === 'undefined' || !playerData.inventory || !playerData.inventory[index]) return;
+
+    playerData.activeFighterIndex = index;
+    const newRot = playerData.inventory[index];
+    const fighterLvl = newRot.level || 1;
+
+    window.maxPlayerHp = 50 + (fighterLvl * 15);
+    window.playerHp = window.maxPlayerHp;
+
+    updatePlayerFighterDisplay(newRot, fighterLvl);
+    updateHpBars();
+
+    if (typeof window.saveGameData === 'function') {
+        window.saveGameData();
+    }
+
+    const switchModal = document.getElementById('battleSwitchModal');
+    if (switchModal) switchModal.style.display = 'none';
+
+    const battleLog = document.getElementById('battleLog');
+    if (battleLog) battleLog.innerText = `Switched to ${newRot.name}!`;
+};
+
 // Catch / Vault Button Action
 window.battleCatch = function() {
     const battleLog = document.getElementById('battleLog');
@@ -242,5 +320,9 @@ window.closeBattle = function() {
     const modal = document.getElementById('battleModal');
     if (modal) {
         modal.style.display = 'none';
+    }
+    const switchModal = document.getElementById('battleSwitchModal');
+    if (switchModal) {
+        switchModal.style.display = 'none';
     }
 };
