@@ -52,7 +52,7 @@ window.addAccountXp = function(amount) {
     window.saveGameData();
   }
   
-  updateAccountHud();
+  updateAccountWidget();
 };
 
 window.useLuckyEgg = function() {
@@ -85,11 +85,35 @@ window.updateWalkingProgress = function(metersWalked) {
   }
 };
 
-function updateAccountHud() {
+function updateAccountWidget() {
+  if (typeof playerData === 'undefined') return;
+
+  // Update old HUD text element if it exists
   const lvlEl = document.getElementById('accountLevelVal');
-  if (lvlEl && playerData) {
-    lvlEl.innerText = playerData.accountLevel || 1;
+  if (lvlEl) lvlEl.innerText = playerData.accountLevel || 1;
+
+  // Update top-right profile widget elements
+  const widgetLvlEl = document.getElementById('widgetAccLevel');
+  if (widgetLvlEl) widgetLvlEl.innerText = playerData.accountLevel || 1;
+
+  const nameEl = document.getElementById('widgetUsername');
+  if (nameEl) nameEl.innerText = playerData.username || "Player";
+
+  const xpBar = document.getElementById('widgetXpBar');
+  if (xpBar) {
+    const current = playerData.accountXp || 0;
+    const max = playerData.accountXpMax || 100;
+    const pct = Math.min(100, Math.max(0, (current / max) * 100));
+    xpBar.style.width = pct + '%';
+  }
+
+  const activeImg = document.getElementById('widgetActiveRotImg');
+  if (activeImg && playerData.inventory && playerData.inventory.length > 0) {
+    const activeFighter = playerData.inventory[playerData.activeFighterIndex || 0];
+    if (activeFighter && activeFighter.image) {
+      activeImg.src = activeFighter.image;
+    }
   }
 }
 
-setInterval(updateAccountHud, 1000);
+setInterval(updateAccountWidget, 1000);
