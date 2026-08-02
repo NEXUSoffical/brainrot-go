@@ -312,20 +312,22 @@ function renderInventoryGrid() {
     const inventory = window.playerData.inventory || [];
 
     if (inventory.length === 0) {
-        inventoryGrid.innerHTML = `<p style="grid-column: span 3; color: #777; font-size: 0.8rem; padding: 20px;">Your inventory is empty! Catch rots on the map.</p>`;
+        inventoryGrid.innerHTML = `<p style="grid-column: span 3; color: #777; font-size: 0.9rem; padding: 30px;">Your inventory is empty! Catch rots on the map.</p>`;
         return;
     }
 
     inventory.forEach((rot, index) => {
         const isActive = window.playerData.activeFighterIndex === index;
         const rarityColor = window.getRarityColor(rot.rarity);
+        const rotLevel = rot.level || 1;
+        const coinValue = 1; // Flat 1 coin value per transfer
 
         const card = document.createElement('div');
         card.style.cssText = `
             background: linear-gradient(135deg, #111, ${rarityColor}33);
             border: 2px solid ${isActive ? '#00ff00' : rarityColor};
-            border-radius: 8px;
-            padding: 6px;
+            border-radius: 10px;
+            padding: 10px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -333,16 +335,47 @@ function renderInventoryGrid() {
         `;
 
         card.innerHTML = `
-            <div style="width: 42px; height: 42px; background: #fff; border-radius: 4px; overflow: hidden; margin-bottom: 2px;">
+            <div style="width: 55px; height: 55px; background: #fff; border-radius: 6px; overflow: hidden; margin-bottom: 4px;">
                 <img src="${rot.image}" style="width: 100%; height: 100%; object-fit: cover;">
             </div>
-            <span style="font-size: 8.5px; color: #fff; font-family: monospace; font-weight: bold;">${rot.name}</span>
-            <span style="font-size: 7.5px; color: #00ff00; font-family: monospace;">Lvl ${rot.level || 1}</span>
-            ${isActive ? '<span style="font-size: 6.5px; background: #00ff00; color: #000; padding: 1px 4px; border-radius: 3px; font-weight: bold;">FIGHTING</span>' : `<button onclick="setActiveFighter(${index})" style="font-size: 6.5px; background: #333; color: #fff; border: 1px solid #777; cursor: pointer; padding: 2px 4px; border-radius: 3px; margin-top: 2px;">SELECT</button>`}
+            <span style="font-size: 10px; color: #fff; font-family: monospace; font-weight: bold;">${rot.name}</span>
+            <span style="font-size: 9px; color: #00ff00; font-family: monospace;">Lvl ${rotLevel}</span>
+            <span style="font-size: 8px; color: #ffaa00; font-family: monospace;">💰 +${coinValue} Coin</span>
+            <div style="display: flex; gap: 4px; margin-top: 6px; width: 100%;">
+                ${isActive ? '<span style="font-size: 7.5px; background: #00ff00; color: #000; padding: 3px 6px; border-radius: 4px; font-weight: bold; flex: 1; text-align: center;">FIGHTING</span>' : `<button onclick="setActiveFighter(${index})" style="font-size: 7.5px; background: #333; color: #fff; border: 1px solid #777; cursor: pointer; padding: 3px 6px; border-radius: 4px; flex: 1;">SELECT</button>`}
+                <button onclick="transferRot(${index})" style="font-size: 7.5px; background: #ff0055; color: #fff; border: none; cursor: pointer; padding: 3px 6px; border-radius: 4px; font-weight: bold;">TRANSFER</button>
+            </div>
         `;
         inventoryGrid.appendChild(card);
     });
 }
+
+window.transferRot = function(index) {
+    const inventory = window.playerData.inventory || [];
+    if (inventory.length <= 1) {
+        alert("You cannot transfer your last rot!");
+        return;
+    }
+    if (index === window.playerData.activeFighterIndex) {
+        alert("You cannot transfer your active fighter! Select a different fighter first.");
+        return;
+    }
+
+    const rot = inventory[index];
+    const coinGain = 1; // Flat 1 coin gain
+
+    if (confirm(`Transfer ${rot.name} (Lvl ${rot.level || 1}) in exchange for 1 coin?`)) {
+        inventory.splice(index, 1);
+        window.playerData.rotBalance = (window.playerData.rotBalance || 500) + coinGain;
+
+        if (index < window.playerData.activeFighterIndex) {
+            window.playerData.activeFighterIndex--;
+        }
+
+        window.saveGameData();
+        updateHUD();
+    }
+};
 
 function renderDexGrid() {
     const dexGrid = document.getElementById('dexGrid');
@@ -397,7 +430,7 @@ window.setActiveFighter = function(index) {
 window.openInventory = function() {
     const modal = document.getElementById('inventoryModal');
     if (modal) {
-        modal.style.display = 'block';
+        modal.style.display = 'flex';
         renderInventoryGrid();
     }
 };
@@ -504,11 +537,12 @@ window.clearAllAccounts = async function() {
             alert("Failed to wipe database.");
         }
     }
-};// ==========================================
+};
+
+// ==========================================
 // STEP 4: AUTO-SAVE THROTTLING & SAFETY NET
 // ==========================================
 
-// Auto-save every 60 seconds in the background to protect Firebase free limits
 setInterval(() => {
     if (window.playerData && window.playerData.username) {
         window.saveGameData();
@@ -516,10 +550,8 @@ setInterval(() => {
     }
 }, 60000);
 
-// Emergency save when the player closes the tab or app
 window.addEventListener('beforeunload', (event) => {
     if (window.playerData && window.playerData.username) {
-        // Synchronous final save ping
         db.collection('accounts').doc(window.playerData.username).set(_internalPlayerData);
     }
 });

@@ -1,16 +1,21 @@
-// spawner.js - Spawns wild brainrots with strict, rare-heavy level distribution
+// spawner.js - Dynamic GPS-Based Brainrot Spawner & Spawns
 
 let spawnedCreatures = [];
+let lastSpawnLat = null;
+let lastSpawnLng = null;
 
-// Stricter level generator:
-// - Level 1-10: 88% (Standard common spawns)
-// - Level 11-20: 10% (Uncommon)
-// - Level 21-50: 1.8% (Very rare)
-// - Level 51-100: 0.2% (Extremely rare / "Go tell your friends")
+// Stricter level generator with a massive bias for Level 1:
+// - Level 1: 60% (The absolute most common spawn)
+// - Levels 2-10: 28% (Common low levels)
+// - Levels 11-20: 10% (Uncommon)
+// - Levels 21-50: 1.8% (Very rare)
+// - Levels 51-100: 0.2% (Extremely rare)
 function getRandomLevel() {
   const roll = Math.random();
-  if (roll < 0.88) {
-    return Math.floor(Math.random() * 10) + 1;       // Levels 1 - 10 (88%)
+  if (roll < 0.60) {
+    return 1;                                        // Exactly Level 1 (60%)
+  } else if (roll < 0.88) {
+    return Math.floor(Math.random() * 9) + 2;        // Levels 2 - 10 (28%)
   } else if (roll < 0.98) {
     return Math.floor(Math.random() * 10) + 11;      // Levels 11 - 20 (10%)
   } else if (roll < 0.998) {
@@ -190,7 +195,7 @@ function spawnSingleCreature(lat, lng) {
 }
 
 // 3. Spawn a batch of creatures
-function spawnBatch(playerLat, playerLng, count = 10) {
+function spawnBatch(playerLat, playerLng, count = 8) {
   for (let i = 0; i < count; i++) {
     spawnSingleCreature(playerLat, playerLng);
   }
@@ -210,3 +215,37 @@ function cleanUpFarCreatures(playerLat, playerLng, maxDistanceMeters = 800) {
     return true;
   });
 }
+
+// 5. Dynamic Spawner Loop tracking movement
+function initSpawner() {
+  setInterval(() => {
+    let currentPos = null;
+
+    if (typeof playerMarker !== 'undefined' && playerMarker) {
+      currentPos = playerMarker.getLatLng();
+    } else if (typeof playerLat !== 'undefined' && typeof playerLng !== 'undefined') {
+      currentPos = { lat: playerLat, lng: playerLng };
+    } else if (window.currentLat && window.currentLng) {
+      currentPos = { lat: window.currentLat, lng: window.currentLng };
+    }
+
+    if (!currentPos) return;
+
+    // Clean up far creatures
+    cleanUpFarCreatures(currentPos.lat, currentPos.lng);
+
+    // If player moves more than ~50 meters, spawn a new batch around them
+    if (lastSpawnLat === null || lastSpawnLng === null || 
+        Math.abs(currentPos.lat - lastSpawnLat) > 0.0005 || 
+        Math.abs(currentPos.lng - lastSpawnLng) > 0.0005) {
+        
+      spawnBatch(currentPos.lat, currentPos.lng, 8);
+      lastSpawnLat = currentPos.lat;
+      lastSpawnLng = currentPos.lng;
+    }
+  }, 5000);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(initSpawner, 1500);
+});
