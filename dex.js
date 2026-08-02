@@ -214,7 +214,7 @@ function updateHUD() {
     if (totalBrainrotsEl) totalBrainrotsEl.innerText = totalPossible;
     if (inventoryCountEl) inventoryCountEl.innerText = inventoryCount;
     if (rotBalanceEl) rotBalanceEl.innerText = window.playerData.rotBalance || 500;
-    if (hudTitle && window.playerData.username) hudTitle.innerText = `🎮 ${window.playerData.username.toUpperCase()}`;
+    if (hudTitle && window.playerData.username) hudTitle.innerText = `🕹️ ${window.playerData.username.toUpperCase()}`;
 
     renderInventoryGrid();
     renderDexGrid();
