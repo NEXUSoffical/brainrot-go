@@ -1,0 +1,29 @@
+/* ==========================================
+   BRAINROT GO - MAIN STYLESHEET
+   ========================================== */
+
+body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    font-family: sans-serif;
+}
+
+#map {
+    width: 100vw;
+    height: 100vh;
+}
+
+/* CRITICAL FIX: Completely removes Leaflet's default grey box wrappers */
+.leaflet-div-icon {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+/* Clean character icon wrapper override */
+.clean-brainrot-icon {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+}

@@ -1,0 +1,40 @@
+.player-container {
+    width: 65px; height: 85px; position: relative; pointer-events: none;
+    filter: drop-shadow(0 6px 12px rgba(0,255,0,0.7));
+}
+
+.character-svg { width: 100%; height: 100%; transition: transform 0.1s ease; }
+
+.walking .left-leg { animation: legSwing 0.35s infinite alternate ease-in-out; transform-origin: 20px 42px; }
+.walking .right-leg { animation: legSwing 0.35s infinite alternate-reverse ease-in-out; transform-origin: 30px 42px; }
+.walking .left-arm { animation: armSwing 0.35s infinite alternate-reverse ease-in-out; transform-origin: 14px 26px; }
+.walking .right-arm { animation: armSwing 0.35s infinite alternate ease-in-out; transform-origin: 36px 26px; }
+
+.idle .body-group { animation: idleBreath 1.2s infinite alternate ease-in-out; transform-origin: center bottom; }
+
+@keyframes legSwing { 0% { transform: rotate(-25deg); } 100% { transform: rotate(25deg); } }
+@keyframes armSwing { 0% { transform: rotate(-20deg); } 100% { transform: rotate(20deg); } }
+@keyframes idleBreath { 0% { transform: scaleY(1); } 100% { transform: scaleY(1.03) translateY(-1px); } }
+
+.facing-left .character-svg { transform: scaleX(-1); }
+.facing-right .character-svg { transform: scaleX(1); }
+.facing-up .face-features { display: none; }
+.facing-up .back-hair { display: block !important; }
+.facing-down .face-features { display: block; }
+
+.brainrot-spawn-btn { 
+    background: none; border: none; font-size: 38px; text-align: center; line-height: 1;
+    cursor: pointer !important; pointer-events: auto !important;
+    animation: pokemonSpawn 0.5s ease-out, floatBob 1.5s ease-in-out infinite alternate 0.5s;
+}
+
+@keyframes pokemonSpawn {
+    0% { transform: scale(0) rotate(-180deg); opacity: 0; }
+    80% { transform: scale(1.3); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes floatBob {
+    from { transform: translateY(0); filter: drop-shadow(0 2px 4px rgba(0,255,0,0.5)); }
+    to { transform: translateY(-8px); filter: drop-shadow(0 8px 12px rgba(255,0,127,0.8)); }
+}

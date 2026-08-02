@@ -1,0 +1,24 @@
+#battleModal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2000; background: #111; border: 4px solid #ff007f; border-radius: 12px; padding: 25px; text-align: center; width: 340px; box-shadow: 0 0 30px #ff007f; }
+#battleModal h2 { color: #ff007f; font-size: 1.6rem; margin-bottom: 10px; text-shadow: 0 0 10px #ff007f; }
+#creatureSprite { font-size: 4rem; margin: 15px 0; animation: bounce 0.6s infinite alternate; }
+@keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-15px); } }
+
+#dexModal { 
+    display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+    z-index: 99999; background: #0a0a0a; border: 4px solid #00ff00; border-radius: 12px; 
+    padding: 25px; width: 85vw; max-width: 520px; max-height: 80vh; overflow-y: auto; 
+    box-shadow: 0 0 40px #00ff00; text-align: center; 
+}
+
+#dexGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 12px; margin-bottom: 15px; }
+
+.close-x-btn {
+    position: sticky; top: 0; float: right; margin-top: -10px; margin-right: -10px;
+    background: #ff0055; color: #fff; border: 2px solid #fff; font-size: 1.2rem;
+    font-weight: bold; width: 36px; height: 36px; border-radius: 50%;
+    cursor: pointer; z-index: 100000; box-shadow: 0 0 10px #ff0055;
+}
+.close-x-btn:hover { background: #ff3300; transform: scale(1.1); }
+
+.btn-action { background: #00ff00; color: #000; border: none; padding: 12px 20px; font-size: 1rem; font-weight: bold; font-family: monospace; border-radius: 6px; cursor: pointer; width: 100%; margin-top: 10px; }
+.btn-action:hover { background: #55ff55; transform: scale(1.02); }

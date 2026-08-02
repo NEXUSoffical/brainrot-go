@@ -1,0 +1,146 @@
+// 🌍 REAL-WORLD GPS & KEYBOARD MOVEMENT ENGINE
+let playerLat = 53.45544;
+let playerLng = -2.97630;
+let playerMarker = null;
+let isWalking = false;
+let moveInterval = null;
+let activeKeys = {};
+
+function initPlayer() {
+    if (typeof map === 'undefined') return;
+    
+    // Stop clones from spawning
+    if (playerMarker !== null) return; 
+
+    // Custom animated player SVG marker
+    const playerSvgHtml = `
+        <div id="playerAvatar" class="player-container facing-down">
+            <svg class="character-svg" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+                <!-- Back Hair (Visible when facing up) -->
+                <g class="back-hair" style="display:none;">
+                    <circle cx="32" cy="24" r="14" fill="#00ff00"/>
+                </g>
+                <!-- Body / Torso -->
+                <g class="body-group">
+                    <!-- Left Leg -->
+                    <rect class="left-leg" x="20" y="40" width="8" height="16" rx="4" fill="#111"/>
+                    <!-- Right Leg -->
+                    <rect class="right-leg" x="36" y="40" width="8" height="16" rx="4" fill="#111"/>
+                    <!-- Torso -->
+                    <rect x="18" y="22" width="28" height="22" rx="6" fill="#ff007f"/>
+                    <!-- Head -->
+                    <circle cx="32" cy="16" r="12" fill="#ffccaa"/>
+                    <!-- Cap / Hat -->
+                    <path d="M 18 14 Q 32 6 46 14 Z" fill="#00ff00"/>
+                    <rect x="28" y="10" width="16" height="4" rx="2" fill="#00ff00"/>
+                    <!-- Face Features -->
+                    <g class="face-features">
+                        <circle cx="28" cy="16" r="2" fill="#000"/>
+                        <circle cx="36" cy="16" r="2" fill="#000"/>
+                        <path d="M 30 21 Q 32 24 34 21" stroke="#000" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+                    </g>
+                </g>
+            </svg>
+        </div>
+    `;
+
+    const playerIcon = L.divIcon({
+        html: playerSvgHtml,
+        className: 'player-div-icon',
+        iconSize: [65, 85],
+        iconAnchor: [32, 70]
+    });
+
+    playerMarker = L.marker([playerLat, playerLng], { icon: playerIcon }).addTo(map);
+    map.setView([playerLat, playerLng], 19);
+
+    // Initial batch spawns
+    if (typeof spawnBatch === 'function') {
+        spawnBatch(6);
+    }
+}
+
+// Keyboard movement listeners
+window.addEventListener('keydown', (e) => {
+    const accountModal = document.getElementById('accountModal');
+    if (accountModal && accountModal.style.display !== 'none') return;
+    if (document.activeElement.tagName === 'INPUT') return;
+
+    const key = e.key.toLowerCase();
+    if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) {
+        activeKeys[key] = true;
+        if (!isWalking) {
+            isWalking = true;
+            startMovementLoop();
+        }
+    }
+});
+
+window.addEventListener('keyup', (e) => {
+    const key = e.key.toLowerCase();
+    activeKeys[key] = false;
+    
+    if (!activeKeys['w'] && !activeKeys['a'] && !activeKeys['s'] && !activeKeys['d'] &&
+        !activeKeys['arrowup'] && !activeKeys['arrowdown'] && !activeKeys['arrowleft'] && !activeKeys['arrowright']) {
+        isWalking = false;
+        clearInterval(moveInterval);
+        moveInterval = null;
+        const avatar = document.getElementById('playerAvatar');
+        if (avatar) avatar.classList.remove('walking');
+    }
+});
+
+function startMovementLoop() {
+    if (moveInterval) return;
+
+    // We changed this number to make the steps smaller and normal!
+    const moveSpeed = 0.000005; 
+    const avatar = document.getElementById('playerAvatar');
+
+    moveInterval = setInterval(() => {
+        let dLat = 0;
+        let dLng = 0;
+        let facingClass = 'facing-down';
+
+        if (activeKeys['w'] || activeKeys['arrowup']) {
+            dLat += moveSpeed;
+            facingClass = 'facing-up';
+        }
+        if (activeKeys['s'] || activeKeys['arrowdown']) {
+            dLat -= moveSpeed;
+            facingClass = 'facing-down';
+        }
+        if (activeKeys['a'] || activeKeys['arrowleft']) {
+            dLng -= moveSpeed;
+            facingClass = 'facing-left';
+        }
+        if (activeKeys['d'] || activeKeys['arrowright']) {
+            dLng += moveSpeed;
+            facingClass = 'facing-right';
+        }
+
+        if (dLat !== 0 || dLng !== 0) {
+            playerLat += dLat;
+            playerLng += dLng;
+
+            playerMarker.setLatLng([playerLat, playerLng]);
+            map.panTo([playerLat, playerLng], { animate: false });
+
+            if (avatar) {
+                avatar.className = `player-container walking ${facingClass}`;
+            }
+
+            // Update HUD coordinates
+            document.getElementById('latVal').innerText = playerLat.toFixed(5);
+            document.getElementById('lngVal').innerText = playerLng.toFixed(5);
+
+            if (typeof cleanUpFarCreatures === 'function') {
+                cleanUpFarCreatures();
+            }
+        }
+    }, 50);
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    setTimeout(initPlayer, 200);
+});
