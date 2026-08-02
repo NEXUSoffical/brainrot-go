@@ -8,12 +8,6 @@ let lastSpawnLng = null;
 window.activeCreatures = spawnedCreatures;
 window.currentBattleEntry = null;
 
-// Stricter level generator with a massive bias for Level 1:
-// - Level 1: 60% (The absolute most common spawn)
-// - Levels 2-10: 28% (Common low levels)
-// - Levels 11-20: 10% (Uncommon)
-// - Levels 21-50: 1.8% (Very rare)
-// - Levels 51-100: 0.2% (Extremely rare)
 function getRandomLevel() {
   const roll = Math.random();
   if (roll < 0.60) {
@@ -29,12 +23,17 @@ function getRandomLevel() {
   }
 }
 
-// 1. Get a random brainrot character with weighted rarity spawning
+// 1. Get a random brainrot character safely with fallback
 function getRandomBrainrot() {
-  const validCharacters = brainrotCharacters.filter(char => char.image && char.image.trim() !== "");
-  if (validCharacters.length === 0) return brainrotCharacters[0];
+  if (typeof brainrotCharacters === 'undefined' || !Array.isArray(brainrotCharacters)) {
+    return { name: "Noobini Pizzanini", rarity: "common", reward: 1, image: "brainrots/noobini_pizzanini.png" };
+  }
 
-  // Create a weighted pool so commons spawn more often than rares
+  const validCharacters = brainrotCharacters.filter(char => char && char.image && char.image.trim() !== "");
+  if (validCharacters.length === 0) {
+    return { name: "Noobini Pizzanini", rarity: "common", reward: 1, image: "brainrots/noobini_pizzanini.png" };
+  }
+
   const weightedPool = [];
   validCharacters.forEach(char => {
     const rarity = (char.rarity || 'common').toLowerCase();
@@ -64,7 +63,6 @@ function getRarityColor(rarity) {
   }
 }
 
-// Global function to trigger battle from the popup
 window.startEncounter = function(name, rarity, reward, imageUrl, level, maxHp) {
   const modal = document.getElementById('battleModal');
   if (modal) {
@@ -80,7 +78,6 @@ window.startEncounter = function(name, rarity, reward, imageUrl, level, maxHp) {
   const wildBadgeName = document.getElementById('wildBadgeName');
   if (wildBadgeName) wildBadgeName.innerText = `${name} (Lvl ${level})`;
 
-  // Find the exact active entry in our array so we can wipe it out later upon capture
   const matchedEntry = spawnedCreatures.find(c => c.data.name === name && c.data.level === Number(level) && !c.captured);
   
   if (matchedEntry) {
@@ -99,13 +96,11 @@ window.startEncounter = function(name, rarity, reward, imageUrl, level, maxHp) {
     hp: Number(maxHp)
   };
 
-  // Initialize battle with exact level and stat scaling
   if (typeof window.initBattle === 'function') {
     window.initBattle(matchedCreature);
   }
 };
 
-// Global function called by battle.js when a creature is caught or defeated to remove it from map
 window.removeCapturedCreature = function() {
   if (window.currentBattleEntry) {
     if (window.currentBattleEntry.marker && typeof window.currentBattleEntry.marker.remove === 'function') {
@@ -114,14 +109,12 @@ window.removeCapturedCreature = function() {
       map.removeLayer(window.currentBattleEntry.marker);
     }
     
-    // Filter it out of the active array
     spawnedCreatures = spawnedCreatures.filter(c => c !== window.currentBattleEntry);
     window.activeCreatures = spawnedCreatures;
     window.currentBattleEntry = null;
   }
 };
 
-// 2. Spawn Rarity-Colored Cards close to the player's immediate radius
 function spawnSingleCreature(lat, lng) {
   if (typeof L === 'undefined' || typeof map === 'undefined' || !map || typeof map.addLayer !== 'function') {
     return;
@@ -242,14 +235,12 @@ function spawnSingleCreature(lat, lng) {
   spawnedCreatures.push(spawnedEntry);
 }
 
-// 3. Spawn a batch of creatures
 function spawnBatch(playerLat, playerLng, count = 8) {
   for (let i = 0; i < count; i++) {
     spawnSingleCreature(playerLat, playerLng);
   }
 }
 
-// 4. Remove creatures that are too far away
 function cleanUpFarCreatures(pLat, pLng, maxDistanceMeters = 150) {
   const currentLat = pLat !== undefined ? pLat : (typeof playerLat !== 'undefined' ? playerLat : null);
   const currentLng = pLng !== undefined ? pLng : (typeof playerLng !== 'undefined' ? playerLng : null);
@@ -272,7 +263,6 @@ function cleanUpFarCreatures(pLat, pLng, maxDistanceMeters = 150) {
   window.activeCreatures = spawnedCreatures;
 }
 
-// 5. Dynamic Spawner Loop tracking movement
 function initSpawner() {
   setInterval(() => {
     let currentPos = null;
