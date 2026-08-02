@@ -1,4 +1,4 @@
-=// dex.js - Cloud-Connected Account Management, Sticker Dex & Admin System
+// dex.js - Cloud-Connected Account Management, Sticker Dex & Admin System
 
 const db = firebase.firestore();
 const auth = firebase.auth();
