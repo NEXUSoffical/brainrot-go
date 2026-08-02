@@ -1,4 +1,4 @@
-// database.js - Phase 1 Common & Rare Launch Roster
+// database.js - Full Roster (Commons, Rares, Secrets, OGs)
 
 const brainrotCharacters = [
   // ====================
