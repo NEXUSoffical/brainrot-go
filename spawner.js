@@ -29,12 +29,26 @@ function getRandomLevel() {
   }
 }
 
-// 1. Get a random brainrot character that actually has an image loaded
+// 1. Get a random brainrot character with weighted rarity spawning
 function getRandomBrainrot() {
-  const availableCharacters = brainrotCharacters.filter(char => char.image && char.image.trim() !== "");
-  if (availableCharacters.length === 0) return brainrotCharacters[0];
-  const randomIndex = Math.floor(Math.random() * availableCharacters.length);
-  return availableCharacters[randomIndex];
+  const validCharacters = brainrotCharacters.filter(char => char.image && char.image.trim() !== "");
+  if (validCharacters.length === 0) return brainrotCharacters[0];
+
+  // Create a weighted pool so commons spawn more often than rares
+  const weightedPool = [];
+  validCharacters.forEach(char => {
+    const rarity = (char.rarity || 'common').toLowerCase();
+    if (rarity === 'rare') {
+      weightedPool.push(char);
+    } else {
+      for (let i = 0; i < 4; i++) {
+        weightedPool.push(char);
+      }
+    }
+  });
+
+  const randomIndex = Math.floor(Math.random() * weightedPool.length);
+  return weightedPool[randomIndex];
 }
 
 // Helper to get rarity color for the cards
