@@ -1,4 +1,6 @@
-// dex.js - Robust Account Management, Sticker Dex & Inventory Storage System
+// dex.js - Cloud-Connected Account Management, Sticker Dex & Admin System
+
+const db = window.db;
 
 let isSignUpMode = false;
 let selectedStarter = null;
@@ -7,27 +9,30 @@ window.playerData = {
     username: "",
     password: "",
     rotBalance: 500,
-    dex: [],         // Sticker book: list of unlocked creature names
-    inventory: [],   // Actual storage: list of owned creature instances with levels/HP
+    dex: [],         
+    inventory: [],   
     activeFighterIndex: 0
 };
 
-// Immediately check session on script load and restore user data
-(function checkExistingSession() {
+// Check existing session on load
+(async function checkExistingSession() {
     const activeUser = localStorage.getItem('brainrot_logged_in_user');
     if (activeUser) {
-        const accounts = JSON.parse(localStorage.getItem('brainrot_accounts') || '{}');
-        if (accounts[activeUser]) {
-            window.playerData = accounts[activeUser];
-            if (!window.playerData.dex) window.playerData.dex = [];
-            if (!window.playerData.inventory) window.playerData.inventory = [];
-            
-            // Hide login modal safely once DOM is ready
-            document.addEventListener('DOMContentLoaded', () => {
-                const modal = document.getElementById('loginModal');
-                if (modal) modal.style.display = 'none';
-                updateHUD();
-            });
+        try {
+            const doc = await db.collection('accounts').doc(activeUser).get();
+            if (doc.exists) {
+                window.playerData = doc.data();
+                if (!window.playerData.dex) window.playerData.dex = [];
+                if (!window.playerData.inventory) window.playerData.inventory = [];
+                
+                document.addEventListener('DOMContentLoaded', () => {
+                    const modal = document.getElementById('loginModal');
+                    if (modal) modal.style.display = 'none';
+                    updateHUD();
+                });
+            }
+        } catch (err) {
+            console.error("Error restoring session from cloud:", err);
         }
     }
 })();
@@ -37,7 +42,6 @@ document.addEventListener('DOMContentLoaded', () => {
     updateHUD();
 });
 
-// Toggle between Login and Sign Up mode
 window.toggleAuthMode = function() {
     isSignUpMode = !isSignUpMode;
     const starterSec = document.getElementById('starterSection');
@@ -52,7 +56,6 @@ window.toggleAuthMode = function() {
     }
 };
 
-// Setup starter selector grid safely
 function setupStarterOptions() {
     const grid = document.getElementById('starterSelectionGrid');
     if (!grid || typeof brainrotCharacters === 'undefined' || !brainrotCharacters.length) {
@@ -82,8 +85,8 @@ function setupStarterOptions() {
     });
 }
 
-// Handle Account Sign Up or Login
-window.handleAccountAction = function() {
+// Handle Cloud Authentication (Sign Up / Login)
+window.handleAccountAction = async function() {
     const usernameInput = document.getElementById('usernameInput');
     const passwordInput = document.getElementById('passwordInput');
     
@@ -95,88 +98,92 @@ window.handleAccountAction = function() {
         return;
     }
 
-    let accounts = JSON.parse(localStorage.getItem('brainrot_accounts') || '{}');
+    try {
+        const docRef = db.collection('accounts').doc(username);
+        const doc = await docRef.get();
 
-    if (isSignUpMode) {
-        if (accounts[username]) {
-            alert("Username already exists! Please log in instead.");
-            return;
+        if (isSignUpMode) {
+            if (doc.exists) {
+                alert("Username already exists! Please log in instead.");
+                return;
+            }
+
+            if (!selectedStarter && typeof brainrotCharacters !== 'undefined') {
+                selectedStarter = brainrotCharacters[0];
+            }
+
+            const starterInstance = {
+                ...selectedStarter,
+                level: 1,
+                xp: 0,
+                maxHp: 50,
+                hp: 50
+            };
+
+            window.playerData = {
+                username: username,
+                password: password,
+                rotBalance: 500,
+                dex: [selectedStarter.name],
+                inventory: [starterInstance],
+                activeFighterIndex: 0
+            };
+
+            await docRef.set(window.playerData);
+            localStorage.setItem('brainrot_logged_in_user', username);
+            alert(`Account created successfully in the cloud! Welcome, ${username}!`);
+        } else {
+            if (!doc.exists || doc.data().password !== password) {
+                alert("Invalid username or password!");
+                return;
+            }
+
+            window.playerData = doc.data();
+            if (!window.playerData.dex) window.playerData.dex = [];
+            if (!window.playerData.inventory) window.playerData.inventory = [];
+            localStorage.setItem('brainrot_logged_in_user', username);
         }
 
-        if (!selectedStarter && typeof brainrotCharacters !== 'undefined') {
-            selectedStarter = brainrotCharacters[0];
-        }
-
-        const starterInstance = {
-            ...selectedStarter,
-            level: 1,
-            xp: 0,
-            maxHp: 50,
-            hp: 50
-        };
-
-        accounts[username] = {
-            username: username,
-            password: password,
-            rotBalance: 500,
-            dex: [selectedStarter.name],
-            inventory: [starterInstance],
-            activeFighterIndex: 0
-        };
-
-        localStorage.setItem('brainrot_accounts', JSON.stringify(accounts));
-        window.playerData = accounts[username];
-        localStorage.setItem('brainrot_logged_in_user', username);
-
-        alert(`Account created successfully! Welcome, ${username}!`);
-    } else {
-        if (!accounts[username] || accounts[username].password !== password) {
-            alert("Invalid username or password!");
-            return;
-        }
-
-        window.playerData = accounts[username];
-        if (!window.playerData.dex) window.playerData.dex = [];
-        if (!window.playerData.inventory) window.playerData.inventory = [];
-        localStorage.setItem('brainrot_logged_in_user', username);
+        const loginModal = document.getElementById('loginModal');
+        if (loginModal) loginModal.style.display = 'none';
+        updateHUD();
+    } catch (err) {
+        console.error("Authentication error:", err);
+        alert("Network error connecting to cloud database.");
     }
-
-    const loginModal = document.getElementById('loginModal');
-    if (loginModal) loginModal.style.display = 'none';
-    updateHUD();
 };
 
-// Logout active account
 window.logoutAccount = function() {
     window.saveGameData();
     localStorage.removeItem('brainrot_logged_in_user');
     location.reload();
 };
 
-// Save player data to account store
-window.saveGameData = function() {
+window.saveGameData = async function() {
     if (!window.playerData || !window.playerData.username) return;
-    let accounts = JSON.parse(localStorage.getItem('brainrot_accounts') || '{}');
-    accounts[window.playerData.username] = window.playerData;
-    localStorage.setItem('brainrot_accounts', JSON.stringify(accounts));
-    updateHUD();
+    try {
+        await db.collection('accounts').doc(window.playerData.username).set(window.playerData);
+        updateHUD();
+    } catch (err) {
+        console.error("Error saving to cloud:", err);
+    }
 };
 
-// Add captured creature to Inventory and Sticker Dex
 window.addToDex = function(creature) {
     if (!window.playerData.inventory) window.playerData.inventory = [];
     if (!window.playerData.dex) window.playerData.dex = [];
 
-    // Add to Inventory (can store multiple copies/duplicates)
+    const rotLevel = creature.level || 1;
+    const rotMaxHp = creature.maxHp || (50 + (rotLevel - 1) * 12);
+
     window.playerData.inventory.push({
         ...creature,
-        level: 1,
-        xp: 0,
-        maxHp: 50,
-        hp: 50
+        level: rotLevel,
+        xp: creature.xp || 0,
+        maxHp: rotMaxHp,
+        hp: rotMaxHp
     });
 
-    // Add to Sticker Dex (encyclopedia unlocks unique sticker once)
     if (!window.playerData.dex.includes(creature.name)) {
         window.playerData.dex.push(creature.name);
     }
@@ -185,7 +192,6 @@ window.addToDex = function(creature) {
     updateHUD();
 };
 
-// Get rarity color helper
 window.getRarityColor = function(rarity) {
     switch ((rarity || '').toLowerCase()) {
         case 'secret': return '#ff0055';
@@ -198,7 +204,6 @@ window.getRarityColor = function(rarity) {
     }
 };
 
-// Update HUD numbers
 function updateHUD() {
     const dexCountEl = document.getElementById('dexCount');
     const totalBrainrotsEl = document.getElementById('totalBrainrots');
@@ -220,7 +225,6 @@ function updateHUD() {
     renderDexGrid();
 }
 
-// 🎒 Render Inventory Grid (Actual storage of owned rots)
 function renderInventoryGrid() {
     const inventoryGrid = document.getElementById('inventoryGrid');
     if (!inventoryGrid) return;
@@ -261,7 +265,6 @@ function renderInventoryGrid() {
     });
 }
 
-// 📖 Render Sticker Book Dex Grid (Encyclopedia)
 function renderDexGrid() {
     const dexGrid = document.getElementById('dexGrid');
     if (!dexGrid || typeof brainrotCharacters === 'undefined' || !brainrotCharacters) return;
@@ -306,14 +309,12 @@ function renderDexGrid() {
     });
 }
 
-// Set active fighter from inventory
 window.setActiveFighter = function(index) {
     window.playerData.activeFighterIndex = index;
     window.saveGameData();
     renderInventoryGrid();
 };
 
-// Open/Close Inventory Modal
 window.openInventory = function() {
     const modal = document.getElementById('inventoryModal');
     if (modal) {
@@ -327,7 +328,6 @@ window.closeInventory = function() {
     if (modal) modal.style.display = 'none';
 };
 
-// Open/Close Sticker Dex Modal
 window.openDex = function() {
     const modal = document.getElementById('dexModal');
     if (modal) {
@@ -339,4 +339,91 @@ window.openDex = function() {
 window.closeDex = function() {
     const modal = document.getElementById('dexModal');
     if (modal) modal.style.display = 'none';
+};
+
+// ==========================================
+// SECURE CLOUD ADMIN PANEL FUNCTIONS
+// ==========================================
+
+window.openAdminPanel = function() {
+    const passwordInput = prompt("Enter Admin Secret Key:");
+    if (passwordInput !== "Kitkat10") {
+        alert("Access Denied.");
+        return;
+    }
+
+    const modal = document.getElementById('adminModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        window.renderAdminPanel();
+    }
+};
+
+window.closeAdminPanel = function() {
+    const modal = document.getElementById('adminModal');
+    if (modal) modal.style.display = 'none';
+};
+
+window.renderAdminPanel = async function() {
+    const listEl = document.getElementById('adminAccountsList');
+    if (!listEl) return;
+
+    listEl.innerHTML = `<p style="color:#00ccff; font-size:0.8rem; text-align:center;">Fetching accounts from cloud database...</p>`;
+
+    try {
+        const snapshot = await db.collection('accounts').get();
+        listEl.innerHTML = '';
+
+        if (snapshot.empty) {
+            listEl.innerHTML = `<p style="color:#777; font-size:0.8rem; text-align:center;">No accounts found in cloud database.</p>`;
+            return;
+        }
+
+        const activeUser = localStorage.getItem('brainrot_logged_in_user');
+
+        snapshot.forEach(doc => {
+            const acc = doc.data();
+            const username = doc.id;
+            const isCurrent = username === activeUser;
+            const invCount = acc.inventory ? acc.inventory.length : 0;
+            const dexCount = acc.dex ? acc.dex.length : 0;
+
+            const card = document.createElement('div');
+            card.style.cssText = `
+                background: #222; border: 1px solid ${isCurrent ? '#00ff00' : '#444'};
+                padding: 10px; border-radius: 6px; display: flex; flex-direction: column; gap: 4px;
+            `;
+            card.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <b style="color:${isCurrent ? '#00ff00' : '#fff'}; font-size:0.9rem;">${username} ${isCurrent ? '(ACTIVE)' : ''}</b>
+                    <span style="font-size:0.75rem; color:#ffaa00;">💰 ${acc.rotBalance || 0} Rot</span>
+                </div>
+                <span style="font-size:0.75rem; color:#00ccff;">Inventory: ${invCount} Rots | Sticker Dex: ${dexCount} Unlocked</span>
+                <span style="font-size:0.7rem; color:#888;">Password: ${acc.password}</span>
+            `;
+            listEl.appendChild(card);
+        });
+    } catch (err) {
+        console.error("Error fetching admin accounts:", err);
+        listEl.innerHTML = `<p style="color:#ff0055; font-size:0.8rem; text-align:center;">Failed to load cloud accounts.</p>`;
+    }
+};
+
+window.clearAllAccounts = async function() {
+    if (confirm("Are you sure you want to delete ALL accounts from the cloud database?")) {
+        try {
+            const snapshot = await db.collection('accounts').get();
+            const batch = db.batch();
+            snapshot.forEach(doc => {
+                batch.delete(doc.ref);
+            });
+            await batch.commit();
+            localStorage.removeItem('brainrot_logged_in_user');
+            alert("All cloud accounts wiped.");
+            location.reload();
+        } catch (err) {
+            console.error("Error wiping cloud accounts:", err);
+            alert("Failed to wipe database.");
+        }
+    }
 };

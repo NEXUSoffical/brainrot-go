@@ -62,8 +62,8 @@ function initPlayer() {
 
 // Keyboard movement listeners
 window.addEventListener('keydown', (e) => {
-    const accountModal = document.getElementById('accountModal');
-    if (accountModal && accountModal.style.display !== 'none') return;
+    const loginModal = document.getElementById('loginModal');
+    if (loginModal && loginModal.style.display !== 'none') return;
     if (document.activeElement.tagName === 'INPUT') return;
 
     const key = e.key.toLowerCase();
@@ -93,7 +93,6 @@ window.addEventListener('keyup', (e) => {
 function startMovementLoop() {
     if (moveInterval) return;
 
-    // We changed this number to make the steps smaller and normal!
     const moveSpeed = 0.000005; 
     const avatar = document.getElementById('playerAvatar');
 

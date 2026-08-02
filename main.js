@@ -4,7 +4,7 @@ let map;
 function initMap() {
     if (map) return;
     
-    // We added keyboard: false here so the map ignores the arrow keys
+    // Disable default map keyboard handling so D-pad/WASD work smoothly
     map = L.map('map', { 
         zoomControl: false, 
         keyboard: false 
@@ -21,21 +21,18 @@ function initMap() {
     }
 }
 
+// Single unified DOM load handler for map, player, and spawns
 window.addEventListener('DOMContentLoaded', () => {
     initMap();
-});
-// Run this automatically as soon as the game loads
-window.addEventListener('DOMContentLoaded', () => {
-  
-  // 1. Automatically update the Rot-Dex total count to show your 100+ characters
-  const rotDexElement = document.querySelector('.rot-dex') || document.getElementById('rot-dex');
-  if (rotDexElement) {
-    rotDexElement.innerText = `ROT-DEX (0/${brainrotCharacters.length})`;
-  }
 
-  // 2. Automatically drop an initial batch of brainrots around your starting coordinates
-  if (typeof spawnBatch === 'function') {
-    spawnBatch(53.45565, -2.97733, 15); // Spawns 15 brainrots immediately on load
-  }
-  
-});
+    // Automatically update the Rot-Dex total count based on total characters loaded
+    const rotDexElement = document.querySelector('.rot-dex') || document.getElementById('rot-dex');
+    if (rotDexElement && typeof brainrotCharacters !== 'undefined') {
+        rotDexElement.innerText = `ROT-DEX (0/${brainrotCharacters.length})`;
+    }
+
+    // Automatically drop an initial batch of brainrots around starting coordinates
+    if (typeof spawnBatch === 'function') {
+        spawnBatch(53.45565, -2.97733, 15);
+    }
+})
