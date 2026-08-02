@@ -6,6 +6,7 @@ let lastSpawnLng = null;
 
 // Expose activeCreatures globally so battle.js can filter them out on capture
 window.activeCreatures = spawnedCreatures;
+window.currentBattleEntry = null;
 
 // Stricter level generator with a massive bias for Level 1:
 // - Level 1: 60% (The absolute most common spawn)
@@ -16,15 +17,15 @@ window.activeCreatures = spawnedCreatures;
 function getRandomLevel() {
   const roll = Math.random();
   if (roll < 0.60) {
-    return 1;                                        // Exactly Level 1 (60%)
+    return 1;                                        
   } else if (roll < 0.88) {
-    return Math.floor(Math.random() * 9) + 2;        // Levels 2 - 10 (28%)
+    return Math.floor(Math.random() * 9) + 2;        
   } else if (roll < 0.98) {
-    return Math.floor(Math.random() * 10) + 11;      // Levels 11 - 20 (10%)
+    return Math.floor(Math.random() * 10) + 11;      
   } else if (roll < 0.998) {
-    return Math.floor(Math.random() * 30) + 21;      // Levels 21 - 50 (1.8%)
+    return Math.floor(Math.random() * 30) + 21;      
   } else {
-    return Math.floor(Math.random() * 50) + 51;      // Levels 51 - 100 (0.2%)
+    return Math.floor(Math.random() * 50) + 51;      
   }
 }
 
@@ -39,13 +40,13 @@ function getRandomBrainrot() {
 // Helper to get rarity color for the cards
 function getRarityColor(rarity) {
   switch ((rarity || '').toLowerCase()) {
-    case 'secret': return '#ff0055';    // Neon Pink
-    case 'mythic': return '#9900ff';    // Purple
-    case 'legendary': return '#ffaa00'; // Gold
-    case 'epic': return '#0088ff';      // Blue
-    case 'rare': return '#00cc44';      // Green
-    case 'uncommon': return '#cccc00';  // Yellow
-    default: return '#888888';          // Grey
+    case 'secret': return '#ff0055';    
+    case 'mythic': return '#9900ff';    
+    case 'legendary': return '#ffaa00'; 
+    case 'epic': return '#0088ff';      
+    case 'rare': return '#00cc44';      
+    case 'uncommon': return '#cccc00';  
+    default: return '#888888';          
   }
 }
 
@@ -65,8 +66,16 @@ window.startEncounter = function(name, rarity, reward, imageUrl, level, maxHp) {
   const wildBadgeName = document.getElementById('wildBadgeName');
   if (wildBadgeName) wildBadgeName.innerText = `${name} (Lvl ${level})`;
 
-  // Find the exact active creature instance matching this encounter so battle.js can reference it
-  const matchedCreature = spawnedCreatures.find(c => c.data.name === name && c.data.level === Number(level))?.data || {
+  // Find the exact active entry in our array so we can wipe it out later upon capture
+  const matchedEntry = spawnedCreatures.find(c => c.data.name === name && c.data.level === Number(level) && !c.captured);
+  
+  if (matchedEntry) {
+    window.currentBattleEntry = matchedEntry;
+  } else {
+    window.currentBattleEntry = null;
+  }
+
+  const matchedCreature = matchedEntry ? matchedEntry.data : {
     name, 
     rarity, 
     reward, 
@@ -82,9 +91,24 @@ window.startEncounter = function(name, rarity, reward, imageUrl, level, maxHp) {
   }
 };
 
+// Global function called by battle.js when a creature is caught or defeated to remove it from map
+window.removeCapturedCreature = function() {
+  if (window.currentBattleEntry) {
+    if (window.currentBattleEntry.marker && typeof window.currentBattleEntry.marker.remove === 'function') {
+      window.currentBattleEntry.marker.remove();
+    } else if (window.currentBattleEntry.marker && typeof map.removeLayer === 'function') {
+      map.removeLayer(window.currentBattleEntry.marker);
+    }
+    
+    // Filter it out of the active array
+    spawnedCreatures = spawnedCreatures.filter(c => c !== window.currentBattleEntry);
+    window.activeCreatures = spawnedCreatures;
+    window.currentBattleEntry = null;
+  }
+};
+
 // 2. Spawn Rarity-Colored Cards close to the player's immediate radius
 function spawnSingleCreature(lat, lng) {
-  // Ensure Leaflet map is fully initialized before attempting to spawn
   if (typeof L === 'undefined' || typeof map === 'undefined' || !map || typeof map.addLayer !== 'function') {
     return;
   }
@@ -103,7 +127,6 @@ function spawnSingleCreature(lat, lng) {
     hp: maxHp
   };
   
-  // Tighter radius offset (~65 meters max spread so they appear right around you)
   const offsetLat = (Math.random() - 0.5) * 0.0006;
   const offsetLng = (Math.random() - 0.5) * 0.0006;
   
@@ -174,9 +197,6 @@ function spawnSingleCreature(lat, lng) {
   });
 
   const marker = L.marker([spawnLat, spawnLng], { icon: customIcon }).addTo(map);
-  
-  // Attach marker reference directly to the creature object so battle.js can delete it
-  creatureInstance.marker = marker;
 
   marker.bindPopup(`
     <div style="text-align: center; font-family: sans-serif; min-width: 140px;">
@@ -215,7 +235,7 @@ function spawnBatch(playerLat, playerLng, count = 8) {
   }
 }
 
-// 4. Remove creatures that are too far away (despawns as you walk past them beyond 150 meters)
+// 4. Remove creatures that are too far away
 function cleanUpFarCreatures(pLat, pLng, maxDistanceMeters = 150) {
   const currentLat = pLat !== undefined ? pLat : (typeof playerLat !== 'undefined' ? playerLat : null);
   const currentLng = pLng !== undefined ? pLng : (typeof playerLng !== 'undefined' ? playerLng : null);
@@ -253,10 +273,8 @@ function initSpawner() {
 
     if (!currentPos) return;
 
-    // Clean up far creatures (despawn when walking past them)
     cleanUpFarCreatures(currentPos.lat, currentPos.lng);
 
-    // If player moves, spawn new local rots around their current position
     if (lastSpawnLat === null || lastSpawnLng === null || 
         Math.abs(currentPos.lat - lastSpawnLat) > 0.0003 || 
         Math.abs(currentPos.lng - lastSpawnLng) > 0.0003) {

@@ -219,14 +219,17 @@ window.battleCatch = function() {
             window.addToDex(window.currentWildCreature);
         }
 
-        // 1. Remove its map marker from the screen so it disappears
-        if (window.currentWildCreature.marker) {
-            window.currentWildCreature.marker.remove();
-        }
-
-        // 2. Filter it out of active spawns so it's gone for good
-        if (typeof window.activeCreatures !== 'undefined') {
-            window.activeCreatures = window.activeCreatures.filter(c => c !== window.currentWildCreature);
+        // Instantly invoke spawner clean-up to wipe it from the map & array permanently
+        if (typeof window.removeCapturedCreature === 'function') {
+            window.removeCapturedCreature();
+        } else {
+            // Fallback safety if function isn't loaded yet
+            if (window.currentWildCreature.marker) {
+                window.currentWildCreature.marker.remove();
+            }
+            if (typeof window.activeCreatures !== 'undefined') {
+                window.activeCreatures = window.activeCreatures.filter(c => c.data !== window.currentWildCreature);
+            }
         }
 
         if (battleLog) battleLog.innerText = `Successfully captured Level ${window.currentWildCreature.level} ${window.currentWildCreature.name}!`;
