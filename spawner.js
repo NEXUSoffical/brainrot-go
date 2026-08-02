@@ -235,8 +235,17 @@ function spawnSingleCreature(lat, lng) {
   spawnedCreatures.push(spawnedEntry);
 }
 
-function spawnBatch(playerLat, playerLng, count = 8) {
-  for (let i = 0; i < count; i++) {
+// 3. Balanced cap limit of max 6 active creatures on screen so you can find clusters
+function spawnBatch(playerLat, playerLng, count = 3) {
+  const maxActive = 6;
+  const currentActive = spawnedCreatures.length;
+  
+  if (currentActive >= maxActive) return;
+  
+  const slotsAvailable = maxActive - currentActive;
+  const toSpawn = Math.min(count, slotsAvailable);
+
+  for (let i = 0; i < toSpawn; i++) {
     spawnSingleCreature(playerLat, playerLng);
   }
 }
@@ -279,16 +288,12 @@ function initSpawner() {
 
     cleanUpFarCreatures(currentPos.lat, currentPos.lng);
 
-    if (lastSpawnLat === null || lastSpawnLng === null || 
-        Math.abs(currentPos.lat - lastSpawnLat) > 0.0003 || 
-        Math.abs(currentPos.lng - lastSpawnLng) > 0.0003) {
-        
-      spawnBatch(currentPos.lat, currentPos.lng, 8);
+    // Keep up to 6 on screen
+    if (spawnedCreatures.length < 6) {
+      spawnBatch(currentPos.lat, currentPos.lng, 2);
       window.activeCreatures = spawnedCreatures;
-      lastSpawnLat = currentPos.lat;
-      lastSpawnLng = currentPos.lng;
     }
-  }, 5000);
+  }, 3000);
 }
 
 document.addEventListener('DOMContentLoaded', () => {
