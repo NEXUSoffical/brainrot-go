@@ -60,13 +60,13 @@ function initPlayer() {
     }
 }
 
-// Keyboard movement listeners
+// Keyboard movement listeners with safe string fallbacks
 window.addEventListener('keydown', (e) => {
     const loginModal = document.getElementById('loginModal');
     if (loginModal && loginModal.style.display !== 'none') return;
-    if (document.activeElement.tagName === 'INPUT') return;
+    if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
 
-    const key = e.key.toLowerCase();
+    const key = (e.key || '').toLowerCase();
     if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) {
         activeKeys[key] = true;
         if (!isWalking) {
@@ -77,7 +77,7 @@ window.addEventListener('keydown', (e) => {
 });
 
 window.addEventListener('keyup', (e) => {
-    const key = e.key.toLowerCase();
+    const key = (e.key || '').toLowerCase();
     activeKeys[key] = false;
     
     if (!activeKeys['w'] && !activeKeys['a'] && !activeKeys['s'] && !activeKeys['d'] &&
@@ -149,4 +149,6 @@ function startMovementLoop() {
 
 window.addEventListener('DOMContentLoaded', () => {
     setTimeout(initPlayer, 200);
-});
+});git add .
+git commit -m "Update game files"
+git push
