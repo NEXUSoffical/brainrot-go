@@ -1,4 +1,4 @@
-// battle.js - Full Card Battle Engine Logic with Proper Level Scaling
+// battle.js - Full Card Battle Engine Logic with Faint & Level Scaling
 
 if (typeof window.currentWildCreature === 'undefined') {
     window.currentWildCreature = null;
@@ -16,19 +16,28 @@ window.initBattle = function(creature) {
     window.maxWildHp = creature.maxHp || (50 + (wildLvl - 1) * 12);
     window.wildHp = window.maxWildHp;
 
-    // Safety check for player data / active fighter using inventory (matching dex.js)
+    // Safety check for player data / active fighter using inventory
     if (typeof playerData === 'undefined') {
-        window.playerData = { username: "Player", rotBalance: 500, inventory: [], activeFighterIndex: 0 };
+        window.playerData = { username: "Player", rotBalance: 500, inventory: [], activeFighterIndex: 0, revivePotions: 3 };
     }
     if (!playerData.inventory || playerData.inventory.length === 0) {
-        playerData.inventory = [{ name: "Skibidi", rarity: "common", image: "", level: 1, hp: 50, maxHp: 50 }];
+        playerData.inventory = [{ name: "Skibidi", rarity: "common", image: "", level: 1, hp: 50, maxHp: 50, fainted: false }];
         playerData.activeFighterIndex = 0;
     }
 
-    const activeFighter = playerData.inventory[playerData.activeFighterIndex] || playerData.inventory[0] || { name: "Skibidi", rarity: "common", image: "", level: 1 };
+    // Check if active fighter is fainted, auto-switch to a healthy one if possible
+    let activeFighter = playerData.inventory[playerData.activeFighterIndex] || playerData.inventory[0];
+    if (activeFighter && activeFighter.fainted) {
+        const healthyIndex = playerData.inventory.findIndex(r => !r.fainted);
+        if (healthyIndex !== -1) {
+            playerData.activeFighterIndex = healthyIndex;
+            activeFighter = playerData.inventory[healthyIndex];
+        }
+    }
+
     const fighterLvl = activeFighter.level || 1;
     window.maxPlayerHp = 50 + (fighterLvl * 15);
-    window.playerHp = window.maxPlayerHp;
+    window.playerHp = activeFighter.fainted ? 0 : window.maxPlayerHp;
 
     // Set names and headers with levels
     document.getElementById('wildName').innerText = `${(creature.name || "Unknown").toUpperCase()} (Lvl ${wildLvl})`;
@@ -65,7 +74,11 @@ window.initBattle = function(creature) {
     updateHpBars();
     const battleLog = document.getElementById('battleLog');
     if (battleLog) {
-        battleLog.innerText = `A wild Level ${wildLvl} ${creature.name} appeared!`;
+        if (activeFighter.fainted) {
+            battleLog.innerText = `⚠️ Your active fighter is FAINTED! Switch fighters or visit the Revive Station!`;
+        } else {
+            battleLog.innerText = `A wild Level ${wildLvl} ${creature.name} appeared!`;
+        }
     }
 };
 
@@ -87,7 +100,7 @@ function updatePlayerFighterDisplay(activeFighter, fighterLvl) {
                 align-items: center;
             ">
                 <div style="width: 100%; height: 70px; background-color: #ffffff; border-radius: 4px; overflow: hidden; border: 1px solid #444;">
-                    <img src="${activeFighter.image || ''}" style="width: 100%; height: 100%; object-fit: cover; mix-blend-mode: multiply; filter: brightness(1.2) contrast(3);" onerror="this.style.display='none';">
+                    <img src="${activeFighter.image || ''}" style="width: 100%; height: 100%; object-fit: cover; mix-blend-mode: multiply; filter: brightness(1.2) contrast(3); ${activeFighter.fainted ? 'filter: grayscale(100%);' : ''}" onerror="this.style.display='none';">
                 </div>
                 <span style="font-size: 9px; color: #fff; margin-top: 3px; font-family: monospace; font-weight: bold;">Lvl ${fighterLvl}</span>
             </div>
@@ -96,7 +109,7 @@ function updatePlayerFighterDisplay(activeFighter, fighterLvl) {
 
     const fighterNameEl = document.getElementById('myFighterName');
     if (fighterNameEl) {
-        fighterNameEl.innerText = `${activeFighter.name || 'Fighter'} (Lvl ${fighterLvl})`;
+        fighterNameEl.innerText = `${activeFighter.name || 'Fighter'} (Lvl ${fighterLvl}) ${activeFighter.fainted ? '💀 [FAINTED]' : ''}`;
     }
 }
 
@@ -120,13 +133,19 @@ function updateHpBars() {
 window.battleAttack = function() {
     if (window.wildHp <= 0) return;
 
-    const playerCombatant = document.getElementById('playerCombatant');
-    const wildCombatant = document.getElementById('wildCombatant');
-    
     let activeFighter = null;
     if (typeof playerData !== 'undefined' && playerData.inventory && playerData.inventory.length > 0) {
         activeFighter = playerData.inventory[playerData.activeFighterIndex || 0];
     }
+
+    if (activeFighter && activeFighter.fainted) {
+        alert("❌ Your current fighter has fainted! Switch to a healthy rot or revive them first.");
+        return;
+    }
+
+    const playerCombatant = document.getElementById('playerCombatant');
+    const wildCombatant = document.getElementById('wildCombatant');
+    
     const fighterLvl = activeFighter ? (activeFighter.level || 1) : 1;
     const wildLvl = window.currentWildCreature ? (window.currentWildCreature.level || 1) : 1;
 
@@ -203,7 +222,16 @@ window.battleAttack = function() {
                 if (window.playerHp <= 0) {
                     window.playerHp = 0;
                     updateHpBars();
-                    if (battleLog) battleLog.innerText = `You got completely obliterated by the level gap! Fleeing...`;
+
+                    // MARK ACTIVE FIGHTER AS FAINTED
+                    if (activeFighter) {
+                        activeFighter.fainted = true;
+                    }
+                    if (typeof window.saveGameData === 'function') {
+                        window.saveGameData();
+                    }
+
+                    if (battleLog) battleLog.innerText = `💀 Your fighter fainted! Fleeing battle...`;
                     setTimeout(closeBattle, 1500);
                 }
             }, 300);
@@ -239,11 +267,12 @@ window.openBattleSwitch = function() {
 
     playerData.inventory.forEach((rot, index) => {
         const isCurrent = playerData.activeFighterIndex === index;
+        const isFainted = rot.fainted === true;
         gridHtml += `
-            <div onclick="selectNewFighter(${index})" style="background: ${isCurrent ? '#1a3a1a' : '#222'}; border: 2px solid ${isCurrent ? '#00ff00' : '#555'}; border-radius: 8px; padding: 8px; cursor: pointer; text-align: center;">
-                <img src="${rot.image || ''}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;" onerror="this.style.display='none';">
+            <div onclick="selectNewFighter(${index})" style="background: ${isFainted ? '#2a1a1a' : (isCurrent ? '#1a3a1a' : '#222')}; border: 2px solid ${isFainted ? '#ff0055' : (isCurrent ? '#00ff00' : '#555')}; border-radius: 8px; padding: 8px; cursor: pointer; text-align: center; opacity: ${isFainted ? '0.6' : '1'};">
+                <img src="${rot.image || ''}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; ${isFainted ? 'filter: grayscale(100%);' : ''}" onerror="this.style.display='none';">
                 <div style="font-size: 0.75rem; font-weight: bold; margin-top: 4px; color: #fff;">${rot.name}</div>
-                <div style="font-size: 0.65rem; color: #00ff00;">Lvl ${rot.level || 1}</div>
+                <div style="font-size: 0.65rem; color: ${isFainted ? '#ff0055' : '#00ff00'};">${isFainted ? '💀 FAINTED' : 'Lvl ' + (rot.level || 1)}</div>
                 ${isCurrent ? '<div style="font-size: 0.55rem; color: #00ff00; font-weight: bold;">(ACTIVE)</div>' : ''}
             </div>
         `;
@@ -263,8 +292,13 @@ window.openBattleSwitch = function() {
 window.selectNewFighter = function(index) {
     if (typeof playerData === 'undefined' || !playerData.inventory || !playerData.inventory[index]) return;
 
-    playerData.activeFighterIndex = index;
     const newRot = playerData.inventory[index];
+    if (newRot.fainted) {
+        alert("❌ This rot has fainted! You must revive it at the Revive Station before using it in battle.");
+        return;
+    }
+
+    playerData.activeFighterIndex = index;
     const fighterLvl = newRot.level || 1;
 
     window.maxPlayerHp = 50 + (fighterLvl * 15);
@@ -297,11 +331,9 @@ window.battleCatch = function() {
             window.addToDex(window.currentWildCreature);
         }
 
-        // Instantly invoke spawner clean-up to wipe it from the map & array permanently
         if (typeof window.removeCapturedCreature === 'function') {
             window.removeCapturedCreature();
         } else {
-            // Fallback safety if function isn't loaded yet
             if (window.currentWildCreature.marker) {
                 window.currentWildCreature.marker.remove();
             }
