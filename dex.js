@@ -1,13 +1,13 @@
 // dex.js - Cloud-Connected Account Management, Sticker Dex & Admin System
 
-const db = window.db;
+const db = firebase.firestore();
+const auth = firebase.auth();
 
 let isSignUpMode = false;
 let selectedStarter = null;
 
 window.playerData = {
     username: "",
-    password: "",
     rotBalance: 500,
     dex: [],         
     inventory: [],   
@@ -90,23 +90,21 @@ window.handleAccountAction = async function() {
     const usernameInput = document.getElementById('usernameInput');
     const passwordInput = document.getElementById('passwordInput');
     
-    const username = usernameInput ? usernameInput.value.trim() : "";
+    // Auto-lowercase to prevent mobile input mismatched casing bugs
+    const rawUsername = usernameInput ? usernameInput.value.trim().toLowerCase() : "";
     const password = passwordInput ? passwordInput.value.trim() : "";
 
-    if (!username || !password) {
+    if (!rawUsername || !password) {
         alert("Please enter both username and password!");
         return;
     }
 
-    try {
-        const docRef = db.collection('accounts').doc(username);
-        const doc = await docRef.get();
+    const email = rawUsername + "@brainrotgo.com";
 
+    try {
         if (isSignUpMode) {
-            if (doc.exists) {
-                alert("Username already exists! Please log in instead.");
-                return;
-            }
+            // 1. Save password in secure Firebase Auth Vault
+            await auth.createUserWithEmailAndPassword(email, password);
 
             if (!selectedStarter && typeof brainrotCharacters !== 'undefined') {
                 selectedStarter = brainrotCharacters[0];
@@ -121,27 +119,33 @@ window.handleAccountAction = async function() {
             };
 
             window.playerData = {
-                username: username,
-                password: password,
+                username: rawUsername,
                 rotBalance: 500,
                 dex: [selectedStarter.name],
                 inventory: [starterInstance],
                 activeFighterIndex: 0
             };
 
-            await docRef.set(window.playerData);
-            localStorage.setItem('brainrot_logged_in_user', username);
-            alert(`Account created successfully in the cloud! Welcome, ${username}!`);
+            // 2. Save document to Firestore without storing password
+            await db.collection('accounts').doc(rawUsername).set(window.playerData);
+            
+            localStorage.setItem('brainrot_logged_in_user', rawUsername);
+            alert(`Account created successfully! Welcome, ${rawUsername}!`);
         } else {
-            if (!doc.exists || doc.data().password !== password) {
-                alert("Invalid username or password!");
-                return;
-            }
+            // 1. Verify credentials via Auth Vault
+            await auth.signInWithEmailAndPassword(email, password);
 
-            window.playerData = doc.data();
-            if (!window.playerData.dex) window.playerData.dex = [];
-            if (!window.playerData.inventory) window.playerData.inventory = [];
-            localStorage.setItem('brainrot_logged_in_user', username);
+            // 2. Load Firestore account document
+            const docRef = db.collection('accounts').doc(rawUsername);
+            const doc = await docRef.get();
+
+            if (doc.exists) {
+                window.playerData = doc.data();
+                if (!window.playerData.dex) window.playerData.dex = [];
+                if (!window.playerData.inventory) window.playerData.inventory = [];
+            }
+            
+            localStorage.setItem('brainrot_logged_in_user', rawUsername);
         }
 
         const loginModal = document.getElementById('loginModal');
@@ -149,12 +153,79 @@ window.handleAccountAction = async function() {
         updateHUD();
     } catch (err) {
         console.error("Authentication error:", err);
-        alert("Network error connecting to cloud database.");
+        if (err.code === 'auth/email-already-in-use') {
+            alert("Username already exists! Please log in instead.");
+        } else if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+            alert("Invalid username or password!");
+        } else {
+            alert("Error: " + err.message);
+        }
     }
 };
 
-window.logoutAccount = function() {
-    window.saveGameData();
+// ==========================================
+// GOOGLE SIGN-IN MAGIC
+// ==========================================
+window.signInWithGoogle = async function() {
+    try {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        const result = await auth.signInWithPopup(provider);
+        const user = result.user;
+
+        // Turn their Google email (e.g., kieran@gmail.com) into a cool username (kieran)
+        const rawUsername = user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+
+        // Check if they already have a save file in the database
+        const docRef = db.collection('accounts').doc(rawUsername);
+        const doc = await docRef.get();
+
+        if (!doc.exists) {
+            // NEW GOOGLE PLAYER! Give them a starter rot
+            if (!selectedStarter && typeof brainrotCharacters !== 'undefined') {
+                selectedStarter = brainrotCharacters[0];
+            }
+
+            const starterInstance = {
+                ...selectedStarter,
+                level: 1,
+                xp: 0,
+                maxHp: 50,
+                hp: 50
+            };
+
+            window.playerData = {
+                username: rawUsername,
+                rotBalance: 500,
+                dex: [selectedStarter.name],
+                inventory: [starterInstance],
+                activeFighterIndex: 0
+            };
+
+            // Save their new profile to the cloud
+            await docRef.set(window.playerData);
+        } else {
+            // RETURNING GOOGLE PLAYER! Load their data
+            window.playerData = doc.data();
+            if (!window.playerData.dex) window.playerData.dex = [];
+            if (!window.playerData.inventory) window.playerData.inventory = [];
+        }
+
+        // Log them in instantly
+        localStorage.setItem('brainrot_logged_in_user', rawUsername);
+        
+        const loginModal = document.getElementById('loginModal');
+        if (loginModal) loginModal.style.display = 'none';
+        updateHUD();
+
+    } catch (err) {
+        console.error("Google Auth Error:", err);
+        alert("Error signing in with Google. Make sure popups aren't blocked!");
+    }
+};
+
+window.logoutAccount = async function() {
+    await window.saveGameData();
+    await auth.signOut();
     localStorage.removeItem('brainrot_logged_in_user');
     location.reload();
 };
@@ -399,7 +470,6 @@ window.renderAdminPanel = async function() {
                     <span style="font-size:0.75rem; color:#ffaa00;">💰 ${acc.rotBalance || 0} Rot</span>
                 </div>
                 <span style="font-size:0.75rem; color:#00ccff;">Inventory: ${invCount} Rots | Sticker Dex: ${dexCount} Unlocked</span>
-                <span style="font-size:0.7rem; color:#888;">Password: ${acc.password}</span>
             `;
             listEl.appendChild(card);
         });
