@@ -6,13 +6,34 @@ const auth = firebase.auth();
 let isSignUpMode = false;
 let selectedStarter = null;
 
-window.playerData = {
+// 🛡️ SECURE STATE WRAPPER (ANTI-CHEAT GUARD DOG)
+let _internalPlayerData = {
     username: "",
     rotBalance: 500,
     dex: [],         
     inventory: [],   
     activeFighterIndex: 0
 };
+
+window.playerData = new Proxy(_internalPlayerData, {
+    set(target, property, value) {
+        if (property === 'rotBalance' && value > (target.rotBalance + 10000)) {
+            console.warn("🚨 ANTI-CHEAT: Unauthorized balance modification blocked!");
+            alert("Nice try! Anti-cheat blocked your hack. 😉");
+            return false;
+        }
+        target[property] = value;
+        return true;
+    }
+});
+
+function setPlayerData(newData) {
+    _internalPlayerData.username = newData.username || "";
+    _internalPlayerData.rotBalance = newData.rotBalance || 500;
+    _internalPlayerData.dex = newData.dex || [];
+    _internalPlayerData.inventory = newData.inventory || [];
+    _internalPlayerData.activeFighterIndex = newData.activeFighterIndex || 0;
+}
 
 // Check existing session on load
 (async function checkExistingSession() {
@@ -21,7 +42,7 @@ window.playerData = {
         try {
             const doc = await db.collection('accounts').doc(activeUser).get();
             if (doc.exists) {
-                window.playerData = doc.data();
+                setPlayerData(doc.data());
                 if (!window.playerData.dex) window.playerData.dex = [];
                 if (!window.playerData.inventory) window.playerData.inventory = [];
                 
@@ -90,7 +111,6 @@ window.handleAccountAction = async function() {
     const usernameInput = document.getElementById('usernameInput');
     const passwordInput = document.getElementById('passwordInput');
     
-    // Auto-lowercase to prevent mobile input mismatched casing bugs
     const rawUsername = usernameInput ? usernameInput.value.trim().toLowerCase() : "";
     const password = passwordInput ? passwordInput.value.trim() : "";
 
@@ -103,7 +123,6 @@ window.handleAccountAction = async function() {
 
     try {
         if (isSignUpMode) {
-            // 1. Save password in secure Firebase Auth Vault
             await auth.createUserWithEmailAndPassword(email, password);
 
             if (!selectedStarter && typeof brainrotCharacters !== 'undefined') {
@@ -118,29 +137,26 @@ window.handleAccountAction = async function() {
                 hp: 50
             };
 
-            window.playerData = {
+            setPlayerData({
                 username: rawUsername,
                 rotBalance: 500,
                 dex: [selectedStarter.name],
                 inventory: [starterInstance],
                 activeFighterIndex: 0
-            };
+            });
 
-            // 2. Save document to Firestore without storing password
-            await db.collection('accounts').doc(rawUsername).set(window.playerData);
+            await db.collection('accounts').doc(rawUsername).set(_internalPlayerData);
             
             localStorage.setItem('brainrot_logged_in_user', rawUsername);
             alert(`Account created successfully! Welcome, ${rawUsername}!`);
         } else {
-            // 1. Verify credentials via Auth Vault
             await auth.signInWithEmailAndPassword(email, password);
 
-            // 2. Load Firestore account document
             const docRef = db.collection('accounts').doc(rawUsername);
             const doc = await docRef.get();
 
             if (doc.exists) {
-                window.playerData = doc.data();
+                setPlayerData(doc.data());
                 if (!window.playerData.dex) window.playerData.dex = [];
                 if (!window.playerData.inventory) window.playerData.inventory = [];
             }
@@ -163,24 +179,19 @@ window.handleAccountAction = async function() {
     }
 };
 
-// ==========================================
-// GOOGLE SIGN-IN MAGIC
-// ==========================================
+// Google Sign-In Magic
 window.signInWithGoogle = async function() {
     try {
         const provider = new firebase.auth.GoogleAuthProvider();
         const result = await auth.signInWithPopup(provider);
         const user = result.user;
 
-        // Turn their Google email (e.g., kieran@gmail.com) into a cool username (kieran)
         const rawUsername = user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
 
-        // Check if they already have a save file in the database
         const docRef = db.collection('accounts').doc(rawUsername);
         const doc = await docRef.get();
 
         if (!doc.exists) {
-            // NEW GOOGLE PLAYER! Give them a starter rot
             if (!selectedStarter && typeof brainrotCharacters !== 'undefined') {
                 selectedStarter = brainrotCharacters[0];
             }
@@ -193,24 +204,21 @@ window.signInWithGoogle = async function() {
                 hp: 50
             };
 
-            window.playerData = {
+            setPlayerData({
                 username: rawUsername,
                 rotBalance: 500,
                 dex: [selectedStarter.name],
                 inventory: [starterInstance],
                 activeFighterIndex: 0
-            };
+            });
 
-            // Save their new profile to the cloud
-            await docRef.set(window.playerData);
+            await docRef.set(_internalPlayerData);
         } else {
-            // RETURNING GOOGLE PLAYER! Load their data
-            window.playerData = doc.data();
+            setPlayerData(doc.data());
             if (!window.playerData.dex) window.playerData.dex = [];
             if (!window.playerData.inventory) window.playerData.inventory = [];
         }
 
-        // Log them in instantly
         localStorage.setItem('brainrot_logged_in_user', rawUsername);
         
         const loginModal = document.getElementById('loginModal');
@@ -231,9 +239,9 @@ window.logoutAccount = async function() {
 };
 
 window.saveGameData = async function() {
-    if (!window.playerData || !window.playerData.username) return;
+    if (!_internalPlayerData || !_internalPlayerData.username) return;
     try {
-        await db.collection('accounts').doc(window.playerData.username).set(window.playerData);
+        await db.collection('accounts').doc(_internalPlayerData.username).set(_internalPlayerData);
         updateHUD();
     } catch (err) {
         console.error("Error saving to cloud:", err);
@@ -496,4 +504,22 @@ window.clearAllAccounts = async function() {
             alert("Failed to wipe database.");
         }
     }
-};
+};// ==========================================
+// STEP 4: AUTO-SAVE THROTTLING & SAFETY NET
+// ==========================================
+
+// Auto-save every 60 seconds in the background to protect Firebase free limits
+setInterval(() => {
+    if (window.playerData && window.playerData.username) {
+        window.saveGameData();
+        console.log("⚡ Auto-saved game state to cloud.");
+    }
+}, 60000);
+
+// Emergency save when the player closes the tab or app
+window.addEventListener('beforeunload', (event) => {
+    if (window.playerData && window.playerData.username) {
+        // Synchronous final save ping
+        db.collection('accounts').doc(window.playerData.username).set(_internalPlayerData);
+    }
+});
