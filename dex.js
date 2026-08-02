@@ -35,7 +35,7 @@ function setPlayerData(newData) {
     _internalPlayerData.activeFighterIndex = newData.activeFighterIndex || 0;
 }
 
-// Save player data to Cloud & Local Storage backup instantly
+// Save player data to Cloud & Local Storage backup instantly (Strikes out Leaflet markers to prevent circular crashes)
 window.saveGameData = async function() {
     if (!_internalPlayerData) return;
     
@@ -43,11 +43,18 @@ window.saveGameData = async function() {
         _internalPlayerData.username = "player";
     }
 
-    // Always save to browser local storage first so it is instantly safe
-    localStorage.setItem('brainrot_local_backup', JSON.stringify(_internalPlayerData));
-
     try {
-        await db.collection('accounts').doc(_internalPlayerData.username).set(_internalPlayerData);
+        // Strip out Leaflet markers and internal DOM nodes using a replacer function to avoid circular structure errors
+        const cleanDataString = JSON.stringify(_internalPlayerData, (key, value) => {
+            if (key === 'marker' || key === '_popup' || key === '_source') return undefined;
+            return value;
+        });
+
+        // Always save to browser local storage first so it is instantly safe
+        localStorage.setItem('brainrot_local_backup', cleanDataString);
+
+        const cleanDataObject = JSON.parse(cleanDataString);
+        await db.collection('accounts').doc(_internalPlayerData.username).set(cleanDataObject);
         localStorage.setItem('brainrot_logged_in_user', _internalPlayerData.username);
         console.log("⚡ Game data saved successfully to cloud and local!");
     } catch (err) {
@@ -271,7 +278,12 @@ window.signInWithGoogle = async function() {
                 activeFighterIndex: 0
             });
 
-            await docRef.set(_internalPlayerData);
+            // Clean save before storing starter doc via helper logic
+            const cleanDataString = JSON.stringify(_internalPlayerData, (key, value) => {
+                if (key === 'marker' || key === '_popup' || key === '_source') return undefined;
+                return value;
+            });
+            await docRef.set(JSON.parse(cleanDataString));
         } else {
             setPlayerData(doc.data());
             if (!window.playerData.dex) window.playerData.dex = [];
@@ -306,6 +318,7 @@ window.addToDex = function(creature) {
 
     window.playerData.inventory.push({
         ...creature,
+        marker: undefined, // Strip marker reference out on addition
         level: rotLevel,
         xp: creature.xp || 0,
         maxHp: rotMaxHp,
@@ -601,7 +614,15 @@ setInterval(() => {
 
 window.addEventListener('beforeunload', (event) => {
     if (window.playerData && window.playerData.username) {
-        localStorage.setItem('brainrot_local_backup', JSON.stringify(_internalPlayerData));
-        db.collection('accounts').doc(window.playerData.username).set(_internalPlayerData);
+        try {
+            const cleanDataString = JSON.stringify(_internalPlayerData, (key, value) => {
+                if (key === 'marker' || key === '_popup' || key === '_source') return undefined;
+                return value;
+            });
+            localStorage.setItem('brainrot_local_backup', cleanDataString);
+            db.collection('accounts').doc(window.playerData.username).set(JSON.parse(cleanDataString));
+        } catch (e) {
+            console.error("Unload save error:", e);
+        }
     }
 });
