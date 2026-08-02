@@ -1,4 +1,4 @@
-// dex.js - Cloud-Connected Account Management, Sticker Dex & Admin System
+=// dex.js - Cloud-Connected Account Management, Sticker Dex & Admin System
 
 const db = firebase.firestore();
 const auth = firebase.auth();
@@ -35,26 +35,87 @@ function setPlayerData(newData) {
     _internalPlayerData.activeFighterIndex = newData.activeFighterIndex || 0;
 }
 
-// Check existing session on load
-(async function checkExistingSession() {
+// Save player data to Cloud & Local Storage backup instantly
+window.saveGameData = async function() {
+    if (!_internalPlayerData) return;
+    
+    if (!_internalPlayerData.username) {
+        _internalPlayerData.username = "player";
+    }
+
+    // Always save to browser local storage first so it is instantly safe
+    localStorage.setItem('brainrot_local_backup', JSON.stringify(_internalPlayerData));
+
+    try {
+        await db.collection('accounts').doc(_internalPlayerData.username).set(_internalPlayerData);
+        localStorage.setItem('brainrot_logged_in_user', _internalPlayerData.username);
+        console.log("⚡ Game data saved successfully to cloud and local!");
+    } catch (err) {
+        console.warn("Cloud save skipped/failed, saved locally instead:", err);
+    }
+};
+
+// Load and safely merge saved player data from Local Storage and Cloud
+window.loadGameData = async function() {
+    let localData = null;
+    const localBackup = localStorage.getItem('brainrot_local_backup');
+    if (localBackup) {
+        try {
+            localData = JSON.parse(localBackup);
+            setPlayerData(localData);
+        } catch (e) {
+            console.error("Error reading local backup", e);
+        }
+    }
+
     const activeUser = localStorage.getItem('brainrot_logged_in_user');
-    if (activeUser) {
+    if (activeUser && activeUser !== "player") {
         try {
             const doc = await db.collection('accounts').doc(activeUser).get();
             if (doc.exists) {
-                setPlayerData(doc.data());
-                if (!window.playerData.dex) window.playerData.dex = [];
-                if (!window.playerData.inventory) window.playerData.inventory = [];
+                const cloudData = doc.data();
                 
-                document.addEventListener('DOMContentLoaded', () => {
-                    const modal = document.getElementById('loginModal');
-                    if (modal) modal.style.display = 'none';
-                    updateHUD();
+                // Smart Merge: Combine local and cloud Dex items so nothing ever gets wiped
+                const mergedDex = Array.from(new Set([...(localData?.dex || []), ...(cloudData.dex || [])]));
+                
+                // Smart Merge: Combine inventories to keep all caught rots safe
+                const inventoryMap = new Map();
+                if (cloudData.inventory) {
+                    cloudData.inventory.forEach(item => inventoryMap.set(item.name + (item.level || 1), item));
+                }
+                if (localData?.inventory) {
+                    localData.inventory.forEach(item => inventoryMap.set(item.name + (item.level || 1), item));
+                }
+                const mergedInventory = Array.from(inventoryMap.values());
+
+                setPlayerData({
+                    username: cloudData.username || activeUser,
+                    rotBalance: Math.max(cloudData.rotBalance || 0, localData?.rotBalance || 0),
+                    dex: mergedDex,
+                    inventory: mergedInventory,
+                    activeFighterIndex: cloudData.activeFighterIndex || localData?.activeFighterIndex || 0
                 });
+
+                console.log("Game data successfully synced and merged from cloud!");
             }
         } catch (err) {
             console.error("Error restoring session from cloud:", err);
         }
+    }
+
+    if (!window.playerData.dex) window.playerData.dex = [];
+    if (!window.playerData.inventory) window.playerData.inventory = [];
+};
+
+// Check existing session on load
+(async function checkExistingSession() {
+    await window.loadGameData();
+    if (_internalPlayerData.username && _internalPlayerData.username !== "player") {
+        document.addEventListener('DOMContentLoaded', () => {
+            const modal = document.getElementById('loginModal');
+            if (modal) modal.style.display = 'none';
+            updateHUD();
+        });
     }
 })();
 
@@ -145,9 +206,7 @@ window.handleAccountAction = async function() {
                 activeFighterIndex: 0
             });
 
-            await db.collection('accounts').doc(rawUsername).set(_internalPlayerData);
-            
-            localStorage.setItem('brainrot_logged_in_user', rawUsername);
+            await window.saveGameData();
             alert(`Account created successfully! Welcome, ${rawUsername}!`);
         } else {
             await auth.signInWithEmailAndPassword(email, password);
@@ -238,16 +297,6 @@ window.logoutAccount = async function() {
     location.reload();
 };
 
-window.saveGameData = async function() {
-    if (!_internalPlayerData || !_internalPlayerData.username) return;
-    try {
-        await db.collection('accounts').doc(_internalPlayerData.username).set(_internalPlayerData);
-        updateHUD();
-    } catch (err) {
-        console.error("Error saving to cloud:", err);
-    }
-};
-
 window.addToDex = function(creature) {
     if (!window.playerData.inventory) window.playerData.inventory = [];
     if (!window.playerData.dex) window.playerData.dex = [];
@@ -320,7 +369,7 @@ function renderInventoryGrid() {
         const isActive = window.playerData.activeFighterIndex === index;
         const rarityColor = window.getRarityColor(rot.rarity);
         const rotLevel = rot.level || 1;
-        const coinValue = 1; // Flat 1 coin value per transfer
+        const coinValue = 1;
 
         const card = document.createElement('div');
         card.style.cssText = `
@@ -362,7 +411,7 @@ window.transferRot = function(index) {
     }
 
     const rot = inventory[index];
-    const coinGain = 1; // Flat 1 coin gain
+    const coinGain = 1;
 
     if (confirm(`Transfer ${rot.name} (Lvl ${rot.level || 1}) in exchange for 1 coin?`)) {
         inventory.splice(index, 1);
@@ -540,18 +589,19 @@ window.clearAllAccounts = async function() {
 };
 
 // ==========================================
-// STEP 4: AUTO-SAVE THROTTLING & SAFETY NET
+// AUTO-SAVE THROTTLING & SAFETY NET
 // ==========================================
 
 setInterval(() => {
     if (window.playerData && window.playerData.username) {
         window.saveGameData();
-        console.log("⚡ Auto-saved game state to cloud.");
+        console.log("⚡ Auto-saved game state to cloud/local.");
     }
 }, 60000);
 
 window.addEventListener('beforeunload', (event) => {
     if (window.playerData && window.playerData.username) {
+        localStorage.setItem('brainrot_local_backup', JSON.stringify(_internalPlayerData));
         db.collection('accounts').doc(window.playerData.username).set(_internalPlayerData);
     }
 });

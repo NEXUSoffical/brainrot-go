@@ -4,6 +4,9 @@ let spawnedCreatures = [];
 let lastSpawnLat = null;
 let lastSpawnLng = null;
 
+// Expose activeCreatures globally so battle.js can filter them out on capture
+window.activeCreatures = spawnedCreatures;
+
 // Stricter level generator with a massive bias for Level 1:
 // - Level 1: 60% (The absolute most common spawn)
 // - Levels 2-10: 28% (Common low levels)
@@ -62,17 +65,20 @@ window.startEncounter = function(name, rarity, reward, imageUrl, level, maxHp) {
   const wildBadgeName = document.getElementById('wildBadgeName');
   if (wildBadgeName) wildBadgeName.innerText = `${name} (Lvl ${level})`;
 
+  // Find the exact active creature instance matching this encounter so battle.js can reference it
+  const matchedCreature = spawnedCreatures.find(c => c.data.name === name && c.data.level === Number(level))?.data || {
+    name, 
+    rarity, 
+    reward, 
+    image: imageUrl,
+    level: Number(level),
+    maxHp: Number(maxHp),
+    hp: Number(maxHp)
+  };
+
   // Initialize battle with exact level and stat scaling
   if (typeof window.initBattle === 'function') {
-    window.initBattle({ 
-      name, 
-      rarity, 
-      reward, 
-      image: imageUrl,
-      level: Number(level),
-      maxHp: Number(maxHp),
-      hp: Number(maxHp)
-    });
+    window.initBattle(matchedCreature);
   }
 };
 
@@ -165,6 +171,9 @@ function spawnSingleCreature(lat, lng) {
 
     const marker = L.marker([spawnLat, spawnLng], { icon: customIcon }).addTo(map);
     
+    // Attach marker reference directly to the creature object so battle.js can delete it
+    creatureInstance.marker = marker;
+
     marker.bindPopup(`
       <div style="text-align: center; font-family: sans-serif; min-width: 140px;">
         <b style="font-size: 15px; color: #222;">${creatureInstance.name}</b><br>
@@ -185,12 +194,14 @@ function spawnSingleCreature(lat, lng) {
       </div>
     `);
     
-    spawnedCreatures.push({
+    const spawnedEntry = {
       marker: marker,
       data: creatureInstance,
       lat: spawnLat,
       lng: spawnLng
-    });
+    };
+
+    spawnedCreatures.push(spawnedEntry);
   }
 }
 
@@ -208,12 +219,13 @@ function cleanUpFarCreatures(playerLat, playerLng, maxDistanceMeters = 800) {
       const distance = map.distance([playerLat, playerLng], [creature.lat, creature.lng]);
       
       if (distance > maxDistanceMeters) {
-        map.removeLayer(creature.marker);
+        creature.marker.remove();
         return false;
       }
     }
     return true;
   });
+  window.activeCreatures = spawnedCreatures;
 }
 
 // 5. Dynamic Spawner Loop tracking movement
@@ -240,6 +252,7 @@ function initSpawner() {
         Math.abs(currentPos.lng - lastSpawnLng) > 0.0005) {
         
       spawnBatch(currentPos.lat, currentPos.lng, 8);
+      window.activeCreatures = spawnedCreatures;
       lastSpawnLat = currentPos.lat;
       lastSpawnLng = currentPos.lng;
     }

@@ -132,14 +132,10 @@ window.battleAttack = function() {
         
         if (wildCombatant) wildCombatant.classList.add('hit-knockback');
 
-        // Level scaling formula: 
-        // If player level is much lower, damage is heavily penalized (minimum 1 damage).
-        // If player level is higher or equal, damage scales up nicely.
         let baseDamage = Math.floor(Math.random() * 15) + (5 + (fighterLvl * 3));
         const levelDiff = fighterLvl - wildLvl;
         
         if (levelDiff < 0) {
-            // Severe penalty for fighting higher level opponents
             const penaltyFactor = Math.max(0.05, 1 + (levelDiff * 0.08)); 
             baseDamage = Math.max(1, Math.floor(baseDamage * penaltyFactor));
         } else {
@@ -162,7 +158,6 @@ window.battleAttack = function() {
             updateHpBars();
             
             if (activeFighter) {
-                // Bonus level reward based on defeated wild level
                 const levelGain = Math.max(1, Math.floor(wildLvl / 10));
                 activeFighter.level = (activeFighter.level || 1) + levelGain;
                 activeFighter.maxHp = 50 + (activeFighter.level - 1) * 15;
@@ -184,11 +179,10 @@ window.battleAttack = function() {
                 if (wildCombatant) wildCombatant.classList.remove('charge-attack');
                 if (playerCombatant) playerCombatant.classList.add('hit-knockback');
 
-                // Wild counter-attack scaling: Higher level wild rots hit exponentially harder!
                 let counterDamage = Math.floor(Math.random() * 10) + (5 + (wildLvl * 4));
                 const reverseDiff = wildLvl - fighterLvl;
                 if (reverseDiff > 0) {
-                    counterDamage += reverseDiff * 3; // Brutal extra damage if wild is way higher level
+                    counterDamage += reverseDiff * 3;
                 }
 
                 window.playerHp -= counterDamage;
@@ -223,6 +217,16 @@ window.battleCatch = function() {
     if (window.currentWildCreature) {
         if (typeof window.addToDex === 'function') {
             window.addToDex(window.currentWildCreature);
+        }
+
+        // 1. Remove its map marker from the screen so it disappears
+        if (window.currentWildCreature.marker) {
+            window.currentWildCreature.marker.remove();
+        }
+
+        // 2. Filter it out of active spawns so it's gone for good
+        if (typeof window.activeCreatures !== 'undefined') {
+            window.activeCreatures = window.activeCreatures.filter(c => c !== window.currentWildCreature);
         }
 
         if (battleLog) battleLog.innerText = `Successfully captured Level ${window.currentWildCreature.level} ${window.currentWildCreature.name}!`;
