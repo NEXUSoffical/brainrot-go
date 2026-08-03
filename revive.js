@@ -62,18 +62,32 @@ function openReviveModal() {
 
 window.reviveRot = function(index) {
   if (!playerData.revivePotions || playerData.revivePotions <= 0) {
-    alert("❌ You don't have any Revive Potions left! Win battles or buy more to get them.");
+    alert("❌ You don't have any Revive Potions left! Level up to get more.");
     return;
   }
 
   let rot = playerData.inventory[index];
   if (!rot || !rot.fainted) return;
 
+  // 🚨 THIS IS THE MATH THAT THROWS THE BOTTLE AWAY! 🚨
   playerData.revivePotions--;
   rot.fainted = false;
 
   if (typeof saveGameData === 'function') saveGameData();
   
   alert(`🎉 Success! ${rot.name} has been revived and is ready for battle!`);
+  
+  updatePotionHud(); // Tell the main screen to update the button number!
   openReviveModal(); // Refresh the modal list
 };
+
+// 🔄 NEW: A function just to keep the main screen button accurate
+window.updatePotionHud = function() {
+  const potionHudEl = document.getElementById('potionHudCount');
+  if (potionHudEl && typeof playerData !== 'undefined') {
+    potionHudEl.innerText = playerData.revivePotions || 0;
+  }
+};
+
+// Run this every second to make sure the button always matches your real backpack
+setInterval(updatePotionHud, 1000);
