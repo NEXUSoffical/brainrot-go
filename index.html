@@ -194,9 +194,20 @@
     <!-- 🚨 STRICT LOCATION ERROR MODAL -->
     <div id="locationErrorModal">
         <div style="background: #111; border: 3px solid #ff0055; border-radius: 15px; padding: 30px; max-width: 400px; box-shadow: 0 0 30px rgba(255,0,85,0.4);">
-            <h2 style="color: #ff0055; font-size: 1.5rem; margin-bottom: 10px; text-shadow: 0 0 10px #ff0055;">⚠️ GPS ACCESS REQUIRED</h2>
-            <p style="font-size: 0.85rem; color: #ccc; line-height: 1.4; margin-bottom: 20px;">Brainrot Go requires real-time GPS location to play. Location permissions were denied or are unavailable.</p>
-            <button class="btn-hud" style="background: #ff0055; color: #fff; width: 100%; border: none; padding: 10px; border-radius: 5px; font-weight: bold; cursor: pointer;" onclick="location.reload()">RETRY PERMISSION</button>
+            <h2 style="color: #ff0055; font-size: 1.5rem; margin-bottom: 10px; text-shadow: 0 0 10px #ff0055;">⚠️ GPS BLOCKED!</h2>
+            <p style="font-size: 0.85rem; color: #ccc; line-height: 1.4; margin-bottom: 15px;">Brainrot Go needs your real-world location to build the map.</p>
+            
+            <div style="background: rgba(255, 204, 0, 0.1); border: 1px dashed #ffcc00; padding: 10px; border-radius: 8px; margin-bottom: 20px;">
+                <p style="font-size: 0.75rem; color: #ffcc00; line-height: 1.5;">
+                    <b>HOW TO FIX IT:</b><br>
+                    Your browser is blocking the GPS. <br><br>
+                    1. Click the <b>Lock Icon 🔒</b> or <b>"aA"</b> next to the website address at the very top of your screen.<br>
+                    2. Find <b>Location</b> and change it to <b>Allow</b>.<br>
+                    3. Click the button below!
+                </p>
+            </div>
+
+            <button class="btn-hud" style="background: #ff0055; color: #fff; width: 100%; border: none; padding: 12px; border-radius: 5px; font-weight: bold; cursor: pointer;" onclick="location.reload()">I FIXED IT! RELOAD GAME</button>
         </div>
     </div>
 
@@ -209,6 +220,27 @@
         <hr style="margin: 6px 0; border-color: #333;">
         <p>📦 <b>INVENTORY:</b> <span id="inventoryCount">0</span> Rots</p>
         <p>💰 <b>ROT:</b> <span id="rotBalance">500</span></p>
+    </div>
+
+    <!-- 👤 PLAYER PROFILE WIDGET (TOP RIGHT) -->
+    <div id="playerProfileWidget" style="
+        position: absolute; top: 15px; right: 15px; z-index: 1000;
+        background: rgba(10, 10, 10, 0.9); border: 2px solid #00ff00;
+        border-radius: 12px; padding: 8px 12px; color: #fff;
+        box-shadow: 0 0 15px rgba(0, 255, 0, 0.4); font-family: monospace;
+        display: flex; align-items: center; gap: 10px; width: 180px; pointer-events: none;
+    ">
+        <div style="position: relative; width: 42px; height: 42px; border-radius: 50%; border: 2px solid #00ff00; overflow: hidden; background: #222; flex-shrink: 0;">
+            <img id="widgetActiveRotImg" src="" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'">
+        </div>
+        <div style="display: flex; flex-direction: column; text-align: left; width: 100%; overflow: hidden;">
+            <div style="font-size: 0.75rem; font-weight: bold; color: #00ff00; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="widgetUsername">Player</div>
+            <div style="font-size: 0.65rem; color: #fff;">LVL <span id="widgetAccLevel">1</span></div>
+            <!-- XP Progress Bar -->
+            <div style="width: 100%; height: 5px; background: #333; border-radius: 3px; margin-top: 3px; overflow: hidden; border: 1px solid #555;">
+                <div id="widgetXpBar" style="height: 100%; background: #00ff00; width: 0%; transition: width 0.3s ease;"></div>
+            </div>
+        </div>
     </div>
 
     <!-- HUD Buttons -->
