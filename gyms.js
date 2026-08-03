@@ -55,28 +55,53 @@ async function checkOrCreateNearbyGym(lat, lng) {
   }
 }
 
+// 🎨 THIS IS THE MAGIC PAINTBRUSH THAT DRAWS THE GREEN PINS! 🎨
 function renderGymMarker(gymData) {
   if (gymMarkers.some(g => g.id === gymData.id)) return;
 
   const gymIcon = L.divIcon({
     className: '',
     html: `
-      <div style="
-        background: linear-gradient(135deg, #ff007f, #7f00ff);
-        border: 3px solid #fff;
-        border-radius: 500px;
-        width: 45px;
-        height: 45px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: 0 0 15px #ff007f;
-        cursor: pointer;
-        font-size: 20px;
-      ">🏰</div>
+      <div style="position: relative; width: 40px; height: 50px; display: flex; flex-direction: column; align-items: center; cursor: pointer;">
+        <!-- The bouncy glowing pin -->
+        <div style="
+          width: 28px;
+          height: 28px;
+          background: linear-gradient(135deg, #00ff55, #00aa33);
+          border-radius: 50% 50% 50% 0;
+          transform: rotate(-45deg);
+          box-shadow: 0 0 15px #00ff55;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: 2px solid #fff;
+          z-index: 2;
+        ">
+          <!-- The white dot in the middle -->
+          <div style="
+            width: 10px;
+            height: 10px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #fff;
+            transform: rotate(45deg);
+          "></div>
+        </div>
+        
+        <!-- The glowing target ring on the ground -->
+        <div style="
+          position: absolute;
+          bottom: 2px;
+          width: 20px;
+          height: 6px;
+          border: 2px solid #00ff55;
+          border-radius: 50%;
+          box-shadow: 0 0 10px #00ff55, inset 0 0 5px #00ff55;
+        "></div>
+      </div>
     `,
-    iconSize: [45, 45],
-    iconAnchor: [22, 22]
+    iconSize: [40, 50],
+    iconAnchor: [20, 48] // This tells the map to stick the very bottom of the ring to the street!
   });
 
   const marker = L.marker([gymData.lat, gymData.lng], { icon: gymIcon }).addTo(map);
@@ -88,13 +113,13 @@ function updateGymPopup(marker, gymData) {
   const isOwner = playerData && gymData.owner === playerData.username;
   marker.bindPopup(`
     <div style="text-align: center; font-family: monospace;">
-      <b style="color: #ff007f; font-size: 14px;">🏰 MEME GYM</b><br>
+      <b style="color: #00ff55; font-size: 14px;">🟢 MEME GYM</b><br>
       <span style="font-size: 11px; color: #333;">Defender: ${gymData.defenderName} (Lvl ${gymData.defenderLevel})</span><br>
       <span style="font-size: 10px; color: #666;">Controlled by: ${gymData.owner}</span><br>
       ${isOwner ? 
         `<span style="color: #00ff00; font-size: 11px; font-weight: bold; display: block; margin-top: 6px;">👑 YOU DEFEND THIS GYM</span>` :
         `<button onclick="openGymBattle('${gymData.id}')" style="
-          margin-top: 8px; background: #ff007f; color: white; border: none;
+          margin-top: 8px; background: #00ff55; color: black; border: none;
           padding: 6px 12px; font-weight: bold; border-radius: 6px; cursor: pointer;
         ">⚔️ CHALLENGE GYM</button>`
       }
@@ -173,7 +198,7 @@ function openGymRotSelector(gymId) {
     playerData.inventory.forEach((rot, index) => {
       gridHtml += `
         <div onclick="executeGymClaim('${gymId}', ${index})" style="
-          background: #222; border: 2px solid #ff007f; border-radius: 8px;
+          background: #222; border: 2px solid #00ff55; border-radius: 8px;
           padding: 8px; cursor: pointer; text-align: center; transition: transform 0.1s;
         ">
           <img src="${rot.image}" style="width: 55px; height: 55px; object-fit: contain;">
@@ -185,8 +210,8 @@ function openGymRotSelector(gymId) {
   }
 
   modal.innerHTML = `
-    <div style="background: #111; border: 3px solid #ff007f; border-radius: 15px; padding: 20px; width: 100%; max-width: 420px; text-align: center; box-shadow: 0 0 30px rgba(255,0,127,0.4);">
-      <h2 style="color: #ff007f; font-size: 1.2rem; margin-bottom: 6px;">👑 CHOOSE GYM DEFENDER</h2>
+    <div style="background: #111; border: 3px solid #00ff55; border-radius: 15px; padding: 20px; width: 100%; max-width: 420px; text-align: center; box-shadow: 0 0 30px rgba(0,255,85,0.4);">
+      <h2 style="color: #00ff55; font-size: 1.2rem; margin-bottom: 6px;">👑 CHOOSE GYM DEFENDER</h2>
       <p style="font-size: 0.72rem; color: #aaa; margin-bottom: 12px;">Select which rot you want to leave behind to guard this gym:</p>
       <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-height: 260px; overflow-y: auto; margin-bottom: 15px; padding: 4px; background: #181818; border-radius: 8px;">
         ${gridHtml}
