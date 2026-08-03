@@ -55,53 +55,53 @@ async function checkOrCreateNearbyGym(lat, lng) {
   }
 }
 
-// 🎨 THIS IS THE MAGIC PAINTBRUSH THAT DRAWS THE GREEN PINS! 🎨
+// 🍄 SUPER-SIZED GLOWING GYM PINS 🍄
 function renderGymMarker(gymData) {
   if (gymMarkers.some(g => g.id === gymData.id)) return;
 
   const gymIcon = L.divIcon({
     className: '',
     html: `
-      <div style="position: relative; width: 40px; height: 50px; display: flex; flex-direction: column; align-items: center; cursor: pointer;">
-        <!-- The bouncy glowing pin -->
+      <div style="position: relative; width: 60px; height: 75px; display: flex; flex-direction: column; align-items: center; cursor: pointer;">
+        <!-- The massive bouncing glowing pin -->
         <div style="
-          width: 28px;
-          height: 28px;
+          width: 45px;
+          height: 45px;
           background: linear-gradient(135deg, #00ff55, #00aa33);
           border-radius: 50% 50% 50% 0;
           transform: rotate(-45deg);
-          box-shadow: 0 0 15px #00ff55;
+          box-shadow: 0 0 20px #00ff55;
           display: flex;
           align-items: center;
           justify-content: center;
-          border: 2px solid #fff;
+          border: 3px solid #fff;
           z-index: 2;
         ">
           <!-- The white dot in the middle -->
           <div style="
-            width: 10px;
-            height: 10px;
+            width: 16px;
+            height: 16px;
             background: #fff;
             border-radius: 50%;
-            box-shadow: 0 0 8px #fff;
+            box-shadow: 0 0 10px #fff;
             transform: rotate(45deg);
           "></div>
         </div>
         
-        <!-- The glowing target ring on the ground -->
+        <!-- The huge glowing target ring on the ground -->
         <div style="
           position: absolute;
           bottom: 2px;
-          width: 20px;
-          height: 6px;
-          border: 2px solid #00ff55;
+          width: 32px;
+          height: 10px;
+          border: 3px solid #00ff55;
           border-radius: 50%;
-          box-shadow: 0 0 10px #00ff55, inset 0 0 5px #00ff55;
+          box-shadow: 0 0 15px #00ff55, inset 0 0 8px #00ff55;
         "></div>
       </div>
     `,
-    iconSize: [40, 50],
-    iconAnchor: [20, 48] // This tells the map to stick the very bottom of the ring to the street!
+    iconSize: [60, 75],
+    iconAnchor: [30, 72] // Tells the map to stick the very bottom ring perfectly to the street!
   });
 
   const marker = L.marker([gymData.lat, gymData.lng], { icon: gymIcon }).addTo(map);
@@ -139,6 +139,23 @@ window.openGymBattle = async function(gymId) {
     alert("You already defend this gym!");
     return;
   }
+
+  // 📺 FIX: We are turning the TV screen ON so you can actually see the battle! 📺
+  const modal = document.getElementById('battleModal');
+  if (modal) modal.style.display = 'flex';
+
+  // Fix all the text at the top so it says you are fighting a Gym Defender
+  const wildNameEl = document.getElementById('wildName');
+  if (wildNameEl) wildNameEl.innerText = `GYM LEADER: ${gymData.defenderName} (Lvl ${gymData.defenderLevel})`;
+
+  const wildRarityEl = document.getElementById('wildRarity');
+  if (wildRarityEl) wildRarityEl.innerText = `RARITY: EPIC DEFENDER`;
+
+  const wildBadgeName = document.getElementById('wildBadgeName');
+  if (wildBadgeName) wildBadgeName.innerText = `${gymData.defenderName} (Lvl ${gymData.defenderLevel})`;
+
+  // Close the little map pop-up bubble so it gets out of the way
+  if (typeof map !== 'undefined' && map) map.closePopup();
 
   if (typeof window.initBattle === 'function') {
     window.initBattle({
