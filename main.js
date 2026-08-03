@@ -48,14 +48,21 @@ function startStrictLocation() {
             }
         },
         function(error) {
-            // FAIL! They clicked "Don't Allow" or the GPS is broken
-            // SHOW THE BIG RED STOP SCREEN! 🛑
-            document.getElementById('locationErrorModal').style.display = 'flex';
+            // FAIL! But let's check WHY it failed...
+            if (error.code === 1) {
+                // Error Code 1 means PERMISSION DENIED. 
+                // ONLY show the red screen if they actually told the bodyguard to block it! 🛑
+                document.getElementById('locationErrorModal').style.display = 'flex';
+            } else {
+                // Error Code 2 or 3 means the GPS is just being slow or lost signal.
+                // Do NOT show the red screen. Just log it and wait patiently! ⏳
+                console.log("GPS is taking a bit long to connect, still searching...");
+            }
         },
         {
             enableHighAccuracy: true, // Exact satellite GPS, no guessing!
-            timeout: 10000,           // Wait 10 seconds to find them
-            maximumAge: 0             // Never use old saved locations
+            timeout: 30000,           // Wait 30 whole seconds to find them instead of panicking at 10!
+            maximumAge: 10000         // It's okay if the location is 10 seconds old
         }
     );
 }
