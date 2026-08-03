@@ -1,16 +1,23 @@
 // 🌍 REAL-WORLD GPS & KEYBOARD MOVEMENT ENGINE
-let playerLat = 53.45544;
-let playerLng = -2.97630;
+// Look! No more super-glued house numbers! We leave these empty now.
+let playerLat;
+let playerLng;
 let playerMarker = null;
 let isWalking = false;
 let moveInterval = null;
 let activeKeys = {};
 
 function initPlayer() {
-    if (typeof map === 'undefined') return;
+    // If the map isn't built yet, wait patiently!
+    if (typeof map === 'undefined' || !map) return; 
     
     // Stop clones from spawning
     if (playerMarker !== null) return; 
+
+    // 🚨 THE MAGIC TRICK: Steal the exact GPS location from the map! 🚨
+    let mapCenter = map.getCenter();
+    playerLat = mapCenter.lat;
+    playerLng = mapCenter.lng;
 
     // Custom animated player SVG marker
     const playerSvgHtml = `
@@ -51,13 +58,10 @@ function initPlayer() {
         iconAnchor: [32, 70]
     });
 
+    // Drop the player marker exactly where they are standing in real life!
     playerMarker = L.marker([playerLat, playerLng], { icon: playerIcon }).addTo(map);
-    map.setView([playerLat, playerLng], 19);
-
-    // Initial batch spawns with correct player coordinates and count
-    if (typeof spawnBatch === 'function') {
-        spawnBatch(playerLat, playerLng, 8);
-    }
+    
+    // Note: We removed the extra brainrot spawn code here because main.js already does it for us!
 }
 
 // Keyboard movement listeners with bulletproof string safety
@@ -148,7 +152,4 @@ function startMovementLoop() {
         }
     }, 50);
 }
-
-window.addEventListener('DOMContentLoaded', () => {
-    setTimeout(initPlayer, 200);
-});
+// I completely deleted the sneaky timer at the bottom that was making the player spawn too early!
