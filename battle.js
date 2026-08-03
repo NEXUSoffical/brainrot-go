@@ -21,7 +21,7 @@ window.initBattle = function(creature) {
         window.playerData = { username: "Player", rotBalance: 500, inventory: [], activeFighterIndex: 0, revivePotions: 3 };
     }
     if (!playerData.inventory || playerData.inventory.length === 0) {
-        playerData.inventory = [{ name: "Skibidi", rarity: "common", image: "", level: 1, hp: 50, maxHp: 50, fainted: false }];
+        playerData.inventory = [{ name: "Skibidi", rarity: "common", image: "", level: 1, xp: 0, hp: 50, maxHp: 50, fainted: false }];
         playerData.activeFighterIndex = 0;
     }
 
@@ -68,7 +68,7 @@ window.initBattle = function(creature) {
         `;
     }
 
-    // Render Player Card Graphic
+    // Render Player Card Graphic with new XP Bar
     updatePlayerFighterDisplay(activeFighter, fighterLvl);
 
     updateHpBars();
@@ -82,10 +82,16 @@ window.initBattle = function(creature) {
     }
 };
 
-// Helper to render active player fighter graphics & info
+// Helper to render active player fighter graphics & XP Info
 function updatePlayerFighterDisplay(activeFighter, fighterLvl) {
     const playerRarityColor = typeof window.getRarityColor === 'function' ? window.getRarityColor(activeFighter.rarity) : '#00ff00';
     const playerCardContainer = document.getElementById('playerCardContainer');
+    
+    // Calculate XP Progress for the tiny blue bar
+    const currentXp = activeFighter.xp || 0;
+    const requiredXp = fighterLvl * 100;
+    const xpPercent = Math.min(100, Math.max(0, (currentXp / requiredXp) * 100));
+
     if (playerCardContainer) {
         playerCardContainer.innerHTML = `
             <div style="
@@ -102,7 +108,12 @@ function updatePlayerFighterDisplay(activeFighter, fighterLvl) {
                 <div style="width: 100%; height: 70px; background-color: #ffffff; border-radius: 4px; overflow: hidden; border: 1px solid #444;">
                     <img src="${activeFighter.image || ''}" style="width: 100%; height: 100%; object-fit: cover; mix-blend-mode: multiply; filter: brightness(1.2) contrast(3); ${activeFighter.fainted ? 'filter: grayscale(100%);' : ''}" onerror="this.style.display='none';">
                 </div>
-                <span style="font-size: 9px; color: #fff; margin-top: 3px; font-family: monospace; font-weight: bold;">Lvl ${fighterLvl}</span>
+                <div style="width: 100%; display: flex; flex-direction: column; align-items: center; margin-top: 3px;">
+                    <span style="font-size: 9px; color: #fff; font-family: monospace; font-weight: bold;">Lvl ${fighterLvl}</span>
+                    <div style="width: 90%; height: 3px; background: #222; border-radius: 2px; margin-top: 2px; overflow: hidden; border: 1px solid #444;">
+                        <div style="width: ${xpPercent}%; height: 100%; background: #00ccff;"></div>
+                    </div>
+                </div>
             </div>
         `;
     }
@@ -181,15 +192,41 @@ window.battleAttack = function() {
             window.wildHp = 0;
             updateHpBars();
             
+            // 🛡️ THE NEW STRICT GRINDING XP SYSTEM 🛡️
             if (activeFighter) {
-                const levelGain = Math.max(1, Math.floor(wildLvl / 10));
-                activeFighter.level = (activeFighter.level || 1) + levelGain;
+                activeFighter.xp = activeFighter.xp || 0;
+                
+                // You get base 10 XP + 15 XP for every level the wild creature has
+                const xpGained = 10 + (wildLvl * 15);
+                activeFighter.xp += xpGained;
+
+                let xpNeeded = activeFighter.level * 100;
+                let leveledUp = false;
+
+                // Loop just in case they earned enough to level up multiple times
+                while (activeFighter.xp >= xpNeeded) {
+                    activeFighter.xp -= xpNeeded;
+                    activeFighter.level++;
+                    xpNeeded = activeFighter.level * 100;
+                    leveledUp = true;
+                }
+
                 activeFighter.maxHp = 50 + (activeFighter.level - 1) * 15;
-                activeFighter.hp = activeFighter.maxHp;
+                if (leveledUp) {
+                    activeFighter.hp = activeFighter.maxHp; // Full heal reward for leveling up!
+                }
 
                 playerData.rotBalance += (wildLvl * 10);
                 if (typeof window.saveGameData === 'function') window.saveGameData();
-                if (battleLog) battleLog.innerText = `Victory! ${activeFighter.name} leveled up to Lvl ${activeFighter.level}!`;
+                
+                if (battleLog) {
+                    if (leveledUp) {
+                        battleLog.innerText = `Victory! +${xpGained} XP! ${activeFighter.name} leveled up to Lvl ${activeFighter.level}!`;
+                    } else {
+                        battleLog.innerText = `Victory! +${xpGained} XP! Click 'Defeat to Unlock Vault' to catch it!`;
+                    }
+                }
+                updatePlayerFighterDisplay(activeFighter, activeFighter.level);
             } else {
                 if (battleLog) battleLog.innerText = `Victory! Click 'Defeat to Unlock Vault' to catch it!`;
             }
@@ -268,12 +305,22 @@ window.openBattleSwitch = function() {
     playerData.inventory.forEach((rot, index) => {
         const isCurrent = playerData.activeFighterIndex === index;
         const isFainted = rot.fainted === true;
+        const requiredXp = (rot.level || 1) * 100;
+        const xpPercent = Math.min(100, Math.max(0, ((rot.xp || 0) / requiredXp) * 100));
+
         gridHtml += `
             <div onclick="selectNewFighter(${index})" style="background: ${isFainted ? '#2a1a1a' : (isCurrent ? '#1a3a1a' : '#222')}; border: 2px solid ${isFainted ? '#ff0055' : (isCurrent ? '#00ff00' : '#555')}; border-radius: 8px; padding: 8px; cursor: pointer; text-align: center; opacity: ${isFainted ? '0.6' : '1'};">
                 <img src="${rot.image || ''}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; ${isFainted ? 'filter: grayscale(100%);' : ''}" onerror="this.style.display='none';">
                 <div style="font-size: 0.75rem; font-weight: bold; margin-top: 4px; color: #fff;">${rot.name}</div>
                 <div style="font-size: 0.65rem; color: ${isFainted ? '#ff0055' : '#00ff00'};">${isFainted ? '💀 FAINTED' : 'Lvl ' + (rot.level || 1)}</div>
-                ${isCurrent ? '<div style="font-size: 0.55rem; color: #00ff00; font-weight: bold;">(ACTIVE)</div>' : ''}
+                
+                <!-- Tiny XP Bar in Switch Menu -->
+                ${!isFainted ? `
+                <div style="width: 100%; height: 2px; background: #111; margin-top: 3px; border-radius: 2px; overflow: hidden;">
+                    <div style="width: ${xpPercent}%; height: 100%; background: #00ccff;"></div>
+                </div>` : ''}
+
+                ${isCurrent ? '<div style="font-size: 0.55rem; color: #00ff00; font-weight: bold; margin-top: 2px;">(ACTIVE)</div>' : ''}
             </div>
         `;
     });
