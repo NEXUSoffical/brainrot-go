@@ -133,8 +133,18 @@ function spawnSingleCreature(lat, lng) {
     return;
   }
 
-  const currentLat = lat || (typeof playerLat !== 'undefined' ? playerLat : 53.45565);
-  const currentLng = lng || (typeof playerLng !== 'undefined' ? playerLng : -2.97733);
+  // 🚨 NO MORE HOUSE NUMBERS! If we don't know where the player is, CANCEL THE SPAWN!
+  let currentLat = lat;
+  let currentLng = lng;
+
+  if (currentLat === undefined || currentLng === undefined) {
+      if (typeof playerLat !== 'undefined' && typeof playerLng !== 'undefined' && playerLat !== undefined) {
+          currentLat = playerLat;
+          currentLng = playerLng;
+      } else {
+          return; // Abort spawn! Don't throw them at a random house!
+      }
+  }
 
   const characterTemplate = getRandomBrainrot();
   const level = getRandomLevel();
@@ -291,7 +301,7 @@ function initSpawner() {
 
     if (typeof playerMarker !== 'undefined' && playerMarker && typeof playerMarker.getLatLng === 'function') {
       currentPos = playerMarker.getLatLng();
-    } else if (typeof playerLat !== 'undefined' && typeof playerLng !== 'undefined') {
+    } else if (typeof playerLat !== 'undefined' && typeof playerLng !== 'undefined' && playerLat !== undefined) {
       currentPos = { lat: playerLat, lng: playerLng };
     } else if (window.currentLat && window.currentLng) {
       currentPos = { lat: window.currentLat, lng: window.currentLng };
