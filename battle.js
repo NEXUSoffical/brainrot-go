@@ -18,7 +18,7 @@ window.initBattle = function(creature) {
 
     // Safety check for player data / active fighter using inventory
     if (typeof playerData === 'undefined') {
-        window.playerData = { username: "Player", rotBalance: 500, inventory: [], activeFighterIndex: 0, revivePotions: 3 };
+        window.playerData = { username: "Player", rotBalance: 500, inventory: [], activeFighterIndex: 0, revivePotions: 0 };
     }
     if (!playerData.inventory || playerData.inventory.length === 0) {
         playerData.inventory = [{ name: "Skibidi", rarity: "common", image: "", level: 1, xp: 0, hp: 50, maxHp: 50, fainted: false }];
@@ -192,18 +192,17 @@ window.battleAttack = function() {
             window.wildHp = 0;
             updateHpBars();
             
-            // 🛡️ THE NEW STRICT GRINDING XP SYSTEM 🛡️
+            // 🛡️ THE STRICT GRINDING XP SYSTEM FOR YOUR FIGHTER 🛡️
             if (activeFighter) {
                 activeFighter.xp = activeFighter.xp || 0;
                 
-                // You get base 10 XP + 15 XP for every level the wild creature has
+                // Fighter gets base 10 XP + 15 XP for every level the wild creature has
                 const xpGained = 10 + (wildLvl * 15);
                 activeFighter.xp += xpGained;
 
                 let xpNeeded = activeFighter.level * 100;
                 let leveledUp = false;
 
-                // Loop just in case they earned enough to level up multiple times
                 while (activeFighter.xp >= xpNeeded) {
                     activeFighter.xp -= xpNeeded;
                     activeFighter.level++;
@@ -213,11 +212,10 @@ window.battleAttack = function() {
 
                 activeFighter.maxHp = 50 + (activeFighter.level - 1) * 15;
                 if (leveledUp) {
-                    activeFighter.hp = activeFighter.maxHp; // Full heal reward for leveling up!
+                    activeFighter.hp = activeFighter.maxHp; 
                 }
 
-                playerData.rotBalance += (wildLvl * 10);
-                if (typeof window.saveGameData === 'function') window.saveGameData();
+                updatePlayerFighterDisplay(activeFighter, activeFighter.level);
                 
                 if (battleLog) {
                     if (leveledUp) {
@@ -226,10 +224,20 @@ window.battleAttack = function() {
                         battleLog.innerText = `Victory! +${xpGained} XP! Click 'Defeat to Unlock Vault' to catch it!`;
                     }
                 }
-                updatePlayerFighterDisplay(activeFighter, activeFighter.level);
             } else {
                 if (battleLog) battleLog.innerText = `Victory! Click 'Defeat to Unlock Vault' to catch it!`;
             }
+
+            // ⭐ NEW: REWARD THE ACTUAL PLAYER WITH COINS AND ACCOUNT XP! ⭐
+            playerData.rotBalance += (wildLvl * 10);
+            
+            if (typeof window.addAccountXp === 'function') {
+                // You earn 20 Account XP just for winning, plus 5 extra per level of the monster!
+                window.addAccountXp(20 + (wildLvl * 5)); 
+            }
+            
+            if (typeof window.saveGameData === 'function') window.saveGameData();
+
             return;
         }
 
@@ -260,7 +268,6 @@ window.battleAttack = function() {
                     window.playerHp = 0;
                     updateHpBars();
 
-                    // MARK ACTIVE FIGHTER AS FAINTED
                     if (activeFighter) {
                         activeFighter.fainted = true;
                     }
@@ -314,7 +321,6 @@ window.openBattleSwitch = function() {
                 <div style="font-size: 0.75rem; font-weight: bold; margin-top: 4px; color: #fff;">${rot.name}</div>
                 <div style="font-size: 0.65rem; color: ${isFainted ? '#ff0055' : '#00ff00'};">${isFainted ? '💀 FAINTED' : 'Lvl ' + (rot.level || 1)}</div>
                 
-                <!-- Tiny XP Bar in Switch Menu -->
                 ${!isFainted ? `
                 <div style="width: 100%; height: 2px; background: #111; margin-top: 3px; border-radius: 2px; overflow: hidden;">
                     <div style="width: ${xpPercent}%; height: 100%; background: #00ccff;"></div>
@@ -387,6 +393,11 @@ window.battleCatch = function() {
             if (typeof window.activeCreatures !== 'undefined') {
                 window.activeCreatures = window.activeCreatures.filter(c => c.data !== window.currentWildCreature);
             }
+        }
+
+        // ⭐ NEW: REWARD THE PLAYER WITH EVEN MORE XP FOR CATCHING IT! ⭐
+        if (typeof window.addAccountXp === 'function') {
+            window.addAccountXp(30 + (window.currentWildCreature.level * 10)); 
         }
 
         if (battleLog) battleLog.innerText = `Successfully captured Level ${window.currentWildCreature.level} ${window.currentWildCreature.name}!`;
