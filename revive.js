@@ -1,9 +1,7 @@
 // revive.js - Revive Potions & Fainted Rots System
 
-// Initialize potions if player doesn't have any yet
-if (typeof playerData !== 'undefined' && typeof playerData.revivePotions === 'undefined') {
-  playerData.revivePotions = 3; // Give 3 free potions to start
-}
+// The panicky "Give 3 free potions" code has been DELETED! 
+// Now the game waits for your real cloud save to load.
 
 function openReviveModal() {
   let existing = document.getElementById('reviveModal');
@@ -69,7 +67,7 @@ window.reviveRot = function(index) {
   let rot = playerData.inventory[index];
   if (!rot || !rot.fainted) return;
 
-  // 🚨 THIS IS THE MATH THAT THROWS THE BOTTLE AWAY! 🚨
+  // 🧪 THIS IS THE MATH THAT THROWS THE BOTTLE AWAY! 🧪
   playerData.revivePotions--;
   rot.fainted = false;
 
