@@ -41,4 +41,26 @@ function handleWeatherVisuals(code) {
         console.log("☀️ Weather is clear/sunny outside!");
         overlay.style.display = 'none';
     }
-}
+}// Secret Weather Cheat for Testing!
+window.testRain = function(makeItRain) {
+    let overlay = document.getElementById('weatherOverlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'weatherOverlay';
+        overlay.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            pointer-events: none; z-index: 999; display: none;
+        `;
+        document.body.appendChild(overlay);
+    }
+
+    if (makeItRain) {
+        console.log("🌧️ Cheat activated: Making it rain!");
+        overlay.style.display = 'block';
+        overlay.style.background = 'rgba(0, 100, 255, 0.15)';
+        overlay.style.boxShadow = 'inset 0 0 50px rgba(0, 100, 255, 0.3)';
+    } else {
+        console.log("☀️ Cheat activated: Clearing the skies!");
+        overlay.style.display = 'none';
+    }
+};
