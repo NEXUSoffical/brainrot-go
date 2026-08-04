@@ -374,11 +374,18 @@ window.updatePotionHud = function() {
 };
 
 function renderInventoryGrid() {
-    const inventoryGrid = document.getElementById('inventoryGrid');
-    if (!inventoryGrid) return;
-
+    let inventoryGrid = document.getElementById('inventoryGrid');
     let modal = document.getElementById('inventoryModal');
-    if (modal && !modal.querySelector('#inventoryTabSwitcher')) {
+
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'inventoryModal';
+        modal.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.95); z-index: 999999; display: none;
+            flex-direction: column; align-items: center; justify-content: center;
+            color: #fff; font-family: monospace; padding: 20px;
+        `;
         modal.innerHTML = `
             <div style="background: #111; border: 3px solid #ffcc00; border-radius: 15px; padding: 20px; width: 100%; max-width: 420px; text-align: center; box-shadow: 0 0 30px rgba(255,204,0,0.4);">
                 <h2 style="color: #ffcc00; font-size: 1.3rem; margin-bottom: 10px;">🎒 INVENTORY</h2>
@@ -390,15 +397,17 @@ function renderInventoryGrid() {
                 <button onclick="closeInventory()" style="background: #333; color: #fff; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%;">CLOSE</button>
             </div>
         `;
+        document.body.appendChild(modal);
+        inventoryGrid = document.getElementById('inventoryGrid');
     }
 
-    const actualGrid = document.getElementById('inventoryGrid') || inventoryGrid;
-    actualGrid.innerHTML = '';
+    if (!inventoryGrid) return;
+    inventoryGrid.innerHTML = '';
 
     if (currentInventoryTab === 'rots') {
         const inventory = window.playerData.inventory || [];
         if (inventory.length === 0) {
-            actualGrid.innerHTML = `<p style="grid-column: span 2; color: #777; font-size: 0.9rem; padding: 30px; text-align: center;">Your inventory is empty! Catch rots on the map.</p>`;
+            inventoryGrid.innerHTML = `<p style="grid-column: span 2; color: #777; font-size: 0.9rem; padding: 30px; text-align: center;">Your inventory is empty! Catch rots on the map.</p>`;
             return;
         }
 
@@ -435,13 +444,13 @@ function renderInventoryGrid() {
                     <button onclick="transferRot(${index})" style="background: #ff0055; color: #fff; border: none; padding: 3px 6px; font-size: 0.6rem; font-weight: bold; border-radius: 4px; cursor: pointer; flex: 1;">TRANSFER</button>
                 </div>
             `;
-            actualGrid.appendChild(card);
+            inventoryGrid.appendChild(card);
         });
     } else {
         const revives = window.playerData.revivePotions || 0;
         const luckyEggs = window.playerData.luckyEggs || 0;
 
-        actualGrid.innerHTML = `
+        inventoryGrid.innerHTML = `
             <div style="grid-column: span 2; display: flex; flex-direction: column; gap: 10px; width: 100%;">
                 <div style="background: #222; border: 2px solid #00ffcc; border-radius: 8px; padding: 12px; display: flex; align-items: center; justify-content: space-between;">
                     <div style="display: flex; align-items: center; gap: 10px;">
@@ -653,10 +662,10 @@ window.openInventory = function() {
 };
 
 window.openInventoryModal = function() {
+    renderInventoryGrid();
     const modal = document.getElementById('inventoryModal');
     if (modal) {
         modal.style.display = 'flex';
-        renderInventoryGrid();
     }
 };
 
@@ -666,11 +675,27 @@ window.closeInventory = function() {
 };
 
 window.openDex = function() {
-    const modal = document.getElementById('dexModal');
-    if (modal) {
-        modal.style.display = 'block';
-        renderDexGrid();
+    let modal = document.getElementById('dexModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'dexModal';
+        modal.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.95); z-index: 999999; display: none;
+            flex-direction: column; align-items: center; justify-content: center;
+            color: #fff; font-family: monospace; padding: 20px;
+        `;
+        modal.innerHTML = `
+            <div style="background: #111; border: 3px solid #00ccff; border-radius: 15px; padding: 20px; width: 100%; max-width: 420px; text-align: center; box-shadow: 0 0 30px rgba(0,204,255,0.4);">
+                <h2 style="color: #00ccff; font-size: 1.3rem; margin-bottom: 10px;">📖 ROT-DEX</h2>
+                <div id="dexGrid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-height: 300px; overflow-y: auto; margin-bottom: 15px; padding-right: 4px;"></div>
+                <button onclick="closeDex()" style="background: #333; color: #fff; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%;">CLOSE</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
     }
+    modal.style.display = 'flex';
+    renderDexGrid();
 };
 
 window.closeDex = function() {
@@ -689,11 +714,28 @@ window.openAdminPanel = function() {
         return;
     }
 
-    const modal = document.getElementById('adminModal');
-    if (modal) {
-        modal.style.display = 'flex';
-        window.renderAdminPanel();
+    let modal = document.getElementById('adminModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'adminModal';
+        modal.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.95); z-index: 999999; display: none;
+            flex-direction: column; align-items: center; justify-content: center;
+            color: #fff; font-family: monospace; padding: 20px;
+        `;
+        modal.innerHTML = `
+            <div style="background: #111; border: 3px solid #ff0055; border-radius: 15px; padding: 20px; width: 100%; max-width: 420px; text-align: center;">
+                <h2 style="color: #ff0055; font-size: 1.3rem; margin-bottom: 10px;">🛡️ ADMIN PANEL</h2>
+                <div id="adminAccountsList" style="display: flex; flex-direction: column; gap: 8px; max-height: 250px; overflow-y: auto; margin-bottom: 15px; text-align: left;"></div>
+                <button onclick="clearAllAccounts()" style="background: #ff0055; color: #fff; border: none; padding: 8px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-bottom: 8px;">WIPE ALL CLOUD ACCOUNTS</button>
+                <button onclick="closeAdminPanel()" style="background: #333; color: #fff; border: none; padding: 8px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%;">CLOSE</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
     }
+    modal.style.display = 'flex';
+    window.renderAdminPanel();
 };
 
 window.closeAdminPanel = function() {
