@@ -43,10 +43,16 @@ function setPlayerData(newData) {
     window._internalPlayerData.username = newData.username || window._internalPlayerData.username || "";
     window._internalPlayerData.rotBalance = typeof newData.rotBalance !== 'undefined' ? newData.rotBalance : (window._internalPlayerData.rotBalance || 500);
     
-    // Safeguard: Preserve highest level and XP correctly
     const incomingLevel = newData.accountLevel || newData.accLvl || 1;
-    window._internalPlayerData.accountLevel = Math.max(window._internalPlayerData.accountLevel || 1, incomingLevel);
-    window._internalPlayerData.accountXp = typeof newData.accountXp !== 'undefined' ? newData.accountXp : (window._internalPlayerData.accountXp || 0);
+    window._internalPlayerData.accountLevel = Math.max(1, incomingLevel);
+    
+    // Sanitize any corrupted legacy XP overflow
+    let incomingXp = typeof newData.accountXp !== 'undefined' ? newData.accountXp : 0;
+    const maxAllowedXp = window._internalPlayerData.accountLevel * window._internalPlayerData.accountLevel * 200;
+    if (incomingXp >= maxAllowedXp) {
+        incomingXp = 0; 
+    }
+    window._internalPlayerData.accountXp = incomingXp;
 
     window._internalPlayerData.dex = newData.dex || window._internalPlayerData.dex || [];
     window._internalPlayerData.inventory = newData.inventory || window._internalPlayerData.inventory || [];
@@ -55,20 +61,20 @@ function setPlayerData(newData) {
     window._internalPlayerData.luckyEggs = typeof newData.luckyEggs !== 'undefined' ? newData.luckyEggs : (window._internalPlayerData.luckyEggs || 0);
 }
 
-// Balanced Account XP & Leveling System
+// Safe Progressive XP System (Strictly max 1 level-up per action)
 window.addAccountXp = function(amount) {
     const hasLuckyEgg = window.activeLuckyEggTime && Date.now() < window.activeLuckyEggTime;
     const finalXp = hasLuckyEgg ? amount * 2 : amount;
 
     window._internalPlayerData.accountXp = (window._internalPlayerData.accountXp || 0) + finalXp;
     
-    // Required XP scales per level (Level * 300)
-    let requiredXp = (window._internalPlayerData.accountLevel || 1) * 300;
+    let currentLevel = window._internalPlayerData.accountLevel || 1;
+    let requiredXp = currentLevel * currentLevel * 200;
     
-    while (window._internalPlayerData.accountXp >= requiredXp) {
+    // Changed from 'while' to 'if' so you can only gain 1 level at a time per action
+    if (window._internalPlayerData.accountXp >= requiredXp) {
         window._internalPlayerData.accountXp -= requiredXp;
-        window._internalPlayerData.accountLevel = (window._internalPlayerData.accountLevel || 1) + 1;
-        requiredXp = window._internalPlayerData.accountLevel * 300;
+        window._internalPlayerData.accountLevel = currentLevel + 1;
         console.log(`🎉 Account leveled up to Level ${window._internalPlayerData.accountLevel}!`);
     }
 
@@ -406,8 +412,8 @@ window.addToDex = function(creature) {
         window.playerData.dex.push(creature.name);
     }
 
-    // Give a controlled amount of Account XP when catching a rot instead of a full level
-    window.addAccountXp(50);
+    // Give 10 XP for catching a rot
+    window.addAccountXp(10);
 
     window.saveGameData();
     updateHUD();
@@ -446,7 +452,7 @@ function updateHUD() {
     
     const currentLevel = window.playerData.accountLevel || 1;
     const currentXp = window.playerData.accountXp || 0;
-    const requiredXp = currentLevel * 300;
+    const requiredXp = currentLevel * currentLevel * 200;
     const xpPercent = Math.min(100, Math.max(0, (currentXp / requiredXp) * 100));
 
     accLvlEls.forEach(el => {

@@ -1,4 +1,4 @@
-// battle.js - Full Card Battle Engine Logic with Faint & Level Scaling
+// battle.js - Full Card Battle Engine Logic with Faint, Level Scaling & Audio FX
 
 if (typeof window.currentWildCreature === 'undefined') {
     window.currentWildCreature = null;
@@ -165,6 +165,11 @@ window.battleAttack = function() {
     setTimeout(() => {
         if (playerCombatant) playerCombatant.classList.remove('charge-attack');
         
+        // 🔊 Play chiptune attack hit sound effect!
+        if (window.gameAudio && typeof window.gameAudio.playHit === 'function') {
+            window.gameAudio.playHit();
+        }
+
         if (wildCombatant) wildCombatant.classList.add('hit-knockback');
 
         let baseDamage = Math.floor(Math.random() * 15) + (5 + (fighterLvl * 3));
@@ -192,11 +197,10 @@ window.battleAttack = function() {
             window.wildHp = 0;
             updateHpBars();
             
-            // 🛡️ THE STRICT GRINDING XP SYSTEM FOR YOUR FIGHTER 🛡️
+            // 🛡️ FIGHTER XP SYSTEM ONLY (No account XP here)
             if (activeFighter) {
                 activeFighter.xp = activeFighter.xp || 0;
                 
-                // Fighter gets base 10 XP + 15 XP for every level the wild creature has
                 const xpGained = 10 + (wildLvl * 15);
                 activeFighter.xp += xpGained;
 
@@ -228,10 +232,7 @@ window.battleAttack = function() {
                 if (battleLog) battleLog.innerText = `Victory! Click 'Defeat to Unlock Vault' to catch it!`;
             }
 
-            // ⭐ REWARD THE PLAYER WITH ACCOUNT XP ONLY (COIN GLITCH REMOVED) ⭐
-            if (typeof window.addAccountXp === 'function') {
-                window.addAccountXp(20 + (wildLvl * 5)); 
-            }
+            // ❌ DUPLICATE ACCOUNT XP REMOVED FROM HERE COMPLETELY
             
             if (typeof window.saveGameData === 'function') window.saveGameData();
 
@@ -377,6 +378,11 @@ window.battleCatch = function() {
     }
 
     if (window.currentWildCreature) {
+        // 🔊 Play catch fanfare sound effect!
+        if (window.gameAudio && typeof window.gameAudio.playCatch === 'function') {
+            window.gameAudio.playCatch();
+        }
+
         if (typeof window.addToDex === 'function') {
             window.addToDex(window.currentWildCreature);
         }
@@ -392,10 +398,7 @@ window.battleCatch = function() {
             }
         }
 
-        // ⭐ REWARD THE PLAYER WITH ACCOUNT XP FOR CATCHING IT ⭐
-        if (typeof window.addAccountXp === 'function') {
-            window.addAccountXp(30 + (window.currentWildCreature.level * 10)); 
-        }
+        // ❌ DUPLICATE ACCOUNT XP REMOVED FROM HERE (addToDex in dex.js now solely handles account XP)
 
         if (battleLog) battleLog.innerText = `Successfully captured Level ${window.currentWildCreature.level} ${window.currentWildCreature.name}!`;
         setTimeout(closeBattle, 1200);
