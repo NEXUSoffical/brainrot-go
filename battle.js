@@ -228,11 +228,8 @@ window.battleAttack = function() {
                 if (battleLog) battleLog.innerText = `Victory! Click 'Defeat to Unlock Vault' to catch it!`;
             }
 
-            // ⭐ NEW: REWARD THE ACTUAL PLAYER WITH COINS AND ACCOUNT XP! ⭐
-            playerData.rotBalance += (wildLvl * 10);
-            
+            // ⭐ REWARD THE PLAYER WITH ACCOUNT XP ONLY (COIN GLITCH REMOVED) ⭐
             if (typeof window.addAccountXp === 'function') {
-                // You earn 20 Account XP just for winning, plus 5 extra per level of the monster!
                 window.addAccountXp(20 + (wildLvl * 5)); 
             }
             
@@ -395,7 +392,7 @@ window.battleCatch = function() {
             }
         }
 
-        // ⭐ NEW: REWARD THE PLAYER WITH EVEN MORE XP FOR CATCHING IT! ⭐
+        // ⭐ REWARD THE PLAYER WITH ACCOUNT XP FOR CATCHING IT ⭐
         if (typeof window.addAccountXp === 'function') {
             window.addAccountXp(30 + (window.currentWildCreature.level * 10)); 
         }
