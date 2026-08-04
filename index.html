@@ -21,12 +21,12 @@
 
         .hud {
             position: absolute; top: 15px; left: 15px; z-index: 1000;
-            background: rgba(10, 10, 10, 0.85); border: 2px solid #00ff00;
+            background: rgba(10, 10, 10, 0.85); border: 2px solid #76ff03;
             border-radius: 10px; padding: 10px 14px; color: #fff;
-            box-shadow: 0 0 15px rgba(0, 255, 0, 0.4); font-family: monospace;
+            box-shadow: 0 0 15px rgba(118, 255, 3, 0.4); font-family: monospace;
             max-width: 220px;
         }
-        .hud h1 { font-size: 1rem; color: #00ff00; text-shadow: 0 0 5px #00ff00; margin-bottom: 4px; }
+        .hud h1 { font-size: 1rem; color: #76ff03; text-shadow: 0 0 5px #76ff03; margin-bottom: 4px; }
         .hud p { font-size: 0.75rem; margin: 2px 0; color: #ccc; }
 
         .hud-buttons {
@@ -35,9 +35,9 @@
         }
 
         .btn-hud {
-            background: #00ff00; color: #000; border: none; padding: 10px 16px;
+            background: #76ff03; color: #000; border: none; padding: 10px 16px;
             font-size: 0.9rem; font-weight: bold; border-radius: 30px; cursor: pointer;
-            box-shadow: 0 0 15px #00ff00; font-family: monospace; transition: transform 0.1s;
+            box-shadow: 0 0 15px #76ff03; font-family: monospace; transition: transform 0.1s;
         }
         .btn-hud:active { transform: scale(0.95); }
 
@@ -47,14 +47,14 @@
             width: 140px; height: 140px; display: grid;
             grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr);
             gap: 4px; background: rgba(0, 0, 0, 0.4); padding: 8px; border-radius: 50%;
-            backdrop-filter: blur(4px); border: 2px solid rgba(0,255,0,0.3);
+            backdrop-filter: blur(4px); border: 2px solid rgba(118,255,3,0.3);
         }
         .dpad-btn {
-            background: rgba(0, 255, 0, 0.2); border: 1px solid #00ff00; color: #00ff00;
+            background: rgba(118, 255, 3, 0.2); border: 1px solid #76ff03; color: #76ff03;
             font-size: 1.2rem; display: flex; align-items: center; justify-content: center;
             border-radius: 8px; cursor: pointer; font-weight: bold;
         }
-        .dpad-btn:active { background: rgba(0, 255, 0, 0.6); color: #000; }
+        .dpad-btn:active { background: rgba(118, 255, 3, 0.6); color: #000; }
         .dpad-up { grid-column: 2; grid-row: 1; }
         .dpad-left { grid-column: 1; grid-row: 2; }
         .dpad-right { grid-column: 3; grid-row: 2; }
@@ -68,9 +68,9 @@
             color: #fff; font-family: monospace; padding: 20px;
         }
         .login-box {
-            background: #111; border: 3px solid #00ff00; border-radius: 15px;
+            background: #111; border: 3px solid #76ff03; border-radius: 15px;
             padding: 20px; width: 100%; max-width: 400px; text-align: center;
-            box-shadow: 0 0 30px rgba(0,255,0,0.4);
+            box-shadow: 0 0 30px rgba(118,255,3,0.4);
         }
         .login-input {
             width: 100%; padding: 10px; margin: 8px 0; background: #222;
@@ -88,7 +88,7 @@
             align-items: center; transition: all 0.2s;
         }
         .starter-option:hover, .starter-option.selected {
-            border-color: #00ff00; box-shadow: 0 0 10px #00ff00; background: #1a2a1a;
+            border-color: #76ff03; box-shadow: 0 0 10px #76ff03; background: #1a2a1a;
         }
 
         /* STRICT LOCATION ERROR MODAL */
@@ -136,7 +136,7 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.5); font-family: monospace; margin-top: 4px;
         }
         .hp-bar-outer { width: 100%; height: 8px; background: #222; border-radius: 4px; overflow: hidden; border: 1px solid #444; margin: 3px 0; }
-        .hp-bar-inner { height: 100%; background: #00ff00; width: 100%; transition: width 0.3s ease-out; }
+        .hp-bar-inner { height: 100%; background: #76ff03; width: 100%; transition: width 0.3s ease-out; }
 
         .charge-attack { transform: translate(100px, -80px) scale(1.15) !important; }
         .hit-knockback { transform: translate(15px, -15px) scale(0.9) !important; filter: brightness(2) drop-shadow(0 0 15px #ff0000) !important; }
@@ -160,17 +160,158 @@
 </head>
 <body>
 
+    <!-- HOME SCREEN OVERLAY WITH CORRECT PATH TO IMAGE -->
+    <div id="homeScreenOverlay" style="
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background: #000 url('brainrots/image_2.png') no-repeat center center/cover !important;
+        z-index: 99999999 !important;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
+        padding: 30px 20px;
+        font-family: 'Arial Black', Gadget, sans-serif;
+        color: #fff;
+        box-sizing: border-box;
+        overflow: hidden;
+    ">
+        <!-- Dark Tint Overlay for Readability -->
+        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.55); z-index: 1;"></div>
+
+        <!-- Top Active Players Badge -->
+        <div style="width: 100%; display: flex; justify-content: flex-start; z-index: 2;">
+            <div style="background: rgba(0, 0, 0, 0.85); border: 2px solid #76ff03; padding: 6px 16px; border-radius: 20px; display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: bold; box-shadow: 0 0 12px rgba(118,255,3,0.4);">
+                <div style="width: 9px; height: 9px; background-color: #76ff03; border-radius: 50%; box-shadow: 0 0 10px #76ff03;"></div>
+                <span id="landingPlayerCount" style="color: #76ff03;">1</span> <span style="color:#fff;">players</span>
+            </div>
+        </div>
+
+        <!-- Center Logo-Inspired Branding -->
+        <div style="display: flex; flex-direction: column; align-items: center; text-align: center; width: 100%; z-index: 2; margin-top: -10px;">
+            
+            <!-- Catch. Collect. Go Crazy Subtitle -->
+            <div style="font-size: 0.85rem; font-style: italic; color: #76ff03; letter-spacing: 2px; margin-bottom: 15px; text-shadow: 0 0 8px rgba(118,255,3,0.8); transform: rotate(-3deg);">
+                CATCH. COLLECT. GO CRAZY.
+            </div>
+
+            <!-- Main Logo Stack -->
+            <div style="
+                background: rgba(0, 0, 0, 0.88);
+                border: 4px solid #76ff03;
+                border-radius: 20px;
+                padding: 22px 28px;
+                box-shadow: 0 0 40px rgba(118,255,3,0.5), inset 0 0 20px rgba(118,255,3,0.2);
+                max-width: 340px;
+                width: 100%;
+                margin-bottom: 25px;
+                position: relative;
+                backdrop-filter: blur(4px);
+            ">
+                <!-- BRAINROT Text -->
+                <div style="
+                    font-size: 2.2rem;
+                    font-weight: 900;
+                    letter-spacing: 1px;
+                    color: #ffffff;
+                    text-transform: uppercase;
+                    text-shadow: 3px 3px 0px #000, 0 0 15px rgba(255,255,255,0.8);
+                    line-height: 1.1;
+                    margin-bottom: 8px;
+                ">BRAINROT</div>
+
+                <!-- ROT Neon Green Slime Text Box / Highlight -->
+                <div style="
+                    font-size: 2.6rem;
+                    font-weight: 900;
+                    letter-spacing: 2px;
+                    color: #76ff03;
+                    text-transform: uppercase;
+                    text-shadow: 2px 2px 0px #000, 0 0 20px rgba(118,255,3,0.9);
+                    line-height: 1;
+                    margin-bottom: 12px;
+                ">ROT</div>
+
+                <!-- GO Badge with Gun Sight Target -->
+                <div style="
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    background: #ffffff;
+                    color: #000;
+                    font-size: 1.8rem;
+                    font-weight: 900;
+                    padding: 4px 24px;
+                    border-radius: 30px;
+                    box-shadow: 0 4px 15px rgba(255,255,255,0.4);
+                    letter-spacing: 2px;
+                    gap: 8px;
+                ">
+                    <span>GO</span>
+                    <!-- Target crosshair icon -->
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="9"></circle>
+                        <line x1="12" y1="3" x2="12" y2="7"></line>
+                        <line x1="12" y1="17" x2="12" y2="21"></line>
+                        <line x1="3" y1="12" x2="7" y2="12"></line>
+                        <line x1="17" y1="12" x2="21" y2="12"></line>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Glowing Slime Green Play Button -->
+            <button onclick="dismissHomeScreen()" style="
+                background: linear-gradient(135deg, #76ff03 0%, #00e676 100%);
+                color: #000000;
+                font-size: 1.3rem;
+                font-weight: 900;
+                padding: 16px 0;
+                width: 100%;
+                max-width: 280px;
+                border: none;
+                border-radius: 35px;
+                cursor: pointer;
+                box-shadow: 0 8px 25px rgba(118, 255, 3, 0.6);
+                text-transform: uppercase;
+                letter-spacing: 2px;
+                margin-bottom: 12px;
+                transition: transform 0.1s ease;
+            ">PLAY NOW</button>
+            
+            <div style="font-size: 0.7rem; color: #a5d6a7; margin-bottom: 15px; font-family: monospace; text-shadow: 0 2px 4px rgba(0,0,0,0.9);">
+                Explore real-world geolocation, collect rots & battle gyms!
+            </div>
+
+            <!-- Contract Address Pill -->
+            <div onclick="copyLandingCA()" style="background: rgba(0, 0, 0, 0.9); border: 1px solid #76ff03; padding: 8px 16px; border-radius: 25px; display: flex; align-items: center; gap: 10px; font-size: 0.75rem; cursor: pointer; font-family: monospace;">
+                <span style="color: #76ff03; font-weight: bold;">$ROT CA</span>
+                <span id="landingCAText" style="color: #ccc;">8Byg...Qpump</span>
+                <span>📋</span>
+            </div>
+        </div>
+
+        <!-- Bottom Social Links matching logo vibe -->
+        <div style="display: flex; gap: 20px; z-index: 2;">
+            <a href="#" target="_blank" style="width: 45px; height: 45px; background: rgba(0,0,0,0.9); border: 2px solid #76ff03; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: #76ff03; text-decoration: none; box-shadow: 0 0 10px rgba(118,255,3,0.3);">📖</a>
+            <a href="#" target="_blank" style="width: 45px; height: 45px; background: rgba(0,0,0,0.9); border: 2px solid #76ff03; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: #76ff03; text-decoration: none; box-shadow: 0 0 10px rgba(118,255,3,0.3);">𝕏</a>
+            <a href="#" target="_blank" style="width: 45px; height: 45px; background: rgba(0,0,0,0.9); border: 2px solid #76ff03; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: #76ff03; text-decoration: none; box-shadow: 0 0 10px rgba(118,255,3,0.3);">💬</a>
+        </div>
+    </div>
+
     <!-- ACCOUNT LOGIN / REGISTER MODAL -->
     <div id="loginModal">
         <div class="login-box">
-            <h2 style="color: #00ff00; font-size: 1.4rem; text-shadow: 0 0 10px #00ff00;">🔐 BRAINROT GO ACCOUNT</h2>
+            <h2 style="color: #76ff03; font-size: 1.4rem; text-shadow: 0 0 10px #76ff03;">🔐 BRAINROT GO ACCOUNT</h2>
             <p style="font-size: 0.75rem; color: #aaa; margin-top: 4px;">Log in or sign up to play!</p>
             
             <input type="text" id="usernameInput" class="login-input" placeholder="Username..." maxlength="15">
             <input type="password" id="passwordInput" class="login-input" placeholder="Password..." maxlength="20">
             
             <div id="starterSection" style="display: none; margin-top: 8px;">
-                <p style="font-size: 0.75rem; color: #00ff00; text-align: left;">CHOOSE STARTER ROT:</p>
+                <p style="font-size: 0.75rem; color: #76ff03; text-align: left;">CHOOSE STARTER ROT:</p>
                 <div id="starterSelectionGrid" class="starter-grid"></div>
             </div>
             
@@ -215,20 +356,20 @@
     <!-- PLAYER PROFILE WIDGET (TOP RIGHT) -->
     <div id="playerProfileWidget" style="
         position: absolute; top: 15px; right: 15px; z-index: 1000;
-        background: rgba(10, 10, 10, 0.9); border: 2px solid #00ff00;
+        background: rgba(10, 10, 10, 0.9); border: 2px solid #76ff03;
         border-radius: 12px; padding: 8px 12px; color: #fff;
-        box-shadow: 0 0 15px rgba(0, 255, 0, 0.4); font-family: monospace;
+        box-shadow: 0 0 15px rgba(118, 255, 3, 0.4); font-family: monospace;
         display: flex; align-items: center; gap: 10px; width: 180px; pointer-events: none;
     ">
-        <div style="position: relative; width: 42px; height: 42px; border-radius: 50%; border: 2px solid #00ff00; overflow: hidden; background: #222; flex-shrink: 0;">
+        <div style="position: relative; width: 42px; height: 42px; border-radius: 50%; border: 2px solid #76ff03; overflow: hidden; background: #222; flex-shrink: 0;">
             <img id="widgetActiveRotImg" src="" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'">
         </div>
         <div style="display: flex; flex-direction: column; text-align: left; width: 100%; overflow: hidden;">
-            <div style="font-size: 0.75rem; font-weight: bold; color: #00ff00; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="widgetUsername">Player</div>
+            <div style="font-size: 0.75rem; font-weight: bold; color: #76ff03; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="widgetUsername">Player</div>
             <div style="font-size: 0.65rem; color: #fff;">LVL <span id="widgetAccLevel">1</span></div>
             <!-- XP Progress Bar -->
             <div style="width: 100%; height: 5px; background: #333; border-radius: 3px; margin-top: 3px; overflow: hidden; border: 1px solid #555;">
-                <div id="widgetXpBar" style="height: 100%; background: #00ff00; width: 0%; transition: width 0.3s ease;"></div>
+                <div id="widgetXpBar" style="height: 100%; background: #76ff03; width: 0%; transition: width 0.3s ease;"></div>
             </div>
         </div>
     </div>
@@ -275,7 +416,7 @@
 
             <div id="playerCombatant" class="combatant combatant-player">
                 <div id="playerCardContainer"></div>
-                <div class="hp-badge" style="border-color: #00ff00;">
+                <div class="hp-badge" style="border-color: #76ff03;">
                     <div id="myFighterName" style="font-weight: bold; font-size: 0.7rem;">Fighter (Lvl 1)</div>
                     <div class="hp-bar-outer"><div id="myHpBar" class="hp-bar-inner"></div></div>
                     <div id="myHpText" style="font-size: 0.55rem; color: #aaa;">50/50 HP</div>
@@ -283,13 +424,13 @@
             </div>
         </div>
 
-        <div id="battleLog" style="font-size: 0.85rem; color: #00ff00; font-family: monospace; text-align: center; margin-bottom: 6px; min-height: 20px;">
+        <div id="battleLog" style="font-size: 0.85rem; color: #76ff03; font-family: monospace; text-align: center; margin-bottom: 6px; min-height: 20px;">
             Prepare for battle!
         </div>
 
         <div class="battle-controls">
             <button id="attackBtn" class="btn-action" style="background: #ff0055; color: #fff;" onclick="battleAttack()">⚔️ ATTACK WILD BRAINROT</button>
-            <button id="vaultCatchBtn" class="btn-action" style="background: #00ff00; color: #000;" onclick="battleCatch()">🔒 DEFEAT TO UNLOCK VAULT</button>
+            <button id="vaultCatchBtn" class="btn-action" style="background: #76ff03; color: #000;" onclick="battleCatch()">🔒 DEFEAT TO UNLOCK VAULT</button>
             <button class="btn-action" style="background: #00ccff; color: #000;" onclick="openBattleSwitch()">🔄 SWITCH ROT</button>
             <button class="btn-action" style="background: #333; color: #fff;" onclick="closeBattle()">🏃 FLEE BATTLE</button>
         </div>
@@ -315,8 +456,43 @@
         </div>
     </div>
 
-    <!-- Mobile D-pad helper script -->
+    <!-- Home screen, real player count fetcher, and Mobile D-pad helper script -->
     <script>
+        function dismissHomeScreen() {
+            const overlay = document.getElementById('homeScreenOverlay');
+            if (overlay) overlay.style.display = 'none';
+        }
+
+        function copyLandingCA() {
+            navigator.clipboard.writeText("8BygVz9qpumpFakeContractAddressExample12345");
+            const caText = document.getElementById('landingCAText');
+            if (caText) {
+                caText.innerText = "Copied!";
+                setTimeout(() => { caText.innerText = "8Byg...Qpump"; }, 2000);
+            }
+        }
+
+        // Fetch real account count from Firebase Firestore
+        async function updateRealPlayerCount() {
+            const countEl = document.getElementById('landingPlayerCount');
+            if (!countEl) return;
+
+            try {
+                if (typeof firebase !== 'undefined' && firebase.firestore) {
+                    const snapshot = await firebase.firestore().collection('accounts').get();
+                    const realCount = Math.max(1, snapshot.size);
+                    countEl.innerText = realCount;
+                } else {
+                    countEl.innerText = "1";
+                }
+            } catch (err) {
+                console.warn("Could not fetch live player count, defaulting to 1", err);
+                countEl.innerText = "1";
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', updateRealPlayerCount);
+
         function simulateKey(key, isDown) {
             const eventType = isDown ? 'keydown' : 'keyup';
             window.dispatchEvent(new KeyboardEvent(eventType, { key: key }));

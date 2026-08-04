@@ -15,6 +15,7 @@ if (!window._internalPlayerData) {
     window._internalPlayerData = {
         username: "",
         rotBalance: 500,
+        accountLevel: 1,
         dex: [],         
         inventory: [],   
         activeFighterIndex: 0,
@@ -40,6 +41,7 @@ if (!window.playerData) {
 function setPlayerData(newData) {
     window._internalPlayerData.username = newData.username || "";
     window._internalPlayerData.rotBalance = newData.rotBalance || 500;
+    window._internalPlayerData.accountLevel = newData.accountLevel || newData.accLvl || 1;
     window._internalPlayerData.dex = newData.dex || [];
     window._internalPlayerData.inventory = newData.inventory || [];
     window._internalPlayerData.activeFighterIndex = newData.activeFighterIndex || 0;
@@ -93,23 +95,43 @@ window.loadGameData = async function() {
                 
                 const mergedDex = Array.from(new Set([...(localData?.dex || []), ...(cloudData.dex || [])]));
                 
+                // Merge inventory safely by rot name, keeping the version with the highest level/XP
                 const inventoryMap = new Map();
-                if (cloudData.inventory) {
-                    cloudData.inventory.forEach(item => inventoryMap.set(item.name + (item.level || 1), item));
-                }
-                if (localData?.inventory) {
-                    localData.inventory.forEach(item => inventoryMap.set(item.name + (item.level || 1), item));
-                }
+                const allItems = [...(cloudData.inventory || []), ...(localData?.inventory || [])];
+                allItems.forEach(item => {
+                    const key = item.name;
+                    const existing = inventoryMap.get(key);
+                    if (!existing || 
+                        (item.level || 1) > (existing.level || 1) || 
+                        ((item.level || 1) === (existing.level || 1) && (item.xp || 0) > (existing.xp || 0))) {
+                        inventoryMap.set(key, item);
+                    }
+                });
                 const mergedInventory = Array.from(inventoryMap.values());
+
+                const bestAccountLevel = Math.max(
+                    cloudData.accountLevel || cloudData.accLvl || 1, 
+                    localData?.accountLevel || localData?.accLvl || 1
+                );
+
+                // Use Math.min for consumables so they properly decrease when used
+                const cloudRevives = typeof cloudData.revivePotions !== 'undefined' ? cloudData.revivePotions : 3;
+                const localRevives = typeof localData?.revivePotions !== 'undefined' ? localData.revivePotions : 3;
+                const bestRevives = Math.min(cloudRevives, localRevives);
+
+                const cloudEggs = typeof cloudData.luckyEggs !== 'undefined' ? cloudData.luckyEggs : 0;
+                const localEggs = typeof localData?.luckyEggs !== 'undefined' ? localData.luckyEggs : 0;
+                const bestEggs = Math.min(cloudEggs, localEggs);
 
                 setPlayerData({
                     username: cloudData.username || activeUser,
                     rotBalance: Math.max(cloudData.rotBalance || 0, localData?.rotBalance || 0),
+                    accountLevel: bestAccountLevel,
                     dex: mergedDex,
                     inventory: mergedInventory,
                     activeFighterIndex: cloudData.activeFighterIndex || localData?.activeFighterIndex || 0,
-                    revivePotions: typeof cloudData.revivePotions !== 'undefined' ? cloudData.revivePotions : (localData?.revivePotions || 3),
-                    luckyEggs: typeof cloudData.luckyEggs !== 'undefined' ? cloudData.luckyEggs : (localData?.luckyEggs || 0)
+                    revivePotions: bestRevives,
+                    luckyEggs: bestEggs
                 });
 
                 console.log("Game data successfully synced and merged from cloud!");
@@ -215,6 +237,7 @@ window.handleAccountAction = async function() {
             setPlayerData({
                 username: rawUsername,
                 rotBalance: 500,
+                accountLevel: 1,
                 dex: [window.selectedStarter.name],
                 inventory: [starterInstance],
                 activeFighterIndex: 0,
@@ -281,6 +304,7 @@ window.signInWithGoogle = async function() {
             setPlayerData({
                 username: rawUsername,
                 rotBalance: 500,
+                accountLevel: 1,
                 dex: [window.selectedStarter.name],
                 inventory: [starterInstance],
                 activeFighterIndex: 0,
@@ -313,8 +337,16 @@ window.signInWithGoogle = async function() {
 
 window.logoutAccount = async function() {
     await window.saveGameData();
-    await firebase.auth().signOut();
+    try {
+        await firebase.auth().signOut();
+    } catch (e) {
+        console.warn("Firebase signout error:", e);
+    }
+    
     localStorage.removeItem('brainrot_logged_in_user');
+    localStorage.removeItem('brainrot_local_backup');
+    window._internalPlayerData.username = "";
+    
     location.reload();
 };
 
@@ -360,6 +392,7 @@ function updateHUD() {
     const inventoryCountEl = document.getElementById('inventoryCount');
     const rotBalanceEl = document.getElementById('rotBalance');
     const hudTitle = document.getElementById('hudTitle');
+    const accLvlEls = document.querySelectorAll('#accLvl, .accLvlDisplay');
 
     const totalPossible = (typeof brainrotCharacters !== 'undefined' && brainrotCharacters) ? brainrotCharacters.length : 0;
     const dexCount = (window.playerData.dex) ? window.playerData.dex.length : 0;
@@ -370,6 +403,10 @@ function updateHUD() {
     if (inventoryCountEl) inventoryCountEl.innerText = inventoryCount;
     if (rotBalanceEl) rotBalanceEl.innerText = window.playerData.rotBalance || 500;
     if (hudTitle && window.playerData.username) hudTitle.innerText = `🕹️ ${window.playerData.username.toUpperCase()}`;
+    
+    accLvlEls.forEach(el => {
+        el.innerText = window.playerData.accountLevel || 1;
+    });
 
     renderInventoryGrid();
     renderDexGrid();
@@ -391,13 +428,31 @@ function renderInventoryGrid() {
         modal = document.createElement('div');
         modal.id = 'inventoryModal';
         modal.style.cssText = `
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(0,0,0,0.95); z-index: 999999; display: none;
-            flex-direction: column; align-items: center; justify-content: center;
-            color: #fff; font-family: monospace; padding: 20px;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            background: rgba(0,0,0,0.85) !important;
+            z-index: 999999 !important;
+            display: none;
         `;
         modal.innerHTML = `
-            <div style="background: #111; border: 3px solid #ffcc00; border-radius: 15px; padding: 20px; width: 100%; max-width: 420px; text-align: center; box-shadow: 0 0 30px rgba(255,204,0,0.4);">
+            <div style="
+                position: fixed !important;
+                top: 50% !important;
+                left: 50% !important;
+                transform: translate(-50%, -50%) !important;
+                background: #111 !important;
+                border: 3px solid #ffcc00 !important;
+                border-radius: 15px !important;
+                padding: 20px !important;
+                width: 90% !important;
+                max-width: 420px !important;
+                text-align: center !important;
+                box-shadow: 0 0 30px rgba(255,204,0,0.4) !important;
+                box-sizing: border-box !important;
+            ">
                 <h2 style="color: #ffcc00; font-size: 1.3rem; margin-bottom: 10px;">🎒 INVENTORY</h2>
                 <div id="inventoryTabSwitcher" style="display: flex; gap: 10px; margin-bottom: 15px;">
                     <button onclick="switchInventoryTab('rots')" id="btnTabRots" style="flex: 1; background: ${window.currentInventoryTab === 'rots' ? '#ffcc00' : '#222'}; color: ${window.currentInventoryTab === 'rots' ? '#000' : '#fff'}; border: 2px solid #ffcc00; padding: 8px; font-weight: bold; border-radius: 6px; cursor: pointer;">🧠 ROTS</button>
@@ -530,10 +585,13 @@ window.useRevivePotionMenu = function() {
     reviveModal = document.createElement('div');
     reviveModal.id = 'reviveSelectModal';
     reviveModal.style.cssText = `
-        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-        background: rgba(0,0,0,0.95); z-index: 9999999; display: flex;
-        flex-direction: column; align-items: center; justify-content: center;
-        color: #fff; font-family: monospace; padding: 20px;
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background: rgba(0,0,0,0.85) !important;
+        z-index: 9999999 !important;
     `;
 
     let listHtml = '';
@@ -555,7 +613,20 @@ window.useRevivePotionMenu = function() {
     });
 
     reviveModal.innerHTML = `
-        <div style="background: #111; border: 3px solid #00ffcc; border-radius: 15px; padding: 20px; width: 100%; max-width: 380px; text-align: center;">
+        <div style="
+            position: fixed !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            background: #111 !important;
+            border: 3px solid #00ffcc !important;
+            border-radius: 15px !important;
+            padding: 20px !important;
+            width: 90% !important;
+            max-width: 380px !important;
+            text-align: center !important;
+            box-sizing: border-box !important;
+        ">
             <h3 style="color: #00ffcc; margin-bottom: 8px;">🧪 SELECT ROT TO REVIVE</h3>
             <p style="font-size: 0.75rem; color: #aaa; margin-bottom: 12px;">Choose a fainted fighter to bring back to battle:</p>
             <div style="max-height: 220px; overflow-y: auto; margin-bottom: 15px;">
@@ -667,6 +738,9 @@ window.setActiveFighter = function(index) {
     renderInventoryGrid();
 };
 
+// ==========================================
+// UNIVERSAL BUTTON ALIASES & MODALS
+// ==========================================
 window.openInventory = function() {
     window.openInventoryModal();
 };
@@ -675,7 +749,7 @@ window.openInventoryModal = function() {
     renderInventoryGrid();
     const modal = document.getElementById('inventoryModal');
     if (modal) {
-        modal.style.display = 'flex';
+        modal.style.display = 'block';
     }
 };
 
@@ -685,32 +759,61 @@ window.closeInventory = function() {
 };
 
 window.openDex = function() {
-    let modal = document.getElementById('dexModal');
-    if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'dexModal';
-        modal.style.cssText = `
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(0,0,0,0.95); z-index: 999999; display: none;
-            flex-direction: column; align-items: center; justify-content: center;
-            color: #fff; font-family: monospace; padding: 20px;
-        `;
-        modal.innerHTML = `
-            <div style="background: #111; border: 3px solid #00ccff; border-radius: 15px; padding: 20px; width: 100%; max-width: 420px; text-align: center; box-shadow: 0 0 30px rgba(0,204,255,0.4);">
-                <h2 style="color: #00ccff; font-size: 1.3rem; margin-bottom: 10px;">📖 ROT-DEX</h2>
-                <div id="dexGrid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-height: 300px; overflow-y: auto; margin-bottom: 15px; padding-right: 4px;"></div>
-                <button onclick="closeDex()" style="background: #333; color: #fff; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%;">CLOSE</button>
+    const existingModal = document.getElementById('dexModal');
+    if (existingModal) existingModal.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'dexModal';
+    modal.style.cssText = `
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background: rgba(0,0,0,0.85) !important;
+        z-index: 999999 !important;
+        display: block !important;
+    `;
+
+    modal.innerHTML = `
+        <div style="
+            position: fixed !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            background: #111 !important;
+            border: 3px solid #00ccff !important;
+            border-radius: 15px !important;
+            padding: 20px !important;
+            width: 90% !important;
+            max-width: 440px !important;
+            text-align: center !important;
+            box-shadow: 0 0 30px rgba(0,204,255,0.4) !important;
+            box-sizing: border-box !important;
+            font-family: monospace !important;
+            color: #fff !important;
+        ">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <h2 style="color: #00ccff; font-size: 1.1rem; margin: 0;">📖 ROT-DEX STICKER BOOK</h2>
+                <button onclick="closeDex()" style="background: #ff0055; color: #fff; border: none; width: 28px; height: 28px; border-radius: 50%; font-weight: bold; cursor: pointer;">✕</button>
             </div>
-        `;
-        document.body.appendChild(modal);
-    }
-    modal.style.display = 'flex';
+            <p style="font-size: 0.7rem; color: #aaa; margin-bottom: 12px;">Collect all stickers by exploring and catching rots!</p>
+            <div id="dexGrid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-height: 280px; overflow-y: auto; margin-bottom: 15px; padding-right: 4px; background: #0a0a0a; padding: 10px; border-radius: 8px;"></div>
+            <button onclick="closeDex()" style="background: #333; color: #fff; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%;">CLOSE</button>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
     renderDexGrid();
 };
 
 window.closeDex = function() {
     const modal = document.getElementById('dexModal');
-    if (modal) modal.style.display = 'none';
+    if (modal) modal.remove();
+};
+
+window.openReviveModal = function() {
+    window.useRevivePotionMenu();
 };
 
 // ==========================================
@@ -729,13 +832,29 @@ window.openAdminPanel = function() {
         modal = document.createElement('div');
         modal.id = 'adminModal';
         modal.style.cssText = `
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(0,0,0,0.95); z-index: 999999; display: none;
-            flex-direction: column; align-items: center; justify-content: center;
-            color: #fff; font-family: monospace; padding: 20px;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            background: rgba(0,0,0,0.85) !important;
+            z-index: 999999 !important;
         `;
         modal.innerHTML = `
-            <div style="background: #111; border: 3px solid #ff0055; border-radius: 15px; padding: 20px; width: 100%; max-width: 420px; text-align: center;">
+            <div style="
+                position: fixed !important;
+                top: 50% !important;
+                left: 50% !important;
+                transform: translate(-50%, -50%) !important;
+                background: #111 !important;
+                border: 3px solid #ff0055 !important;
+                border-radius: 15px !important;
+                padding: 20px !important;
+                width: 90% !important;
+                max-width: 420px !important;
+                text-align: center !important;
+                box-sizing: border-box !important;
+            ">
                 <h2 style="color: #ff0055; font-size: 1.3rem; margin-bottom: 10px;">🛡️ ADMIN PANEL</h2>
                 <div id="adminAccountsList" style="display: flex; flex-direction: column; gap: 8px; max-height: 250px; overflow-y: auto; margin-bottom: 15px; text-align: left;"></div>
                 <button onclick="clearAllAccounts()" style="background: #ff0055; color: #fff; border: none; padding: 8px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-bottom: 8px;">WIPE ALL CLOUD ACCOUNTS</button>
@@ -744,7 +863,7 @@ window.openAdminPanel = function() {
         `;
         document.body.appendChild(modal);
     }
-    modal.style.display = 'flex';
+    modal.style.display = 'block';
     window.renderAdminPanel();
 };
 
