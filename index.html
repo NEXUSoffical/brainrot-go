@@ -288,7 +288,7 @@
             <!-- Contract Address Pill -->
             <div onclick="copyLandingCA()" style="background: rgba(0, 0, 0, 0.9); border: 1px solid #76ff03; padding: 8px 16px; border-radius: 25px; display: flex; align-items: center; gap: 10px; font-size: 0.75rem; cursor: pointer; font-family: monospace;">
                 <span style="color: #76ff03; font-weight: bold;">$ROT CA</span>
-                <span id="landingCAText" style="color: #ccc;">8Byg...Qpump</span>
+                <span id="landingCAText" style="color: #ccc;">75yx...pump</span>
                 <span>📋</span>
             </div>
         </div>
@@ -467,11 +467,11 @@
         }
 
         function copyLandingCA() {
-            navigator.clipboard.writeText("8BygVz9qpumpFakeContractAddressExample12345");
+            navigator.clipboard.writeText("75yxF9vQenbSd3VK1Nm8bnxscFU96LGRNz8xk1XXpump");
             const caText = document.getElementById('landingCAText');
             if (caText) {
                 caText.innerText = "Copied!";
-                setTimeout(() => { caText.innerText = "8Byg...Qpump"; }, 2000);
+                setTimeout(() => { caText.innerText = "75yx...pump"; }, 2000);
             }
         }
 
@@ -510,7 +510,7 @@
     <!-- FIREBASE DB & AUTH CONNECTION -->
     <script src="firebase.js"></script>
     
-    <script src="dex.js?v=4"></script> <!-- 👈 Updated version number -->
+    <script src="dex.js?v=4"></script>
     <script src="battle.js?v=2"></script>
     <script src="spawner.js"></script>
     <script src="gyms.js"></script>
