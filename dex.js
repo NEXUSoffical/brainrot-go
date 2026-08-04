@@ -1,8 +1,5 @@
 // dex.js - Cloud-Connected Account Management, Sticker Dex, Inventory & Admin System
 
-const db = firebase.firestore();
-const auth = firebase.auth();
-
 let isSignUpMode = false;
 let selectedStarter = null;
 let currentInventoryTab = 'rots'; // 'rots' or 'items'
@@ -42,6 +39,7 @@ function setPlayerData(newData) {
 
 window.saveGameData = async function() {
     if (!_internalPlayerData) return;
+    if (typeof firebase === 'undefined') return;
     
     if (!_internalPlayerData.username) {
         _internalPlayerData.username = "player";
@@ -56,7 +54,7 @@ window.saveGameData = async function() {
         localStorage.setItem('brainrot_local_backup', cleanDataString);
 
         const cleanDataObject = JSON.parse(cleanDataString);
-        await db.collection('accounts').doc(_internalPlayerData.username).set(cleanDataObject);
+        await firebase.firestore().collection('accounts').doc(_internalPlayerData.username).set(cleanDataObject);
         localStorage.setItem('brainrot_logged_in_user', _internalPlayerData.username);
         console.log("⚡ Game data saved successfully to cloud and local!");
     } catch (err) {
@@ -77,9 +75,9 @@ window.loadGameData = async function() {
     }
 
     const activeUser = localStorage.getItem('brainrot_logged_in_user');
-    if (activeUser && activeUser !== "player") {
+    if (activeUser && activeUser !== "player" && typeof firebase !== 'undefined') {
         try {
-            const doc = await db.collection('accounts').doc(activeUser).get();
+            const doc = await firebase.firestore().collection('accounts').doc(activeUser).get();
             if (doc.exists) {
                 const cloudData = doc.data();
                 
@@ -190,7 +188,7 @@ window.handleAccountAction = async function() {
 
     try {
         if (isSignUpMode) {
-            await auth.createUserWithEmailAndPassword(email, password);
+            await firebase.auth().createUserWithEmailAndPassword(email, password);
 
             if (!selectedStarter && typeof brainrotCharacters !== 'undefined') {
                 selectedStarter = brainrotCharacters[0];
@@ -217,9 +215,9 @@ window.handleAccountAction = async function() {
             await window.saveGameData();
             alert(`Account created successfully! Welcome, ${rawUsername}!`);
         } else {
-            await auth.signInWithEmailAndPassword(email, password);
+            await firebase.auth().signInWithEmailAndPassword(email, password);
 
-            const docRef = db.collection('accounts').doc(rawUsername);
+            const docRef = firebase.firestore().collection('accounts').doc(rawUsername);
             const doc = await docRef.get();
 
             if (doc.exists) {
@@ -249,12 +247,12 @@ window.handleAccountAction = async function() {
 window.signInWithGoogle = async function() {
     try {
         const provider = new firebase.auth.GoogleAuthProvider();
-        const result = await auth.signInWithPopup(provider);
+        const result = await firebase.auth().signInWithPopup(provider);
         const user = result.user;
 
         const rawUsername = user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
 
-        const docRef = db.collection('accounts').doc(rawUsername);
+        const docRef = firebase.firestore().collection('accounts').doc(rawUsername);
         const doc = await docRef.get();
 
         if (!doc.exists) {
@@ -305,7 +303,7 @@ window.signInWithGoogle = async function() {
 
 window.logoutAccount = async function() {
     await window.saveGameData();
-    await auth.signOut();
+    await firebase.auth().signOut();
     localStorage.removeItem('brainrot_logged_in_user');
     location.reload();
 };
@@ -381,7 +379,6 @@ function renderInventoryGrid() {
 
     let modal = document.getElementById('inventoryModal');
     if (modal && !modal.querySelector('#inventoryTabSwitcher')) {
-        const existingContent = modal.innerHTML;
         modal.innerHTML = `
             <div style="background: #111; border: 3px solid #ffcc00; border-radius: 15px; padding: 20px; width: 100%; max-width: 420px; text-align: center; box-shadow: 0 0 30px rgba(255,204,0,0.4);">
                 <h2 style="color: #ffcc00; font-size: 1.3rem; margin-bottom: 10px;">🎒 INVENTORY</h2>
@@ -707,11 +704,12 @@ window.closeAdminPanel = function() {
 window.renderAdminPanel = async function() {
     const listEl = document.getElementById('adminAccountsList');
     if (!listEl) return;
+    if (typeof firebase === 'undefined') return;
 
     listEl.innerHTML = `<p style="color:#00ccff; font-size:0.8rem; text-align:center;">Fetching accounts from cloud database...</p>`;
 
     try {
-        const snapshot = await db.collection('accounts').get();
+        const snapshot = await firebase.firestore().collection('accounts').get();
         listEl.innerHTML = '';
 
         if (snapshot.empty) {
@@ -751,8 +749,8 @@ window.renderAdminPanel = async function() {
 window.clearAllAccounts = async function() {
     if (confirm("Are you sure you want to delete ALL accounts from the cloud database?")) {
         try {
-            const snapshot = await db.collection('accounts').get();
-            const batch = db.batch();
+            const snapshot = await firebase.firestore().collection('accounts').get();
+            const batch = firebase.firestore().batch();
             snapshot.forEach(doc => {
                 batch.delete(doc.ref);
             });
@@ -779,14 +777,14 @@ setInterval(() => {
 }, 60000);
 
 window.addEventListener('beforeunload', (event) => {
-    if (window.playerData && window.playerData.username) {
+    if (window.playerData && window.playerData.username && typeof firebase !== 'undefined') {
         try {
             const cleanDataString = JSON.stringify(_internalPlayerData, (key, value) => {
                 if (key === 'marker' || key === '_popup' || key === '_source') return undefined;
                 return value;
             });
             localStorage.setItem('brainrot_local_backup', cleanDataString);
-            db.collection('accounts').doc(window.playerData.username).set(JSON.parse(cleanDataString));
+            firebase.firestore().collection('accounts').doc(window.playerData.username).set(JSON.parse(cleanDataString));
         } catch (e) {
             console.error("Unload save error:", e);
         }
