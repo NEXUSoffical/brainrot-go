@@ -60,8 +60,6 @@ function initPlayer() {
 
     // Drop the player marker exactly where they are standing in real life!
     playerMarker = L.marker([playerLat, playerLng], { icon: playerIcon }).addTo(map);
-    
-    // Note: We removed the extra brainrot spawn code here because main.js already does it for us!
 }
 
 // Keyboard movement listeners with bulletproof string safety
@@ -152,4 +150,3 @@ function startMovementLoop() {
         }
     }, 50);
 }
-// I completely deleted the sneaky timer at the bottom that was making the player spawn too early!
