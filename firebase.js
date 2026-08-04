@@ -58,8 +58,7 @@ window.handleAccountAction = function() {
                     window.playerData.username = username;
                 }
                 if (typeof saveGameData === 'function') saveGameData();
-                const loginModal = document.getElementById('loginModal');
-                if (loginModal) loginModal.style.display = 'none';
+                completeLogin();
             })
             .catch((error) => {
                 alert("❌ Sign Up Error: " + error.message);
@@ -67,8 +66,7 @@ window.handleAccountAction = function() {
     } else {
         auth.signInWithEmailAndPassword(email, password)
             .then((userCredential) => {
-                const loginModal = document.getElementById('loginModal');
-                if (loginModal) loginModal.style.display = 'none';
+                completeLogin();
             })
             .catch((error) => {
                 alert("❌ Login Error: " + error.message);
@@ -81,8 +79,7 @@ window.signInWithGoogle = function() {
     
     auth.signInWithPopup(provider)
         .then((result) => {
-            const loginModal = document.getElementById('loginModal');
-            if (loginModal) loginModal.style.display = 'none';
+            completeLogin();
         })
         .catch((error) => {
             console.error("Google Sign-In Error:", error);
@@ -95,6 +92,26 @@ window.signInWithGoogle = function() {
             }
         });
 };
+
+function completeLogin() {
+    const loginModal = document.getElementById('loginModal');
+    if (loginModal) loginModal.style.display = 'none';
+
+    if (typeof loadGameData === 'function') {
+        loadGameData().then(() => {
+            if (typeof initPlayer === 'function') initPlayer();
+        });
+    } else {
+        if (typeof initPlayer === 'function') initPlayer();
+    }
+}
+
+// Listen for active auth sessions on page load
+auth.onAuthStateChanged((user) => {
+    if (user) {
+        completeLogin();
+    }
+});
 
 window.logoutAccount = function() {
     auth.signOut().then(() => {
