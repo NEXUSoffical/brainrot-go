@@ -8,6 +8,68 @@ let lastSpawnLng = null;
 window.activeCreatures = spawnedCreatures;
 window.currentBattleEntry = null;
 
+// Inject CSS Keyframe Animations for Diamond Shimmer & Multi-Point Star Sparkles
+function injectShinyStyles() {
+  if (document.getElementById('shinyDiamondStyles')) return;
+  const style = document.createElement('style');
+  style.id = 'shinyDiamondStyles';
+  style.innerHTML = `
+    @keyframes diamondPulse {
+      0%, 100% {
+        box-shadow: 0 0 15px #ffffff, 0 0 30px #ffd700, inset 0 0 10px #ffffff;
+        border-color: #ffffff;
+        transform: scale(1);
+      }
+      50% {
+        box-shadow: 0 0 35px #ffffff, 0 0 55px #00ffff, inset 0 0 22px #ffd700;
+        border-color: #00ffff;
+        transform: scale(1.08);
+      }
+    }
+
+    @keyframes diamondShimmerBeam {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    @keyframes diamondStarSpin {
+      0% { transform: scale(0.7) rotate(0deg); opacity: 0.5; filter: drop-shadow(0 0 2px #fff); }
+      50% { transform: scale(1.5) rotate(180deg); opacity: 1; filter: drop-shadow(0 0 12px #00ffff) drop-shadow(0 0 6px #fff); }
+      100% { transform: scale(0.7) rotate(360deg); opacity: 0.5; filter: drop-shadow(0 0 2px #fff); }
+    }
+
+    .shiny-diamond-card {
+      animation: diamondPulse 1.6s infinite ease-in-out;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .shiny-diamond-card::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.7) 45%, rgba(0, 255, 255, 0.5) 50%, transparent 70%);
+      background-size: 200% 100%;
+      animation: diamondShimmerBeam 2.2s infinite linear;
+      pointer-events: none;
+      border-radius: 4px;
+    }
+
+    .diamond-star-1 {
+      animation: diamondStarSpin 1.2s infinite ease-in-out;
+      display: inline-block;
+    }
+    .diamond-star-2 {
+      animation: diamondStarSpin 1.6s infinite ease-in-out reverse;
+      display: inline-block;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
+// Automatically inject styles on script load
+injectShinyStyles();
+
 function getRandomLevel() {
   const roll = Math.random();
   if (roll < 0.60) {
@@ -84,7 +146,7 @@ function getRarityColor(rarity) {
   }
 }
 
-// Play an epic synthesized chime sound for ultra-rare spawns
+// Play an epic synthesized chime sound for ultra-rare or shiny spawns
 function playUltraRareSpawnSound() {
   try {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -115,9 +177,9 @@ function playUltraRareSpawnSound() {
 }
 
 // Global function to trigger battle from the popup with strict proximity check
-window.startEncounter = function(name, rarity, reward, imageUrl, level, maxHp) {
+window.startEncounter = function(name, rarity, reward, imageUrl, level, maxHp, isShiny) {
   // Find the exact active entry in our array
-  const matchedEntry = spawnedCreatures.find(c => c.data.name === name && c.data.level === Number(level) && !c.captured);
+  const matchedEntry = spawnedCreatures.find(c => c.data.name === name && c.data.level === Number(level) && (c.data.shiny ? '1' : '0') === String(isShiny) && !c.captured);
   
   if (matchedEntry) {
     // Check distance from player to the creature (must be within 30 meters)
@@ -142,10 +204,10 @@ window.startEncounter = function(name, rarity, reward, imageUrl, level, maxHp) {
   }
   
   const wildNameEl = document.getElementById('wildName');
-  if (wildNameEl) wildNameEl.innerText = `${name} (Lvl ${level})`;
+  if (wildNameEl) wildNameEl.innerText = `${isShiny === 'true' || isShiny === true ? '💎 DIAMOND SHINY ' : ''}${name} (Lvl ${level})`;
 
   const wildRarityEl = document.getElementById('wildRarity');
-  if (wildRarityEl) wildRarityEl.innerText = `RARITY: ${rarity.toUpperCase()}`;
+  if (wildRarityEl) wildRarityEl.innerText = `RARITY: ${rarity.toUpperCase()}${isShiny === 'true' || isShiny === true ? ' [💎 DIAMOND SHINY]' : ''}`;
 
   const wildBadgeName = document.getElementById('wildBadgeName');
   if (wildBadgeName) wildBadgeName.innerText = `${name} (Lvl ${level})`;
@@ -153,11 +215,12 @@ window.startEncounter = function(name, rarity, reward, imageUrl, level, maxHp) {
   const matchedCreature = matchedEntry ? matchedEntry.data : {
     name, 
     rarity, 
-    reward, 
+    reward: Number(reward), 
     image: imageUrl,
     level: Number(level),
     maxHp: Number(maxHp),
-    hp: Number(maxHp)
+    hp: Number(maxHp),
+    shiny: isShiny === 'true' || isShiny === true
   };
 
   if (typeof window.initBattle === 'function') {
@@ -198,19 +261,26 @@ function spawnSingleCreature(lat, lng) {
 
   const characterTemplate = getRandomBrainrot();
   const level = getRandomLevel();
-  const maxHp = 50 + (level - 1) * 12;
+  
+  // 1 in 500 chance (0.2%) to spawn an ultra-rare Diamond Shiny Rot!
+  const isShiny = Math.random() < 0.002;
+  
+  const baseReward = Number(characterTemplate.reward) || 1;
+  const maxHp = (50 + (level - 1) * 12) * (isShiny ? 2 : 1);
 
   const creatureInstance = {
     ...characterTemplate,
     level: level,
     maxHp: maxHp,
-    hp: maxHp
+    hp: maxHp,
+    shiny: isShiny,
+    reward: isShiny ? baseReward * 10 : baseReward
   };
   
   const rarityLower = (creatureInstance.rarity || '').toLowerCase();
-  const isUltraRare = rarityLower === 'og' || rarityLower === 'secret';
+  const isUltraRare = rarityLower === 'og' || rarityLower === 'secret' || isShiny;
 
-  // Trigger legendary audio chime if an ultra-rare card spawns!
+  // Trigger legendary audio chime if an ultra-rare or shiny card spawns!
   if (isUltraRare) {
     playUltraRareSpawnSound();
   }
@@ -229,7 +299,16 @@ function spawnSingleCreature(lat, lng) {
   const cardWidth = isUltraRare ? '92px' : '80px';
   const imgHeight = isUltraRare ? '78px' : '70px';
   
-  const cardStyling = isUltraRare ? `
+  const cardStyling = isShiny ? `
+    width: ${cardWidth}; 
+    background: linear-gradient(135deg, #0a1828, #1a3550, #0a1828); 
+    border: 3px solid #ffffff; 
+    border-radius: 6px; 
+    padding: 5px; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center;
+  ` : (isUltraRare ? `
     width: ${cardWidth}; 
     background: linear-gradient(135deg, #09090b, #181824); 
     border: 3px solid ${rarityColor}; 
@@ -251,9 +330,28 @@ function spawnSingleCreature(lat, lng) {
     display: flex; 
     flex-direction: column; 
     align-items: center;
-  `;
+  `);
 
-  const topBadge = isUltraRare ? `
+  const topBadge = isShiny ? `
+    <div style="
+      position: absolute; 
+      top: -20px; 
+      left: 50%; 
+      transform: translateX(-50%); 
+      background: linear-gradient(90deg, #ffffff, #00ffff, #ffffff); 
+      color: #000; 
+      font-size: 8px; 
+      font-family: monospace; 
+      padding: 2px 8px; 
+      border-radius: 4px; 
+      white-space: nowrap; 
+      font-weight: 900;
+      box-shadow: 0 0 12px #00ffff;
+      z-index: 10;
+    ">
+      <span class="diamond-star-1">💎</span> DIAMOND <span class="diamond-star-2">💎</span>
+    </div>
+  ` : (rarityLower === 'og' || rarityLower === 'secret' ? `
     <div style="
       position: absolute; 
       top: -14px; 
@@ -272,12 +370,12 @@ function spawnSingleCreature(lat, lng) {
     ">
       ⚡ ${creatureInstance.rarity.toUpperCase()} ⚡
     </div>
-  ` : '';
+  ` : '');
 
   const cardHtml = `
     <div style="position: relative;">
       ${topBadge}
-      <div style="${cardStyling}">
+      <div class="${isShiny ? 'shiny-diamond-card' : ''}" style="${cardStyling}">
         <div style="
           width: 100%; 
           height: ${imgHeight}; 
@@ -301,8 +399,8 @@ function spawnSingleCreature(lat, lng) {
         left: 50%; 
         transform: translateX(-50%); 
         background: rgba(0,0,0,0.9); 
-        border: 1px solid ${rarityColor}; 
-        color: ${rarityColor}; 
+        border: 1px solid ${isShiny ? '#00ffff' : rarityColor}; 
+        color: ${isShiny ? '#00ffff' : rarityColor}; 
         font-size: 8px; 
         font-family: monospace; 
         padding: 1px 6px; 
@@ -328,11 +426,12 @@ function spawnSingleCreature(lat, lng) {
 
   marker.bindPopup(`
     <div style="text-align: center; font-family: sans-serif; min-width: 140px;">
+      ${isShiny ? '<b style="color: #00ffff; font-size: 12px; display: block; text-shadow: 0 0 8px #00ffff;">💎 DIAMOND SHINY 💎</b>' : ''}
       <b style="font-size: 15px; color: #222;">${creatureInstance.name}</b><br>
       <span style="font-size: 11px; color: ${rarityColor}; font-weight: bold; display: block; margin-top: 2px;">${creatureInstance.rarity.toUpperCase()}</span>
       <span style="font-size: 11px; color: #555; font-weight: bold; display: block; margin-top: 2px;">Level ${level}</span>
       <span style="font-size: 11px; color: #008000; font-weight: bold; display: block; margin-top: 2px;">Reward: ${creatureInstance.reward} Rot</span>
-      <button onclick="startEncounter('${safeName}', '${creatureInstance.rarity}', '${creatureInstance.reward}', '${imageUrl}', ${level}, ${maxHp})" style="
+      <button onclick="startEncounter('${safeName}', '${creatureInstance.rarity}', '${creatureInstance.reward}', '${imageUrl}', ${level}, ${maxHp}, ${isShiny})" style="
         margin-top: 8px;
         background: #ff0055;
         color: white;
