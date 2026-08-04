@@ -46,12 +46,18 @@ function setPlayerData(newData) {
     const incomingLevel = newData.accountLevel || newData.accLvl || 1;
     window._internalPlayerData.accountLevel = Math.max(1, incomingLevel);
     
-    // Sanitize any corrupted legacy XP overflow
+    // Fixed: Properly process incoming XP and handle level-ups on load instead of wiping it
     let incomingXp = typeof newData.accountXp !== 'undefined' ? newData.accountXp : 0;
-    const maxAllowedXp = window._internalPlayerData.accountLevel * window._internalPlayerData.accountLevel * 200;
-    if (incomingXp >= maxAllowedXp) {
-        incomingXp = 0; 
+    let currentLevel = window._internalPlayerData.accountLevel;
+    let requiredXp = currentLevel * 250;
+    
+    while (incomingXp >= requiredXp) {
+        incomingXp -= requiredXp;
+        currentLevel++;
+        requiredXp = currentLevel * 250;
     }
+    
+    window._internalPlayerData.accountLevel = currentLevel;
     window._internalPlayerData.accountXp = incomingXp;
 
     window._internalPlayerData.dex = newData.dex || window._internalPlayerData.dex || [];
@@ -61,7 +67,7 @@ function setPlayerData(newData) {
     window._internalPlayerData.luckyEggs = typeof newData.luckyEggs !== 'undefined' ? newData.luckyEggs : (window._internalPlayerData.luckyEggs || 0);
 }
 
-// Safe Progressive XP System (Strictly max 1 level-up per action)
+// Balanced XP Curve
 window.addAccountXp = function(amount) {
     const hasLuckyEgg = window.activeLuckyEggTime && Date.now() < window.activeLuckyEggTime;
     const finalXp = hasLuckyEgg ? amount * 2 : amount;
@@ -69,13 +75,14 @@ window.addAccountXp = function(amount) {
     window._internalPlayerData.accountXp = (window._internalPlayerData.accountXp || 0) + finalXp;
     
     let currentLevel = window._internalPlayerData.accountLevel || 1;
-    let requiredXp = currentLevel * currentLevel * 200;
+    let requiredXp = currentLevel * 250;
     
-    // Changed from 'while' to 'if' so you can only gain 1 level at a time per action
-    if (window._internalPlayerData.accountXp >= requiredXp) {
+    while (window._internalPlayerData.accountXp >= requiredXp) {
         window._internalPlayerData.accountXp -= requiredXp;
-        window._internalPlayerData.accountLevel = currentLevel + 1;
-        console.log(`🎉 Account leveled up to Level ${window._internalPlayerData.accountLevel}!`);
+        window._internalPlayerData.accountLevel = (window._internalPlayerData.accountLevel || 1) + 1;
+        currentLevel = window._internalPlayerData.accountLevel;
+        requiredXp = currentLevel * 250;
+        console.log(`🎉 Account leveled up to Level ${currentLevel}!`);
     }
 
     window.saveGameData();
@@ -412,8 +419,8 @@ window.addToDex = function(creature) {
         window.playerData.dex.push(creature.name);
     }
 
-    // Give 10 XP for catching a rot
-    window.addAccountXp(10);
+    // Give 20 XP for catching a rot
+    window.addAccountXp(20);
 
     window.saveGameData();
     updateHUD();
@@ -439,6 +446,7 @@ function updateHUD() {
     const hudTitle = document.getElementById('hudTitle');
     const accLvlEls = document.querySelectorAll('#accLvl, .accLvlDisplay, #accountLevelVal, #widgetAccLevel');
     const widgetXpBar = document.getElementById('widgetXpBar');
+    const widgetXpText = document.getElementById('widgetXpText');
 
     const totalPossible = (typeof brainrotCharacters !== 'undefined' && brainrotCharacters) ? brainrotCharacters.length : 0;
     const dexCount = (window.playerData.dex) ? window.playerData.dex.length : 0;
@@ -452,7 +460,8 @@ function updateHUD() {
     
     const currentLevel = window.playerData.accountLevel || 1;
     const currentXp = window.playerData.accountXp || 0;
-    const requiredXp = currentLevel * currentLevel * 200;
+    const requiredXp = currentLevel * 250;
+    
     const xpPercent = Math.min(100, Math.max(0, (currentXp / requiredXp) * 100));
 
     accLvlEls.forEach(el => {
@@ -461,6 +470,10 @@ function updateHUD() {
 
     if (widgetXpBar) {
         widgetXpBar.style.width = xpPercent + '%';
+    }
+
+    if (widgetXpText) {
+        widgetXpText.innerText = `${currentXp} / ${requiredXp}`;
     }
 
     const widgetUsername = document.getElementById('widgetUsername');

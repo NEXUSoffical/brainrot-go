@@ -1,119 +1,185 @@
-// account.js - Player Account Level, XP, Lucky Eggs & Walking Packs System
 
-if (typeof playerData !== 'undefined' && typeof playerData.accountLevel === 'undefined') {
-  playerData.accountLevel = 1;
-  playerData.accountXp = 0;
-  playerData.accountXpMax = 100;
-  playerData.luckyEggs = 1; // Start with 1 Lucky Egg
-  playerData.luckyEggExpiry = 0; // Timestamp when double XP runs out
-  playerData.walkingPacks = []; // Packs waiting to be walked open
+// account.js - Core Account Management & Authentication Logic
+
+if (typeof window.isSignUpMode === 'undefined') {
+    window.isSignUpMode = false;
+}
+if (typeof window.selectedStarter === 'undefined') {
+    window.selectedStarter = null;
 }
 
-window.addAccountXp = function(amount) {
-  if (!playerData) return;
-  
-  playerData.accountLevel = playerData.accountLevel || 1;
-  playerData.accountXp = playerData.accountXp || 0;
-  playerData.accountXpMax = playerData.accountXpMax || 100;
-
-  // Check if Lucky Egg double XP is active
-  let multiplier = 1;
-  if (playerData.luckyEggExpiry && Date.now() < playerData.luckyEggExpiry) {
-    multiplier = 2;
-  }
-
-  let finalXp = amount * multiplier;
-  playerData.accountXp += finalXp;
-
-  let leveledUp = false;
-  while (playerData.accountXp >= playerData.accountXpMax) {
-    playerData.accountXp -= playerData.accountXpMax;
-    playerData.accountLevel++;
-    playerData.accountXpMax = Math.floor(playerData.accountXpMax * 1.5);
-    leveledUp = true;
-  }
-
-  if (leveledUp) {
-    playerData.revivePotions = (playerData.revivePotions || 0) + 1;
-    playerData.luckyEggs = (playerData.luckyEggs || 0) + 1;
+// Toggle between Login and Sign Up modes on the UI modal
+window.toggleAuthMode = function() {
+    window.isSignUpMode = !window.isSignUpMode;
+    const starterSec = document.getElementById('starterSection');
+    const toggleText = document.getElementById('loginToggleText');
     
-    if (!playerData.walkingPacks) playerData.walkingPacks = [];
-    playerData.walkingPacks.push({
-      id: Date.now(),
-      targetDistance: 1000, // 1000 meters walk required
-      currentDistance: 0,
-      opened: false
-    });
+    if (window.isSignUpMode) {
+        if (starterSec) starterSec.style.display = 'block';
+        if (toggleText) toggleText.innerText = "Already have an account? Click here to Log In";
+    } else {
+        if (starterSec) starterSec.style.display = 'none';
+        if (toggleText) toggleText.innerText = "New player? Click here to Sign Up";
+    }
+};
+
+// Handle manual username/password login or registration action
+window.handleAccountAction = async function() {
+    const usernameInput = document.getElementById('usernameInput');
+    const passwordInput = document.getElementById('passwordInput');
     
-    alert(`🎉 ACCOUNT LEVEL UP!\nYou reached Account Level ${playerData.accountLevel}!\n\n🎁 REWARDS:\n+1 Revive Potion 🧪\n+1 Lucky Egg 🥚 (Double XP for 1hr)\n+1 Walking Pack 🎒 (Walk to unlock!)`);
-  }
+    const rawUsername = usernameInput ? usernameInput.value.trim().toLowerCase() : "";
+    const password = passwordInput ? passwordInput.value.trim() : "";
 
-  if (typeof window.saveGameData === 'function') {
-    window.saveGameData();
-  }
-  
-  updateAccountWidget();
-};
-
-window.useLuckyEgg = function() {
-  if (!playerData.luckyEggs || playerData.luckyEggs <= 0) {
-    alert("❌ You don't have any Lucky Eggs! Level up your account to get more.");
-    return;
-  }
-
-  playerData.luckyEggs--;
-  playerData.luckyEggExpiry = Date.now() + (60 * 60 * 1000); // 1 hour from now
-  alert("🥚 Lucky Egg activated! Double XP active for the next 1 hour!");
-  if (typeof window.saveGameData === 'function') window.saveGameData();
-};
-
-window.updateWalkingProgress = function(metersWalked) {
-  if (!playerData || !playerData.walkingPacks) return;
-
-  let unlockedPack = false;
-  playerData.walkingPacks.forEach(pack => {
-    if (!pack.opened && pack.currentDistance < pack.targetDistance) {
-      pack.currentDistance += metersWalked;
-      if (pack.currentDistance >= pack.targetDistance) {
-        unlockedPack = true;
-      }
+    if (!rawUsername || !password) {
+        alert("Please enter both username and password!");
+        return;
     }
-  });
 
-  if (unlockedPack) {
-    alert("🎁 A Walking Pack is ready to open!");
-  }
+    const email = rawUsername + "@brainrotgo.com";
+
+    try {
+        if (window.isSignUpMode) {
+            await firebase.auth().createUserWithEmailAndPassword(email, password);
+
+            if (!window.selectedStarter && typeof brainrotCharacters !== 'undefined') {
+                window.selectedStarter = brainrotCharacters[0];
+            }
+
+            const starterInstance = {
+                ...window.selectedStarter,
+                level: 1,
+                xp: 0,
+                maxHp: 50,
+                hp: 50
+            };
+
+            if (typeof setPlayerData === 'function') {
+                setPlayerData({
+                    username: rawUsername,
+                    rotBalance: 500,
+                    accountLevel: 1,
+                    accountXp: 0,
+                    dex: [window.selectedStarter.name],
+                    inventory: [starterInstance],
+                    activeFighterIndex: 0,
+                    revivePotions: 3,
+                    luckyEggs: 0
+                });
+            }
+
+            if (typeof window.saveGameData === 'function') {
+                await window.saveGameData();
+            }
+            alert(`Account created successfully! Welcome, ${rawUsername}!`);
+        } else {
+            await firebase.auth().signInWithEmailAndPassword(email, password);
+
+            const docRef = firebase.firestore().collection('accounts').doc(rawUsername);
+            const doc = await docRef.get();
+
+            if (doc.exists && typeof setPlayerData === 'function') {
+                setPlayerData(doc.data());
+                if (window.playerData && !window.playerData.dex) window.playerData.dex = [];
+                if (window.playerData && !window.playerData.inventory) window.playerData.inventory = [];
+            }
+            
+            localStorage.setItem('brainrot_logged_in_user', rawUsername);
+        }
+
+        const loginModal = document.getElementById('loginModal');
+        if (loginModal) loginModal.style.display = 'none';
+        if (typeof updateHUD === 'function') updateHUD();
+    } catch (err) {
+        console.error("Authentication error:", err);
+        if (err.code === 'auth/email-already-in-use') {
+            alert("Username already exists! Please log in instead.");
+        } else if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+            alert("Invalid username or password!");
+        } else {
+            alert("Error: " + err.message);
+        }
+    }
 };
 
-function updateAccountWidget() {
-  if (typeof playerData === 'undefined') return;
+// Handle Google Sign-In authentication flow
+window.signInWithGoogle = async function() {
+    try {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        const result = await firebase.auth().signInWithPopup(provider);
+        const user = result.user;
 
-  // Update old HUD text element if it exists
-  const lvlEl = document.getElementById('accountLevelVal');
-  if (lvlEl) lvlEl.innerText = playerData.accountLevel || 1;
+        const rawUsername = user.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
 
-  // Update top-right profile widget elements
-  const widgetLvlEl = document.getElementById('widgetAccLevel');
-  if (widgetLvlEl) widgetLvlEl.innerText = playerData.accountLevel || 1;
+        const docRef = firebase.firestore().collection('accounts').doc(rawUsername);
+        const doc = await docRef.get();
 
-  const nameEl = document.getElementById('widgetUsername');
-  if (nameEl) nameEl.innerText = playerData.username || "Player";
+        if (!doc.exists) {
+            if (!window.selectedStarter && typeof brainrotCharacters !== 'undefined') {
+                window.selectedStarter = brainrotCharacters[0];
+            }
 
-  const xpBar = document.getElementById('widgetXpBar');
-  if (xpBar) {
-    const current = playerData.accountXp || 0;
-    const max = playerData.accountXpMax || 100;
-    const pct = Math.min(100, Math.max(0, (current / max) * 100));
-    xpBar.style.width = pct + '%';
-  }
+            const starterInstance = {
+                ...window.selectedStarter,
+                level: 1,
+                xp: 0,
+                maxHp: 50,
+                hp: 50
+            };
 
-  const activeImg = document.getElementById('widgetActiveRotImg');
-  if (activeImg && playerData.inventory && playerData.inventory.length > 0) {
-    const activeFighter = playerData.inventory[playerData.activeFighterIndex || 0];
-    if (activeFighter && activeFighter.image) {
-      activeImg.src = activeFighter.image;
+            if (typeof setPlayerData === 'function') {
+                setPlayerData({
+                    username: rawUsername,
+                    rotBalance: 500,
+                    accountLevel: 1,
+                    accountXp: 0,
+                    dex: [window.selectedStarter.name],
+                    inventory: [starterInstance],
+                    activeFighterIndex: 0,
+                    revivePotions: 3,
+                    luckyEggs: 0
+                });
+            }
+
+            const cleanDataString = JSON.stringify(window._internalPlayerData || window.playerData, (key, value) => {
+                if (key === 'marker' || key === '_popup' || key === '_source') return undefined;
+                return value;
+            });
+            await docRef.set(JSON.parse(cleanDataString));
+        } else if (typeof setPlayerData === 'function') {
+            setPlayerData(doc.data());
+            if (window.playerData && !window.playerData.dex) window.playerData.dex = [];
+            if (window.playerData && !window.playerData.inventory) window.playerData.inventory = [];
+        }
+
+        localStorage.setItem('brainrot_logged_in_user', rawUsername);
+        
+        const loginModal = document.getElementById('loginModal');
+        if (loginModal) loginModal.style.display = 'none';
+        if (typeof updateHUD === 'function') updateHUD();
+
+    } catch (err) {
+        console.error("Google Auth Error:", err);
+        alert("Error signing in with Google. Make sure popups aren't blocked!");
     }
-  }
-}
+};
 
-setInterval(updateAccountWidget, 1000);
+// Log out user and clear session storage
+window.logoutAccount = async function() {
+    localStorage.removeItem('brainrot_logged_in_user');
+    localStorage.removeItem('brainrot_local_backup');
+    
+    if (window._internalPlayerData) {
+        window._internalPlayerData.username = "";
+    }
+    
+    try {
+        if (typeof firebase !== 'undefined' && firebase.auth) {
+            await firebase.auth().signOut();
+        }
+    } catch (e) {
+        console.warn("Firebase signout error:", e);
+    }
+    
+    window.location.href = window.location.pathname;
+};

@@ -23,31 +23,51 @@ function getRandomLevel() {
   }
 }
 
-// 1. Get a random brainrot character safely with fallback
+// 1. Get a random brainrot character safely with true "stupid lucky" grind rates for OG and Secret
 function getRandomBrainrot() {
   if (typeof brainrotCharacters === 'undefined' || !Array.isArray(brainrotCharacters)) {
     return { name: "Noobini Pizzanini", rarity: "common", reward: 1, image: "brainrots/noobini_pizzanini.png" };
   }
 
+  // Only pick characters that actually have an image file assigned
   const validCharacters = brainrotCharacters.filter(char => char && char.image && char.image.trim() !== "");
   if (validCharacters.length === 0) {
     return { name: "Noobini Pizzanini", rarity: "common", reward: 1, image: "brainrots/noobini_pizzanini.png" };
   }
 
-  const weightedPool = [];
-  validCharacters.forEach(char => {
-    const rarity = (char.rarity || 'common').toLowerCase();
-    if (rarity === 'rare') {
-      weightedPool.push(char);
-    } else {
-      for (let i = 0; i < 4; i++) {
-        weightedPool.push(char);
-      }
-    }
-  });
+  // Group valid characters by rarity tier
+  const byRarity = {
+    og: validCharacters.filter(c => (c.rarity || '').toLowerCase() === 'og'),
+    secret: validCharacters.filter(c => (c.rarity || '').toLowerCase() === 'secret'),
+    epic: validCharacters.filter(c => (c.rarity || '').toLowerCase() === 'epic'),
+    rare: validCharacters.filter(c => (c.rarity || '').toLowerCase() === 'rare'),
+    common: validCharacters.filter(c => (c.rarity || '').toLowerCase() === 'common')
+  };
 
-  const randomIndex = Math.floor(Math.random() * weightedPool.length);
-  return weightedPool[randomIndex];
+  // Roll a precise random number between 0 and 10,000
+  const roll = Math.random() * 10000;
+  let chosenRarity = 'common';
+
+  if (roll < 5 && byRarity.og.length > 0) {
+    chosenRarity = 'og'; // 0.05% (Extremely rare / Stupid lucky)
+  } else if (roll < 50 && byRarity.secret.length > 0) {
+    chosenRarity = 'secret'; // 0.45% (Heavy grind)
+  } else if (roll < 550 && byRarity.epic.length > 0) {
+    chosenRarity = 'epic'; // 5%
+  } else if (roll < 2500 && byRarity.rare.length > 0) {
+    chosenRarity = 'rare'; // 19.5%
+  } else {
+    chosenRarity = 'common'; // 75%
+  }
+
+  // Fallback just in case a tier has no active images yet
+  let pool = byRarity[chosenRarity];
+  if (!pool || pool.length === 0) {
+    pool = byRarity.common.length > 0 ? byRarity.common : validCharacters;
+  }
+
+  const randomIndex = Math.floor(Math.random() * pool.length);
+  return pool[randomIndex];
 }
 
 // Helper to get rarity color for the cards
@@ -133,7 +153,6 @@ function spawnSingleCreature(lat, lng) {
     return;
   }
 
-  // 🚨 NO MORE HOUSE NUMBERS! If we don't know where the player is, CANCEL THE SPAWN!
   let currentLat = lat;
   let currentLng = lng;
 
@@ -142,7 +161,7 @@ function spawnSingleCreature(lat, lng) {
           currentLat = playerLat;
           currentLng = playerLng;
       } else {
-          return; // Abort spawn! Don't throw them at a random house!
+          return; 
       }
   }
 
