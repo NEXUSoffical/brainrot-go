@@ -67,7 +67,6 @@ function injectShinyStyles() {
   document.head.appendChild(style);
 }
 
-// Automatically inject styles on script load
 injectShinyStyles();
 
 function getRandomLevel() {
@@ -85,58 +84,70 @@ function getRandomLevel() {
   }
 }
 
-// 1. Get a random brainrot character safely with true "stupid lucky" grind rates for OG and Secret
+// 1. Get a random brainrot character safely with strict normalized rarity pools & diagnostics
 function getRandomBrainrot() {
   if (typeof brainrotCharacters === 'undefined' || !Array.isArray(brainrotCharacters)) {
+    console.warn("⚠️ brainrotCharacters is missing or not an array!");
     return { name: "Noobini Pizzanini", rarity: "common", reward: 1, image: "brainrots/noobini_pizzanini.png" };
   }
 
-  // Only pick characters that actually have an image file assigned
   const validCharacters = brainrotCharacters.filter(char => char && char.image && char.image.trim() !== "");
   if (validCharacters.length === 0) {
     return { name: "Noobini Pizzanini", rarity: "common", reward: 1, image: "brainrots/noobini_pizzanini.png" };
   }
 
-  // Group valid characters by rarity tier
+  const normalizedCharacters = validCharacters.map(char => ({
+    ...char,
+    rarity: (char.rarity || 'common').toLowerCase()
+  }));
+
   const byRarity = {
-    og: validCharacters.filter(c => (c.rarity || '').toLowerCase() === 'og'),
-    secret: validCharacters.filter(c => (c.rarity || '').toLowerCase() === 'secret'),
-    epic: validCharacters.filter(c => (c.rarity || '').toLowerCase() === 'epic'),
-    rare: validCharacters.filter(c => (c.rarity || '').toLowerCase() === 'rare'),
-    common: validCharacters.filter(c => (c.rarity || '').toLowerCase() === 'common')
+    og: normalizedCharacters.filter(c => c.rarity === 'og'),
+    secret: normalizedCharacters.filter(c => c.rarity === 'secret'),
+    epic: normalizedCharacters.filter(c => c.rarity === 'epic'),
+    rare: normalizedCharacters.filter(c => c.rarity === 'rare'),
+    common: normalizedCharacters.filter(c => c.rarity === 'common' || !['og', 'secret', 'epic', 'rare'].includes(c.rarity))
   };
 
-  // Roll a precise random number between 0 and 10,000
-  const roll = Math.random() * 10000;
-  let chosenRarity = 'common';
+  console.log(`📊 Rarity Pool Counts -> OG: ${byRarity.og.length} | Secret: ${byRarity.secret.length} | Epic: ${byRarity.epic.length} | Rare: ${byRarity.rare.length} | Common: ${byRarity.common.length}`);
 
-  if (roll < 5 && byRarity.og.length > 0) {
-    chosenRarity = 'og'; // 0.05% (Extremely rare / Stupid lucky)
-  } else if (roll < 50 && byRarity.secret.length > 0) {
-    chosenRarity = 'secret'; // 0.45% (Heavy grind)
-  } else if (roll < 550 && byRarity.epic.length > 0) {
-    chosenRarity = 'epic'; // 5%
-  } else if (roll < 2500 && byRarity.rare.length > 0) {
-    chosenRarity = 'rare'; // 19.5%
+  let chosenRarity = 'common';
+  
+  // TESTING TOGGLE DISABLED: Normal live production rates active
+  const FORCE_RARITY_TEST = null; 
+
+  if (FORCE_RARITY_TEST && byRarity[FORCE_RARITY_TEST] && byRarity[FORCE_RARITY_TEST].length > 0) {
+    chosenRarity = FORCE_RARITY_TEST;
   } else {
-    chosenRarity = 'common'; // 75%
+    const roll = Math.random() * 10000;
+    if (roll < 5 && byRarity.og.length > 0) {
+      chosenRarity = 'og'; // 0.05%
+    } else if (roll < 50 && byRarity.secret.length > 0) {
+      chosenRarity = 'secret'; // 0.45%
+    } else if (roll < 550 && byRarity.epic.length > 0) {
+      chosenRarity = 'epic'; // 5%
+    } else if (roll < 2500 && byRarity.rare.length > 0) {
+      chosenRarity = 'rare'; // 19.5%
+    } else {
+      chosenRarity = 'common'; // 75%
+    }
   }
 
-  // Fallback just in case a tier has no active images yet
   let pool = byRarity[chosenRarity];
   if (!pool || pool.length === 0) {
-    pool = byRarity.common.length > 0 ? byRarity.common : validCharacters;
+    pool = byRarity.common.length > 0 ? byRarity.common : normalizedCharacters;
   }
 
   const randomIndex = Math.floor(Math.random() * pool.length);
-  return pool[randomIndex];
+  const selected = pool[randomIndex];
+  console.log(`🎲 Rolled Rarity: [${chosenRarity.toUpperCase()}], Selected Rot: ${selected.name}`);
+  return selected;
 }
 
-// Helper to get rarity color for the cards
 function getRarityColor(rarity) {
   switch ((rarity || '').toLowerCase()) {
-    case 'og': return '#ffd700';        // Brilliant Gold for ultimate OGs
-    case 'secret': return '#ff00ea';    // Neon Magenta for Secrets
+    case 'og': return '#ffd700';        
+    case 'secret': return '#ff00ea';    
     case 'mythic': return '#9900ff';    
     case 'legendary': return '#ffaa00'; 
     case 'epic': return '#0088ff';      
@@ -146,15 +157,13 @@ function getRarityColor(rarity) {
   }
 }
 
-// Play an epic synthesized chime sound for ultra-rare or shiny spawns
 function playUltraRareSpawnSound() {
   try {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     if (!AudioContext) return;
     const ctx = new AudioContext();
 
-    // Play a sequence of sparkling legendary tones
-    const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+    const notes = [523.25, 659.25, 783.99, 1046.50];
     notes.forEach((freq, index) => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
@@ -171,24 +180,19 @@ function playUltraRareSpawnSound() {
       osc.start(ctx.currentTime + (index * 0.1));
       osc.stop(ctx.currentTime + (index * 0.1) + 0.4);
     });
-  } catch (e) {
-    // Audio context restricted before user interaction
-  }
+  } catch (e) {}
 }
 
-// Global function to trigger battle from the popup with strict proximity check
 window.startEncounter = function(name, rarity, reward, imageUrl, level, maxHp, isShiny) {
-  // Find the exact active entry in our array
   const matchedEntry = spawnedCreatures.find(c => c.data.name === name && c.data.level === Number(level) && (c.data.shiny ? '1' : '0') === String(isShiny) && !c.captured);
   
   if (matchedEntry) {
-    // Check distance from player to the creature (must be within 30 meters)
     const pLat = typeof playerLat !== 'undefined' ? playerLat : null;
     const pLng = typeof playerLng !== 'undefined' ? playerLng : null;
 
     if (pLat !== null && pLng !== null && typeof map !== 'undefined' && map && typeof map.distance === 'function') {
       const distanceMeters = map.distance([pLat, pLng], [matchedEntry.lat, matchedEntry.lng]);
-      if (distanceMeters > 30) {
+      if (distanceMeters > 35) {
         alert("You are too far away! Get closer to battle this Brainrot.");
         return;
       }
@@ -262,9 +266,7 @@ function spawnSingleCreature(lat, lng) {
   const characterTemplate = getRandomBrainrot();
   const level = getRandomLevel();
   
-  // 1 in 500 chance (0.2%) to spawn an ultra-rare Diamond Shiny Rot!
   const isShiny = Math.random() < 0.002;
-  
   const baseReward = Number(characterTemplate.reward) || 1;
   const maxHp = (50 + (level - 1) * 12) * (isShiny ? 2 : 1);
 
@@ -280,12 +282,10 @@ function spawnSingleCreature(lat, lng) {
   const rarityLower = (creatureInstance.rarity || '').toLowerCase();
   const isUltraRare = rarityLower === 'og' || rarityLower === 'secret' || isShiny;
 
-  // Trigger legendary audio chime if an ultra-rare or shiny card spawns!
   if (isUltraRare) {
     playUltraRareSpawnSound();
   }
 
-  // Keep spawns close to the player (within ~30-40 meters max)
   const offsetLat = (Math.random() - 0.5) * 0.0003;
   const offsetLng = (Math.random() - 0.5) * 0.0003;
   
@@ -456,7 +456,6 @@ function spawnSingleCreature(lat, lng) {
   spawnedCreatures.push(spawnedEntry);
 }
 
-// Strict cap limit of max 3 active creatures on screen at a time
 function spawnBatch(playerLat, playerLng, count = 1) {
   const maxActive = 3;
   if (spawnedCreatures.length >= maxActive) return;
@@ -469,8 +468,7 @@ function spawnBatch(playerLat, playerLng, count = 1) {
   }
 }
 
-// Strict proximity clean-up: remove creatures if player walks more than 25 meters away
-function cleanUpFarCreatures(pLat, pLng, maxDistanceMeters = 25) {
+function cleanUpFarCreatures(pLat, pLng, maxDistanceMeters = 45) {
   const currentLat = pLat !== undefined ? pLat : (typeof playerLat !== 'undefined' ? playerLat : null);
   const currentLng = pLng !== undefined ? pLng : (typeof playerLng !== 'undefined' ? playerLng : null);
 
@@ -508,12 +506,11 @@ function initSpawner() {
 
     cleanUpFarCreatures(currentPos.lat, currentPos.lng);
 
-    // Maintain a maximum of 3 spawns nearby
     if (spawnedCreatures.length < 3) {
       spawnBatch(currentPos.lat, currentPos.lng, 1);
       window.activeCreatures = spawnedCreatures;
     }
-  }, 3000);
+  }, 4000);
 }
 
 document.addEventListener('DOMContentLoaded', () => {

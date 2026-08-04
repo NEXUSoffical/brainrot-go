@@ -9,6 +9,9 @@ if (typeof window.selectedStarter === 'undefined') {
 if (typeof window.currentInventoryTab === 'undefined') {
     window.currentInventoryTab = 'rots';
 }
+if (typeof window.currentDexTab === 'undefined') {
+    window.currentDexTab = 'standard';
+}
 
 // 🛡️ SECURE STATE WRAPPER (ANTI-CHEAT GUARD DOG)
 if (!window._internalPlayerData) {
@@ -18,6 +21,7 @@ if (!window._internalPlayerData) {
         accountLevel: 1,
         accountXp: 0,
         dex: [],         
+        shinyDex: [],    
         inventory: [],   
         activeFighterIndex: 0,
         revivePotions: 3,
@@ -46,7 +50,6 @@ function setPlayerData(newData) {
     const incomingLevel = newData.accountLevel || newData.accLvl || 1;
     window._internalPlayerData.accountLevel = Math.max(1, incomingLevel);
     
-    // Fixed: Properly process incoming XP and handle level-ups on load instead of wiping it
     let incomingXp = typeof newData.accountXp !== 'undefined' ? newData.accountXp : 0;
     let currentLevel = window._internalPlayerData.accountLevel;
     let requiredXp = currentLevel * 250;
@@ -61,6 +64,7 @@ function setPlayerData(newData) {
     window._internalPlayerData.accountXp = incomingXp;
 
     window._internalPlayerData.dex = newData.dex || window._internalPlayerData.dex || [];
+    window._internalPlayerData.shinyDex = newData.shinyDex || window._internalPlayerData.shinyDex || [];
     window._internalPlayerData.inventory = newData.inventory || window._internalPlayerData.inventory || [];
     window._internalPlayerData.activeFighterIndex = typeof newData.activeFighterIndex !== 'undefined' ? newData.activeFighterIndex : (window._internalPlayerData.activeFighterIndex || 0);
     window._internalPlayerData.revivePotions = typeof newData.revivePotions !== 'undefined' ? newData.revivePotions : (window._internalPlayerData.revivePotions || 3);
@@ -134,11 +138,12 @@ window.loadGameData = async function() {
                 const cloudData = doc.data();
                 
                 const mergedDex = Array.from(new Set([...(localData?.dex || []), ...(cloudData.dex || [])]));
+                const mergedShinyDex = Array.from(new Set([...(localData?.shinyDex || []), ...(cloudData.shinyDex || [])]));
                 
                 const inventoryMap = new Map();
                 const allItems = [...(cloudData.inventory || []), ...(localData?.inventory || [])];
                 allItems.forEach(item => {
-                    const key = item.name;
+                    const key = item.name + (item.shiny ? '_shiny' : '_std');
                     const existing = inventoryMap.get(key);
                     if (!existing || 
                         (item.level || 1) > (existing.level || 1) || 
@@ -174,6 +179,7 @@ window.loadGameData = async function() {
                     accountLevel: bestAccountLevel,
                     accountXp: bestAccountXp,
                     dex: mergedDex,
+                    shinyDex: mergedShinyDex,
                     inventory: mergedInventory,
                     activeFighterIndex: cloudData.activeFighterIndex || localData?.activeFighterIndex || 0,
                     revivePotions: bestRevives,
@@ -188,6 +194,7 @@ window.loadGameData = async function() {
     }
 
     if (!window.playerData.dex) window.playerData.dex = [];
+    if (!window.playerData.shinyDex) window.playerData.shinyDex = [];
     if (!window.playerData.inventory) window.playerData.inventory = [];
 };
 
@@ -277,7 +284,8 @@ window.handleAccountAction = async function() {
                 level: 1,
                 xp: 0,
                 maxHp: 50,
-                hp: 50
+                hp: 50,
+                shiny: false
             };
 
             setPlayerData({
@@ -286,6 +294,7 @@ window.handleAccountAction = async function() {
                 accountLevel: 1,
                 accountXp: 0,
                 dex: [window.selectedStarter.name],
+                shinyDex: [],
                 inventory: [starterInstance],
                 activeFighterIndex: 0,
                 revivePotions: 3,
@@ -303,6 +312,7 @@ window.handleAccountAction = async function() {
             if (doc.exists) {
                 setPlayerData(doc.data());
                 if (!window.playerData.dex) window.playerData.dex = [];
+                if (!window.playerData.shinyDex) window.playerData.shinyDex = [];
                 if (!window.playerData.inventory) window.playerData.inventory = [];
             }
             
@@ -345,7 +355,8 @@ window.signInWithGoogle = async function() {
                 level: 1,
                 xp: 0,
                 maxHp: 50,
-                hp: 50
+                hp: 50,
+                shiny: false
             };
 
             setPlayerData({
@@ -354,6 +365,7 @@ window.signInWithGoogle = async function() {
                 accountLevel: 1,
                 accountXp: 0,
                 dex: [window.selectedStarter.name],
+                shinyDex: [],
                 inventory: [starterInstance],
                 activeFighterIndex: 0,
                 revivePotions: 3,
@@ -368,6 +380,7 @@ window.signInWithGoogle = async function() {
         } else {
             setPlayerData(doc.data());
             if (!window.playerData.dex) window.playerData.dex = [];
+            if (!window.playerData.shinyDex) window.playerData.shinyDex = [];
             if (!window.playerData.inventory) window.playerData.inventory = [];
         }
 
@@ -402,9 +415,11 @@ window.logoutAccount = async function() {
 window.addToDex = function(creature) {
     if (!window.playerData.inventory) window.playerData.inventory = [];
     if (!window.playerData.dex) window.playerData.dex = [];
+    if (!window.playerData.shinyDex) window.playerData.shinyDex = [];
 
     const rotLevel = creature.level || 1;
     const rotMaxHp = creature.maxHp || (50 + (rotLevel - 1) * 12);
+    const isShiny = creature.shiny === true;
 
     window.playerData.inventory.push({
         ...creature,
@@ -412,11 +427,18 @@ window.addToDex = function(creature) {
         level: rotLevel,
         xp: creature.xp || 0,
         maxHp: rotMaxHp,
-        hp: rotMaxHp
+        hp: rotMaxHp,
+        shiny: isShiny
     });
 
-    if (!window.playerData.dex.includes(creature.name)) {
-        window.playerData.dex.push(creature.name);
+    if (isShiny) {
+        if (!window.playerData.shinyDex.includes(creature.name)) {
+            window.playerData.shinyDex.push(creature.name);
+        }
+    } else {
+        if (!window.playerData.dex.includes(creature.name)) {
+            window.playerData.dex.push(creature.name);
+        }
     }
 
     // Give 20 XP for catching a rot
@@ -449,14 +471,19 @@ function updateHUD() {
     const widgetXpText = document.getElementById('widgetXpText');
 
     const totalPossible = (typeof brainrotCharacters !== 'undefined' && brainrotCharacters) ? brainrotCharacters.length : 0;
-    const dexCount = (window.playerData.dex) ? window.playerData.dex.length : 0;
+    
+    // Choose active count depending on active dex view tab
+    const dexCount = (window.currentDexTab === 'shiny') 
+        ? ((window.playerData.shinyDex) ? window.playerData.shinyDex.length : 0)
+        : ((window.playerData.dex) ? window.playerData.dex.length : 0);
+
     const inventoryCount = (window.playerData.inventory) ? window.playerData.inventory.length : 0;
 
     if (dexCountEl) dexCountEl.innerText = dexCount;
     if (totalBrainrotsEl) totalBrainrotsEl.innerText = totalPossible;
     if (inventoryCountEl) inventoryCountEl.innerText = inventoryCount;
     if (rotBalanceEl) rotBalanceEl.innerText = window.playerData.rotBalance || 500;
-    if (hudTitle && window.playerData.username) hudTitle.innerText = `🕹️ ${window.playerData.username.toUpperCase()}`;
+    if (hudTitle && window.playerData.username) hudTitle.innerText = `🖥️ ${window.playerData.username.toUpperCase()}`;
     
     const currentLevel = window.playerData.accountLevel || 1;
     const currentXp = window.playerData.accountXp || 0;
@@ -553,6 +580,7 @@ function renderInventoryGrid() {
             const isActive = window.playerData.activeFighterIndex === index;
             const isFainted = rot.fainted === true;
             const isInGym = rot.inGym === true;
+            const isShiny = rot.shiny === true;
             const rarityColor = window.getRarityColor(rot.rarity);
             const rotLevel = rot.level || 1;
             const requiredXp = rotLevel * 100;
@@ -560,18 +588,20 @@ function renderInventoryGrid() {
 
             const card = document.createElement('div');
             card.style.cssText = `
-                background: ${isInGym ? '#1a222a' : (isFainted ? '#2a1a1a' : (isActive ? '#1a3a1a' : '#222'))};
-                border: 2px solid ${isInGym ? '#00ccff' : (isFainted ? '#ff0055' : (isActive ? '#00ff00' : rarityColor))};
+                background: ${isInGym ? '#1a222a' : (isFainted ? '#2a1a1a' : (isShiny ? 'linear-gradient(135deg, #0a1828, #1a3550)' : (isActive ? '#1a3a1a' : '#222')))};
+                border: 2px solid ${isInGym ? '#00ccff' : (isFainted ? '#ff0055' : (isShiny ? '#00ffff' : (isActive ? '#00ff00' : rarityColor)))};
                 border-radius: 8px;
                 padding: 8px;
                 text-align: center;
+                box-shadow: ${isShiny ? '0 0 10px rgba(0,255,255,0.4)' : 'none'};
             `;
 
             card.innerHTML = `
-                <img src="${rot.image || ''}" style="width: 55px; height: 55px; object-fit: cover; border-radius: 4px; ${isFainted || isInGym ? 'filter: grayscale(100%);' : ''}" onerror="this.style.display='none';">
+                ${isShiny ? '<div style="font-size:0.6rem; color:#00ffff; font-family:monospace; font-weight:bold; margin-bottom:2px;">💎 SHINY</div>' : ''}
+                <img src="${rot.image || ''}" style="width: 55px; height: 55px; object-fit: cover; border-radius: 4px; ${isFainted || isInGym ? 'filter: grayscale(100%);' : (isShiny ? 'filter: brightness(1.2) contrast(2);' : '')}" onerror="this.style.display='none';">
                 <div style="font-size: 0.75rem; font-weight: bold; margin-top: 4px; color: #fff;">${rot.name}</div>
                 <div style="font-size: 0.65rem; color: ${isInGym ? '#00ccff' : (isFainted ? '#ff0055' : '#00ff00')};">
-                    ${isInGym ? '🏢 [IN GYM]' : (isFainted ? '💀 FAINTED' : 'Lvl ' + rotLevel)}
+                    ${isInGym ? '🏟️ [IN GYM]' : (isFainted ? '💀 FAINTED' : 'Lvl ' + rotLevel)}
                 </div>
                 ${!isFainted && !isInGym ? `
                 <div style="width: 100%; height: 3px; background: #111; margin-top: 4px; border-radius: 2px; overflow: hidden;">
@@ -762,12 +792,38 @@ window.transferRot = function(index) {
     }
 };
 
+window.switchDexTab = function(tabName) {
+    window.currentDexTab = tabName;
+    const btnStandard = document.getElementById('btnDexStandard');
+    const btnShiny = document.getElementById('btnDexShiny');
+    if (btnStandard && btnShiny) {
+        btnStandard.style.background = tabName === 'standard' ? '#00ccff' : '#222';
+        btnStandard.style.color = tabName === 'standard' ? '#000' : '#00ccff';
+        btnStandard.style.boxShadow = tabName === 'standard' ? '0 0 10px #00ccff' : 'none';
+
+        btnShiny.style.background = tabName === 'shiny' ? '#00ffff' : '#222';
+        btnShiny.style.color = tabName === 'shiny' ? '#000' : '#00ffff';
+        btnShiny.style.boxShadow = tabName === 'shiny' ? '0 0 10px #00ffff' : 'none';
+    }
+    renderDexGrid();
+    
+    const dexCountEl = document.getElementById('dexCount');
+    if (dexCountEl) {
+        if (tabName === 'shiny') {
+            dexCountEl.innerText = (window.playerData.shinyDex) ? window.playerData.shinyDex.length : 0;
+        } else {
+            dexCountEl.innerText = (window.playerData.dex) ? window.playerData.dex.length : 0;
+        }
+    }
+};
+
 function renderDexGrid() {
     const dexGrid = document.getElementById('dexGrid');
     if (!dexGrid || typeof brainrotCharacters === 'undefined' || !brainrotCharacters) return;
 
     dexGrid.innerHTML = '';
-    const unlockedDex = window.playerData.dex || [];
+    const isShinyTab = window.currentDexTab === 'shiny';
+    const unlockedDex = isShinyTab ? (window.playerData.shinyDex || []) : (window.playerData.dex || []);
 
     brainrotCharacters.forEach((char) => {
         const isUnlocked = unlockedDex.includes(char.name);
@@ -775,8 +831,8 @@ function renderDexGrid() {
         
         const card = document.createElement('div');
         card.style.cssText = `
-            background: ${isUnlocked ? `linear-gradient(135deg, #111, ${rarityColor}33)` : '#111'};
-            border: 2px solid ${isUnlocked ? rarityColor : '#333'};
+            background: ${isUnlocked ? (isShinyTab ? 'linear-gradient(135deg, #0a1828, #1a3550)' : `linear-gradient(135deg, #111, ${rarityColor}33)`) : '#111'};
+            border: 2px solid ${isUnlocked ? (isShinyTab ? '#00ffff' : rarityColor) : '#333'};
             border-radius: 8px;
             padding: 6px;
             display: flex;
@@ -784,15 +840,17 @@ function renderDexGrid() {
             align-items: center;
             justify-content: center;
             opacity: ${isUnlocked ? '1' : '0.3'};
+            box-shadow: ${isUnlocked && isShinyTab ? '0 0 12px rgba(0,255,255,0.4)' : 'none'};
         `;
 
         if (isUnlocked) {
             card.innerHTML = `
+                ${isShinyTab ? '<div style="font-size: 5.5px; color: #00ffff; font-family: monospace; font-weight: bold; margin-bottom: 1px;">💎 SHINY</div>' : ''}
                 <div style="width: 42px; height: 42px; background: #fff; border-radius: 4px; overflow: hidden; margin-bottom: 2px;">
-                    <img src="${char.image}" style="width: 100%; height: 100%; object-fit: cover;">
+                    <img src="${char.image}" style="width: 100%; height: 100%; object-fit: cover; ${isShinyTab ? 'filter: brightness(1.2) contrast(2);' : ''}">
                 </div>
                 <span style="font-size: 8.5px; color: #fff; font-family: monospace; font-weight: bold;">${char.name}</span>
-                <span style="font-size: 7px; color: ${rarityColor}; font-family: monospace; text-transform: uppercase;">${char.rarity}</span>
+                <span style="font-size: 7px; color: ${isShinyTab ? '#00ffff' : rarityColor}; font-family: monospace; text-transform: uppercase;">${isShinyTab ? 'DIAMOND' : char.rarity}</span>
             `;
         } else {
             card.innerHTML = `
@@ -846,6 +904,10 @@ window.openDex = function() {
         display: block !important;
     `;
 
+    const standardCount = (window.playerData.dex) ? window.playerData.dex.length : 0;
+    const shinyCount = (window.playerData.shinyDex) ? window.playerData.shinyDex.length : 0;
+    const currentCount = window.currentDexTab === 'shiny' ? shinyCount : standardCount;
+
     modal.innerHTML = `
         <div style="
             position: fixed !important;
@@ -864,12 +926,30 @@ window.openDex = function() {
             font-family: monospace !important;
             color: #fff !important;
         ">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <h2 style="color: #00ccff; font-size: 1.1rem; margin: 0;">📖 ROT-DEX STICKER BOOK</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <h2 style="color: #00ccff; font-size: 1.1rem; margin: 0;">📖 STICKER BOOK</h2>
                 <button onclick="closeDex()" style="background: #ff0055; color: #fff; border: none; width: 28px; height: 28px; border-radius: 50%; font-weight: bold; cursor: pointer;">✕</button>
             </div>
-            <p style="font-size: 0.7rem; color: #aaa; margin-bottom: 12px;">Collect all stickers by exploring and catching rots!</p>
-            <div id="dexGrid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-height: 280px; overflow-y: auto; margin-bottom: 15px; padding-right: 4px; background: #0a0a0a; padding: 10px; border-radius: 8px;"></div>
+            
+            <div style="display: flex; gap: 8px; justify-content: center; margin-bottom: 10px;">
+                <button onclick="switchDexTab('standard')" id="btnDexStandard" style="
+                    background: ${window.currentDexTab === 'standard' ? '#00ccff' : '#222'};
+                    color: ${window.currentDexTab === 'standard' ? '#000' : '#00ccff'};
+                    border: 2px solid #00ccff; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.75rem;
+                    box-shadow: ${window.currentDexTab === 'standard' ? '0 0 10px #00ccff' : 'none'};
+                    font-family: monospace;
+                ">📖 STANDARD DEX</button>
+                
+                <button onclick="switchDexTab('shiny')" id="btnDexShiny" style="
+                    background: ${window.currentDexTab === 'shiny' ? '#00ffff' : '#222'};
+                    color: ${window.currentDexTab === 'shiny' ? '#000' : '#00ffff'};
+                    border: 2px solid #00ffff; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.75rem;
+                    box-shadow: ${window.currentDexTab === 'shiny' ? '0 0 10px #00ffff' : 'none'};
+                    font-family: monospace;
+                ">💎 SHINY DEX</button>
+            </div>
+
+            <div id="dexGrid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-height: 260px; overflow-y: auto; margin-bottom: 15px; padding-right: 4px; background: #0a0a0a; padding: 10px; border-radius: 8px;"></div>
             <button onclick="closeDex()" style="background: #333; color: #fff; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%;">CLOSE</button>
         </div>
     `;
@@ -963,6 +1043,7 @@ window.renderAdminPanel = async function() {
             const isCurrent = username === activeUser;
             const invCount = acc.inventory ? acc.inventory.length : 0;
             const dexCount = acc.dex ? acc.dex.length : 0;
+            const shinyCount = acc.shinyDex ? acc.shinyDex.length : 0;
 
             const card = document.createElement('div');
             card.style.cssText = `
@@ -974,7 +1055,7 @@ window.renderAdminPanel = async function() {
                     <b style="color:${isCurrent ? '#00ff00' : '#fff'}; font-size:0.9rem;">${username} ${isCurrent ? '(ACTIVE)' : ''}</b>
                     <span style="font-size:0.75rem; color:#ffaa00;">💰 ${acc.rotBalance || 0} Rot</span>
                 </div>
-                <span style="font-size:0.75rem; color:#00ccff;">Inventory: ${invCount} Rots | Sticker Dex: ${dexCount} Unlocked</span>
+                <span style="font-size:0.75rem; color:#00ccff;">Inventory: ${invCount} | Dex: ${dexCount} | Shiny: ${shinyCount}</span>
             `;
             listEl.appendChild(card);
         });
