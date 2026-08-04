@@ -1,4 +1,4 @@
-// gyms.js - Shared World Meme Gyms System with Custom Defender Selection
+// gyms.js - Shared World Meme Gyms System with Custom Defender Selection & In-Gym Lock
 
 let gymMarkers = [];
 let activeGymId = null;
@@ -55,7 +55,7 @@ async function checkOrCreateNearbyGym(lat, lng) {
   }
 }
 
-// 🍄 SUPER-SIZED GLOWING GYM PINS 🍄
+// 🟢 SUPER-SIZED GLOWING GYM PINS 🟢
 function renderGymMarker(gymData) {
   if (gymMarkers.some(g => g.id === gymData.id)) return;
 
@@ -213,14 +213,21 @@ function openGymRotSelector(gymId) {
     gridHtml = '<p style="color: #aaa;">No rots in inventory!</p>';
   } else {
     playerData.inventory.forEach((rot, index) => {
+      // Skip rots that are already fainted or busy in another gym
+      const isUnavailable = rot.fainted || rot.inGym;
+      
       gridHtml += `
-        <div onclick="executeGymClaim('${gymId}', ${index})" style="
-          background: #222; border: 2px solid #00ff55; border-radius: 8px;
-          padding: 8px; cursor: pointer; text-align: center; transition: transform 0.1s;
+        <div onclick="${isUnavailable ? `alert('❌ This rot is unavailable (fainted or defending a gym)!')` : `executeGymClaim('${gymId}', ${index})`}" style="
+          background: ${isUnavailable ? '#1a1a1a' : '#222'}; 
+          border: 2px solid ${isUnavailable ? '#444' : '#00ff55'}; 
+          border-radius: 8px; padding: 8px; cursor: ${isUnavailable ? 'not-allowed' : 'pointer'}; 
+          text-align: center; opacity: ${isUnavailable ? '0.4' : '1'};
         ">
-          <img src="${rot.image}" style="width: 55px; height: 55px; object-fit: contain;">
+          <img src="${rot.image}" style="width: 55px; height: 55px; object-fit: contain; ${isUnavailable ? 'filter: grayscale(100%);' : ''}">
           <div style="font-size: 0.7rem; margin-top: 4px; font-weight: bold; color: #fff;">${rot.name}</div>
-          <div style="font-size: 0.6rem; color: #aaa;">Lvl ${rot.level || 1}</div>
+          <div style="font-size: 0.6rem; color: ${rot.inGym ? '#00ccff' : (rot.fainted ? '#ff0055' : '#aaa')};">
+            ${rot.inGym ? '🏢 [IN GYM]' : (rot.fainted ? '💀 FAINTED' : 'Lvl ' + (rot.level || 1))}
+          </div>
         </div>
       `;
     });
@@ -241,15 +248,28 @@ function openGymRotSelector(gymId) {
 
 window.executeGymClaim = async function(gymId, index) {
   let chosenRot = playerData.inventory[index];
-  if (!chosenRot) return;
+  if (!chosenRot || chosenRot.inGym || chosenRot.fainted) return;
 
   try {
+    // 🏢 LOCK THE ROT TO THE GYM 🏢
+    chosenRot.inGym = true;
+
+    // If the rot they just stationed was their active fighter, switch active fighter to someone else available
+    if (playerData.activeFighterIndex === index) {
+      const availableIndex = playerData.inventory.findIndex(r => !r.fainted && !r.inGym);
+      playerData.activeFighterIndex = availableIndex !== -1 ? availableIndex : 0;
+    }
+
     await db.collection('gyms').doc(gymId).update({
       defenderName: chosenRot.name,
       defenderImage: chosenRot.image,
       defenderLevel: chosenRot.level || 1,
       owner: playerData.username || "Player"
     });
+
+    if (typeof saveGameData === 'function') {
+      saveGameData();
+    }
 
     alert(`🎉 Victory! ${playerData.username} claimed the gym and stationed ${chosenRot.name} as the defender!`);
     
