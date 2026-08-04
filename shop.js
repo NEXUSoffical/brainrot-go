@@ -101,7 +101,13 @@ window.buyItem = function(itemType, cost) {
     balanceEl.innerHTML = `🪙 ${playerData.rotBalance}`;
   }
   
-  // 6. Update the main screen potion counter so they see it instantly!
+  // 6. UPDATE THE MAIN HUD UI (This was the missing piece!)
+  const mainBalanceEl = document.getElementById('rotBalance');
+  if (mainBalanceEl) {
+    mainBalanceEl.innerText = playerData.rotBalance;
+  }
+  
+  // 7. Update the main screen potion counter so they see it instantly!
   if (typeof updatePotionHud === 'function') {
     updatePotionHud();
   }
