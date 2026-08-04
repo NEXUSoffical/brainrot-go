@@ -70,7 +70,7 @@ function getRandomBrainrot() {
   return pool[randomIndex];
 }
 
-// Helper to get rarity color for the cards (OG gets brilliant gold, Secret gets neon magenta)
+// Helper to get rarity color for the cards
 function getRarityColor(rarity) {
   switch ((rarity || '').toLowerCase()) {
     case 'og': return '#ffd700';        // Brilliant Gold for ultimate OGs
@@ -81,6 +81,36 @@ function getRarityColor(rarity) {
     case 'rare': return '#00cc44';      
     case 'uncommon': return '#cccc00';  
     default: return '#888888';          
+  }
+}
+
+// Play an epic synthesized chime sound for ultra-rare spawns
+function playUltraRareSpawnSound() {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
+
+    // Play a sequence of sparkling legendary tones
+    const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+    notes.forEach((freq, index) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + (index * 0.1));
+      
+      gain.gain.setValueAtTime(0.2, ctx.currentTime + (index * 0.1));
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + (index * 0.1) + 0.4);
+      
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      osc.start(ctx.currentTime + (index * 0.1));
+      osc.stop(ctx.currentTime + (index * 0.1) + 0.4);
+    });
+  } catch (e) {
+    // Audio context restricted before user interaction
   }
 }
 
@@ -177,6 +207,14 @@ function spawnSingleCreature(lat, lng) {
     hp: maxHp
   };
   
+  const rarityLower = (creatureInstance.rarity || '').toLowerCase();
+  const isUltraRare = rarityLower === 'og' || rarityLower === 'secret';
+
+  // Trigger legendary audio chime if an ultra-rare card spawns!
+  if (isUltraRare) {
+    playUltraRareSpawnSound();
+  }
+
   // Keep spawns close to the player (within ~30-40 meters max)
   const offsetLat = (Math.random() - 0.5) * 0.0003;
   const offsetLng = (Math.random() - 0.5) * 0.0003;
@@ -185,12 +223,9 @@ function spawnSingleCreature(lat, lng) {
   const spawnLng = currentLng + offsetLng;
 
   const imageUrl = creatureInstance.image;
-  const rarityLower = (creatureInstance.rarity || '').toLowerCase();
   const rarityColor = getRarityColor(creatureInstance.rarity);
   const safeName = creatureInstance.name.replace(/'/g, "\\'");
     
-  // Ultra-rare styling: Square container with a badass double-line tech border and heavy glow
-  const isUltraRare = rarityLower === 'og' || rarityLower === 'secret';
   const cardWidth = isUltraRare ? '92px' : '80px';
   const imgHeight = isUltraRare ? '78px' : '70px';
   
