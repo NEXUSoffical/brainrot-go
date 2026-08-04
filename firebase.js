@@ -1,84 +1,103 @@
-// account.js - Player Account Management, Authentication, and Cloud Save/Load
+// firebase.js - Firebase Initialization and Authentication Handling
 
-window.playerData = {
-    username: "Player",
-    rotBalance: 500,
-    inventory: [],
-    activeFighterIndex: 0,
-    revivePotions: 3,
-    luckyEggs: 0,
-    accountLevel: 1,
-    accountXp: 0
+const firebaseConfig = {
+    apiKey: "AIzaSyDummyKeyForBrainrotGoApp",
+    authDomain: "brainrot-go.firebaseapp.com",
+    projectId: "brainrot-go",
+    storageBucket: "brainrot-go.appspot.com",
+    messagingSenderId: "123456789",
+    appId: "1:123456789:web:abcdef"
 };
 
-// SAVE GAME DATA TO FIREBASE (Includes revives & lucky eggs!)
-window.saveGameData = function() {
-    if (typeof auth === 'undefined' || !auth.currentUser) return;
-    const userId = auth.currentUser.uid;
-    if (!window.playerData) return;
+if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+}
 
-    db.collection('users').doc(userId).set({
-        username: playerData.username || "Player",
-        rotBalance: playerData.rotBalance || 0,
-        inventory: playerData.inventory || [],
-        activeFighterIndex: playerData.activeFighterIndex || 0,
-        revivePotions: playerData.revivePotions || 0,
-        luckyEggs: playerData.luckyEggs || 0,
-        accountLevel: playerData.accountLevel || 1,
-        accountXp: playerData.accountXp || 0
-    }, { merge: true }).then(() => {
-        console.log("☁️ Game data & items saved successfully!");
-    }).catch((error) => {
-        console.error("❌ Error saving game data:", error);
-    });
-};
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-// LOAD GAME DATA FROM FIREBASE (Pulls revives & lucky eggs back down!)
-window.loadGameData = async function() {
-    if (typeof auth === 'undefined' || !auth.currentUser) return;
-    const userId = auth.currentUser.uid;
+let isSignUpMode = false;
 
-    try {
-        const doc = await db.collection('users').doc(userId).get();
-        if (doc.exists) {
-            const data = doc.data();
-            playerData.username = data.username || "Player";
-            playerData.rotBalance = data.rotBalance || 0;
-            playerData.inventory = data.inventory || [];
-            playerData.activeFighterIndex = data.activeFighterIndex || 0;
-            playerData.revivePotions = typeof data.revivePotions !== 'undefined' ? data.revivePotions : 3;
-            playerData.luckyEggs = typeof data.luckyEggs !== 'undefined' ? data.luckyEggs : 0;
-            playerData.accountLevel = data.accountLevel || 1;
-            playerData.accountXp = data.accountXp || 0;
+window.toggleAuthMode = function() {
+    isSignUpMode = !isSignUpMode;
+    const titleEl = document.querySelector('#loginModal h2');
+    const toggleText = document.getElementById('loginToggleText');
+    const starterSec = document.getElementById('starterSection');
 
-            // Update HUD elements immediately on load
-            if (typeof updatePotionHud === 'function') updatePotionHud();
-            const balanceEl = document.getElementById('rotBalance');
-            if (balanceEl) balanceEl.innerText = playerData.rotBalance;
-            
-            console.log("☁️ Game data & items loaded successfully!");
-        }
-    } catch (error) {
-        console.error("❌ Error loading game data:", error);
+    if (isSignUpMode) {
+        if (titleEl) titleEl.innerText = "🔐 CREATE ACCOUNT";
+        if (toggleText) toggleText.innerText = "Already have an account? Click here to Log In";
+        if (starterSec) starterSec.style.display = 'block';
+        if (typeof renderStarterSelection === 'function') renderStarterSelection();
+    } else {
+        if (titleEl) titleEl.innerText = "🔐 BRAINROT GO ACCOUNT";
+        if (toggleText) toggleText.innerText = "New player? Click here to Sign Up";
+        if (starterSec) starterSec.style.display = 'none';
     }
 };
 
-// Potion HUD update helper
-window.updatePotionHud = function() {
-    const potionHudCount = document.getElementById('potionHudCount');
-    if (potionHudCount && window.playerData) {
-        potionHudCount.innerText = window.playerData.revivePotions || 0;
-    }
-};
+window.handleAccountAction = function() {
+    const usernameEl = document.getElementById('usernameInput');
+    const passwordEl = document.getElementById('passwordInput');
+    
+    const username = usernameEl ? usernameEl.value.trim() : "";
+    const password = passwordEl ? passwordEl.value.trim() : "";
 
-// Handle authentication state changes to trigger load
-if (typeof auth !== 'undefined') {
-    auth.onAuthStateChanged((user) => {
-        if (user) {
-            loadGameData().then(() => {
+    if (!username || !password) {
+        alert("❌ Please enter both username and password!");
+        return;
+    }
+
+    const email = `${username.toLowerCase().replace(/[^a-z0-9]/g, '')}@brainrotgo.com`;
+
+    if (isSignUpMode) {
+        auth.createUserWithEmailAndPassword(email, password)
+            .then((userCredential) => {
+                if (window.playerData) {
+                    window.playerData.username = username;
+                }
+                if (typeof saveGameData === 'function') saveGameData();
                 const loginModal = document.getElementById('loginModal');
                 if (loginModal) loginModal.style.display = 'none';
+            })
+            .catch((error) => {
+                alert("❌ Sign Up Error: " + error.message);
             });
-        }
+    } else {
+        auth.signInWithEmailAndPassword(email, password)
+            .then((userCredential) => {
+                const loginModal = document.getElementById('loginModal');
+                if (loginModal) loginModal.style.display = 'none';
+            })
+            .catch((error) => {
+                alert("❌ Login Error: " + error.message);
+            });
+    }
+};
+
+window.signInWithGoogle = function() {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    
+    auth.signInWithPopup(provider)
+        .then((result) => {
+            const loginModal = document.getElementById('loginModal');
+            if (loginModal) loginModal.style.display = 'none';
+        })
+        .catch((error) => {
+            console.error("Google Sign-In Error:", error);
+            // Fallback to redirect if popup is blocked by the browser
+            if (error.code === 'auth/popup-blocked' || error.code === 'auth/cancelled-popup-request' || error.code === 'auth/popup-closed-by-user') {
+                auth.signInWithRedirect(provider).catch((redirectError) => {
+                    alert("❌ Google Sign-In Redirect Error: " + redirectError.message);
+                });
+            } else {
+                alert("❌ Google Sign-In Error: " + error.message);
+            }
+        });
+};
+
+window.logoutAccount = function() {
+    auth.signOut().then(() => {
+        location.reload();
     });
-}
+};
