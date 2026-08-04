@@ -1,52 +1,62 @@
 // dex.js - Cloud-Connected Account Management, Sticker Dex, Inventory & Admin System
 
-let isSignUpMode = false;
-let selectedStarter = null;
-let currentInventoryTab = 'rots'; // 'rots' or 'items'
+if (typeof window.isSignUpMode === 'undefined') {
+    window.isSignUpMode = false;
+}
+if (typeof window.selectedStarter === 'undefined') {
+    window.selectedStarter = null;
+}
+if (typeof window.currentInventoryTab === 'undefined') {
+    window.currentInventoryTab = 'rots';
+}
 
 // 🛡️ SECURE STATE WRAPPER (ANTI-CHEAT GUARD DOG)
-let _internalPlayerData = {
-    username: "",
-    rotBalance: 500,
-    dex: [],         
-    inventory: [],   
-    activeFighterIndex: 0,
-    revivePotions: 3,
-    luckyEggs: 0
-};
+if (!window._internalPlayerData) {
+    window._internalPlayerData = {
+        username: "",
+        rotBalance: 500,
+        dex: [],         
+        inventory: [],   
+        activeFighterIndex: 0,
+        revivePotions: 3,
+        luckyEggs: 0
+    };
+}
 
-window.playerData = new Proxy(_internalPlayerData, {
-    set(target, property, value) {
-        if (property === 'rotBalance' && value > (target.rotBalance + 10000)) {
-            console.warn("🚨 ANTI-CHEAT: Unauthorized balance modification blocked!");
-            alert("Nice try! Anti-cheat blocked your hack. 😉");
-            return false;
+if (!window.playerData) {
+    window.playerData = new Proxy(window._internalPlayerData, {
+        set(target, property, value) {
+            if (property === 'rotBalance' && value > (target.rotBalance + 10000)) {
+                console.warn("🚨 ANTI-CHEAT: Unauthorized balance modification blocked!");
+                alert("Nice try! Anti-cheat blocked your hack. 😉");
+                return false;
+            }
+            target[property] = value;
+            return true;
         }
-        target[property] = value;
-        return true;
-    }
-});
+    });
+}
 
 function setPlayerData(newData) {
-    _internalPlayerData.username = newData.username || "";
-    _internalPlayerData.rotBalance = newData.rotBalance || 500;
-    _internalPlayerData.dex = newData.dex || [];
-    _internalPlayerData.inventory = newData.inventory || [];
-    _internalPlayerData.activeFighterIndex = newData.activeFighterIndex || 0;
-    _internalPlayerData.revivePotions = typeof newData.revivePotions !== 'undefined' ? newData.revivePotions : 3;
-    _internalPlayerData.luckyEggs = typeof newData.luckyEggs !== 'undefined' ? newData.luckyEggs : 0;
+    window._internalPlayerData.username = newData.username || "";
+    window._internalPlayerData.rotBalance = newData.rotBalance || 500;
+    window._internalPlayerData.dex = newData.dex || [];
+    window._internalPlayerData.inventory = newData.inventory || [];
+    window._internalPlayerData.activeFighterIndex = newData.activeFighterIndex || 0;
+    window._internalPlayerData.revivePotions = typeof newData.revivePotions !== 'undefined' ? newData.revivePotions : 3;
+    window._internalPlayerData.luckyEggs = typeof newData.luckyEggs !== 'undefined' ? newData.luckyEggs : 0;
 }
 
 window.saveGameData = async function() {
-    if (!_internalPlayerData) return;
+    if (!window._internalPlayerData) return;
     if (typeof firebase === 'undefined') return;
     
-    if (!_internalPlayerData.username) {
-        _internalPlayerData.username = "player";
+    if (!window._internalPlayerData.username) {
+        window._internalPlayerData.username = "player";
     }
 
     try {
-        const cleanDataString = JSON.stringify(_internalPlayerData, (key, value) => {
+        const cleanDataString = JSON.stringify(window._internalPlayerData, (key, value) => {
             if (key === 'marker' || key === '_popup' || key === '_source') return undefined;
             return value;
         });
@@ -54,8 +64,8 @@ window.saveGameData = async function() {
         localStorage.setItem('brainrot_local_backup', cleanDataString);
 
         const cleanDataObject = JSON.parse(cleanDataString);
-        await firebase.firestore().collection('accounts').doc(_internalPlayerData.username).set(cleanDataObject);
-        localStorage.setItem('brainrot_logged_in_user', _internalPlayerData.username);
+        await firebase.firestore().collection('accounts').doc(window._internalPlayerData.username).set(cleanDataObject);
+        localStorage.setItem('brainrot_logged_in_user', window._internalPlayerData.username);
         console.log("⚡ Game data saved successfully to cloud and local!");
     } catch (err) {
         console.warn("Cloud save skipped/failed, saved locally instead:", err);
@@ -115,7 +125,7 @@ window.loadGameData = async function() {
 
 (async function checkExistingSession() {
     await window.loadGameData();
-    if (_internalPlayerData.username && _internalPlayerData.username !== "player") {
+    if (window._internalPlayerData.username && window._internalPlayerData.username !== "player") {
         document.addEventListener('DOMContentLoaded', () => {
             const modal = document.getElementById('loginModal');
             if (modal) modal.style.display = 'none';
@@ -130,11 +140,11 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 window.toggleAuthMode = function() {
-    isSignUpMode = !isSignUpMode;
+    window.isSignUpMode = !window.isSignUpMode;
     const starterSec = document.getElementById('starterSection');
     const toggleText = document.getElementById('loginToggleText');
     
-    if (isSignUpMode) {
+    if (window.isSignUpMode) {
         if (starterSec) starterSec.style.display = 'block';
         if (toggleText) toggleText.innerText = "Already have an account? Click here to Log In";
     } else {
@@ -152,7 +162,7 @@ function setupStarterOptions() {
 
     grid.innerHTML = '';
     const starters = brainrotCharacters.slice(0, 6);
-    selectedStarter = starters[0];
+    window.selectedStarter = starters[0];
 
     starters.forEach((char, index) => {
         const item = document.createElement('div');
@@ -166,7 +176,7 @@ function setupStarterOptions() {
         item.onclick = () => {
             document.querySelectorAll('.starter-option').forEach(el => el.classList.remove('selected'));
             item.classList.add('selected');
-            selectedStarter = char;
+            window.selectedStarter = char;
         };
         grid.appendChild(item);
     });
@@ -187,15 +197,15 @@ window.handleAccountAction = async function() {
     const email = rawUsername + "@brainrotgo.com";
 
     try {
-        if (isSignUpMode) {
+        if (window.isSignUpMode) {
             await firebase.auth().createUserWithEmailAndPassword(email, password);
 
-            if (!selectedStarter && typeof brainrotCharacters !== 'undefined') {
-                selectedStarter = brainrotCharacters[0];
+            if (!window.selectedStarter && typeof brainrotCharacters !== 'undefined') {
+                window.selectedStarter = brainrotCharacters[0];
             }
 
             const starterInstance = {
-                ...selectedStarter,
+                ...window.selectedStarter,
                 level: 1,
                 xp: 0,
                 maxHp: 50,
@@ -205,7 +215,7 @@ window.handleAccountAction = async function() {
             setPlayerData({
                 username: rawUsername,
                 rotBalance: 500,
-                dex: [selectedStarter.name],
+                dex: [window.selectedStarter.name],
                 inventory: [starterInstance],
                 activeFighterIndex: 0,
                 revivePotions: 3,
@@ -256,12 +266,12 @@ window.signInWithGoogle = async function() {
         const doc = await docRef.get();
 
         if (!doc.exists) {
-            if (!selectedStarter && typeof brainrotCharacters !== 'undefined') {
-                selectedStarter = brainrotCharacters[0];
+            if (!window.selectedStarter && typeof brainrotCharacters !== 'undefined') {
+                window.selectedStarter = brainrotCharacters[0];
             }
 
             const starterInstance = {
-                ...selectedStarter,
+                ...window.selectedStarter,
                 level: 1,
                 xp: 0,
                 maxHp: 50,
@@ -271,14 +281,14 @@ window.signInWithGoogle = async function() {
             setPlayerData({
                 username: rawUsername,
                 rotBalance: 500,
-                dex: [selectedStarter.name],
+                dex: [window.selectedStarter.name],
                 inventory: [starterInstance],
                 activeFighterIndex: 0,
                 revivePotions: 3,
                 luckyEggs: 0
             });
 
-            const cleanDataString = JSON.stringify(_internalPlayerData, (key, value) => {
+            const cleanDataString = JSON.stringify(window._internalPlayerData, (key, value) => {
                 if (key === 'marker' || key === '_popup' || key === '_source') return undefined;
                 return value;
             });
@@ -390,8 +400,8 @@ function renderInventoryGrid() {
             <div style="background: #111; border: 3px solid #ffcc00; border-radius: 15px; padding: 20px; width: 100%; max-width: 420px; text-align: center; box-shadow: 0 0 30px rgba(255,204,0,0.4);">
                 <h2 style="color: #ffcc00; font-size: 1.3rem; margin-bottom: 10px;">🎒 INVENTORY</h2>
                 <div id="inventoryTabSwitcher" style="display: flex; gap: 10px; margin-bottom: 15px;">
-                    <button onclick="switchInventoryTab('rots')" id="btnTabRots" style="flex: 1; background: ${currentInventoryTab === 'rots' ? '#ffcc00' : '#222'}; color: ${currentInventoryTab === 'rots' ? '#000' : '#fff'}; border: 2px solid #ffcc00; padding: 8px; font-weight: bold; border-radius: 6px; cursor: pointer;">🧠 ROTS</button>
-                    <button onclick="switchInventoryTab('items')" id="btnTabItems" style="flex: 1; background: ${currentInventoryTab === 'items' ? '#ffcc00' : '#222'}; color: ${currentInventoryTab === 'items' ? '#000' : '#fff'}; border: 2px solid #ffcc00; padding: 8px; font-weight: bold; border-radius: 6px; cursor: pointer;">🎒 ITEMS</button>
+                    <button onclick="switchInventoryTab('rots')" id="btnTabRots" style="flex: 1; background: ${window.currentInventoryTab === 'rots' ? '#ffcc00' : '#222'}; color: ${window.currentInventoryTab === 'rots' ? '#000' : '#fff'}; border: 2px solid #ffcc00; padding: 8px; font-weight: bold; border-radius: 6px; cursor: pointer;">🧠 ROTS</button>
+                    <button onclick="switchInventoryTab('items')" id="btnTabItems" style="flex: 1; background: ${window.currentInventoryTab === 'items' ? '#ffcc00' : '#222'}; color: ${window.currentInventoryTab === 'items' ? '#000' : '#fff'}; border: 2px solid #ffcc00; padding: 8px; font-weight: bold; border-radius: 6px; cursor: pointer;">🎒 ITEMS</button>
                 </div>
                 <div id="inventoryGrid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; max-height: 280px; overflow-y: auto; margin-bottom: 15px; padding-right: 4px;"></div>
                 <button onclick="closeInventory()" style="background: #333; color: #fff; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%;">CLOSE</button>
@@ -404,7 +414,7 @@ function renderInventoryGrid() {
     if (!inventoryGrid) return;
     inventoryGrid.innerHTML = '';
 
-    if (currentInventoryTab === 'rots') {
+    if (window.currentInventoryTab === 'rots') {
         const inventory = window.playerData.inventory || [];
         if (inventory.length === 0) {
             inventoryGrid.innerHTML = `<p style="grid-column: span 2; color: #777; font-size: 0.9rem; padding: 30px; text-align: center;">Your inventory is empty! Catch rots on the map.</p>`;
@@ -478,7 +488,7 @@ function renderInventoryGrid() {
 }
 
 window.switchInventoryTab = function(tabName) {
-    currentInventoryTab = tabName;
+    window.currentInventoryTab = tabName;
     const btnRots = document.getElementById('btnTabRots');
     const btnItems = document.getElementById('btnTabItems');
     if (btnRots && btnItems) {
@@ -821,7 +831,7 @@ setInterval(() => {
 window.addEventListener('beforeunload', (event) => {
     if (window.playerData && window.playerData.username && typeof firebase !== 'undefined') {
         try {
-            const cleanDataString = JSON.stringify(_internalPlayerData, (key, value) => {
+            const cleanDataString = JSON.stringify(window._internalPlayerData, (key, value) => {
                 if (key === 'marker' || key === '_popup' || key === '_source') return undefined;
                 return value;
             });
@@ -830,12 +840,5 @@ window.addEventListener('beforeunload', (event) => {
         } catch (e) {
             console.error("Unload save error:", e);
         }
-    }
-});
-// EMERGENCY BUTTON TEST
-document.addEventListener('click', (e) => {
-    const text = (e.target.innerText || '').trim();
-    if (['INVENTORY', 'ROT-DEX', 'REVIVE', 'SHOP', 'LOGOUT'].includes(text)) {
-        console.log("🖱️ Button clicked:", text);
     }
 });
