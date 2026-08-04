@@ -1,12 +1,13 @@
 // firebase.js - Firebase Initialization and Authentication Handling
 
 const firebaseConfig = {
-    apiKey: "AIzaSyDummyKeyForBrainrotGoApp",
-    authDomain: "brainrot-go.firebaseapp.com",
-    projectId: "brainrot-go",
-    storageBucket: "brainrot-go.appspot.com",
-    messagingSenderId: "123456789",
-    appId: "1:123456789:web:abcdef"
+    apiKey: "AIzaSyAUpE0pUHZlY6jGZgJIxHg2KnSfMs0iJTo",
+    authDomain: "brainrot-go-b99c6.firebaseapp.com",
+    projectId: "brainrot-go-b99c6",
+    storageBucket: "brainrot-go-b99c6.firebasestorage.app",
+    messagingSenderId: "668119995218",
+    appId: "1:668119995218:web:faacf0823ade988e31e08b",
+    measurementId: "G-BKE4DCJLQ2"
 };
 
 if (!firebase.apps.length) {
@@ -85,7 +86,6 @@ window.signInWithGoogle = function() {
         })
         .catch((error) => {
             console.error("Google Sign-In Error:", error);
-            // Fallback to redirect if popup is blocked by the browser
             if (error.code === 'auth/popup-blocked' || error.code === 'auth/cancelled-popup-request' || error.code === 'auth/popup-closed-by-user') {
                 auth.signInWithRedirect(provider).catch((redirectError) => {
                     alert("❌ Google Sign-In Redirect Error: " + redirectError.message);
