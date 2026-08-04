@@ -832,3 +832,10 @@ window.addEventListener('beforeunload', (event) => {
         }
     }
 });
+// EMERGENCY BUTTON TEST
+document.addEventListener('click', (e) => {
+    const text = (e.target.innerText || '').trim();
+    if (['INVENTORY', 'ROT-DEX', 'REVIVE', 'SHOP', 'LOGOUT'].includes(text)) {
+        console.log("🖱️ Button clicked:", text);
+    }
+});
