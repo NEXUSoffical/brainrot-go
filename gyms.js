@@ -128,6 +128,13 @@ function updateGymPopup(marker, gymData) {
 }
 
 window.openGymBattle = async function(gymId) {
+  // 🔒 REQUIRE ACCOUNT LEVEL 10 TO CHALLENGE GYMS 🔒
+  const accountLevel = (playerData && playerData.accountLevel) || 1;
+  if (accountLevel < 10) {
+    alert(`❌ Gyms are locked! You need to be Account Level 10 to challenge gyms. (Current Level: ${accountLevel})`);
+    return;
+  }
+
   const gymRef = db.collection('gyms').doc(gymId);
   const doc = await gymRef.get();
   if (!doc.exists) return;
@@ -226,7 +233,7 @@ function openGymRotSelector(gymId) {
           <img src="${rot.image}" style="width: 55px; height: 55px; object-fit: contain; ${isUnavailable ? 'filter: grayscale(100%);' : ''}">
           <div style="font-size: 0.7rem; margin-top: 4px; font-weight: bold; color: #fff;">${rot.name}</div>
           <div style="font-size: 0.6rem; color: ${rot.inGym ? '#00ccff' : (rot.fainted ? '#ff0055' : '#aaa')};">
-            ${rot.inGym ? '🏢 [IN GYM]' : (rot.fainted ? '💀 FAINTED' : 'Lvl ' + (rot.level || 1))}
+            ${rot.inGym ? '🏟️ [IN GYM]' : (rot.fainted ? '💀 FAINTED' : 'Lvl ' + (rot.level || 1))}
           </div>
         </div>
       `;
@@ -251,7 +258,7 @@ window.executeGymClaim = async function(gymId, index) {
   if (!chosenRot || chosenRot.inGym || chosenRot.fainted) return;
 
   try {
-    // 🏢 LOCK THE ROT TO THE GYM 🏢
+    // 🏟️ LOCK THE ROT TO THE GYM 🏟️
     chosenRot.inGym = true;
 
     // If the rot they just stationed was their active fighter, switch active fighter to someone else available
