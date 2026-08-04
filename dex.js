@@ -39,14 +39,18 @@ if (!window.playerData) {
 }
 
 function setPlayerData(newData) {
-    window._internalPlayerData.username = newData.username || "";
-    window._internalPlayerData.rotBalance = newData.rotBalance || 500;
-    window._internalPlayerData.accountLevel = newData.accountLevel || newData.accLvl || 1;
-    window._internalPlayerData.dex = newData.dex || [];
-    window._internalPlayerData.inventory = newData.inventory || [];
-    window._internalPlayerData.activeFighterIndex = newData.activeFighterIndex || 0;
-    window._internalPlayerData.revivePotions = typeof newData.revivePotions !== 'undefined' ? newData.revivePotions : 3;
-    window._internalPlayerData.luckyEggs = typeof newData.luckyEggs !== 'undefined' ? newData.luckyEggs : 0;
+    window._internalPlayerData.username = newData.username || window._internalPlayerData.username || "";
+    window._internalPlayerData.rotBalance = typeof newData.rotBalance !== 'undefined' ? newData.rotBalance : (window._internalPlayerData.rotBalance || 500);
+    
+    // Safeguard: Always take the highest level between existing data and incoming data, never allow a blind reset to 1
+    const incomingLevel = newData.accountLevel || newData.accLvl || 1;
+    window._internalPlayerData.accountLevel = Math.max(window._internalPlayerData.accountLevel || 1, incomingLevel);
+
+    window._internalPlayerData.dex = newData.dex || window._internalPlayerData.dex || [];
+    window._internalPlayerData.inventory = newData.inventory || window._internalPlayerData.inventory || [];
+    window._internalPlayerData.activeFighterIndex = typeof newData.activeFighterIndex !== 'undefined' ? newData.activeFighterIndex : (window._internalPlayerData.activeFighterIndex || 0);
+    window._internalPlayerData.revivePotions = typeof newData.revivePotions !== 'undefined' ? newData.revivePotions : (window._internalPlayerData.revivePotions || 3);
+    window._internalPlayerData.luckyEggs = typeof newData.luckyEggs !== 'undefined' ? newData.luckyEggs : (window._internalPlayerData.luckyEggs || 0);
 }
 
 window.saveGameData = async function() {
@@ -111,10 +115,10 @@ window.loadGameData = async function() {
 
                 const bestAccountLevel = Math.max(
                     cloudData.accountLevel || cloudData.accLvl || 1, 
-                    localData?.accountLevel || localData?.accLvl || 1
+                    localData?.accountLevel || localData?.accLvl || 1,
+                    window._internalPlayerData.accountLevel || 1
                 );
 
-                // Use Math.min for consumables so they properly decrease when used
                 const cloudRevives = typeof cloudData.revivePotions !== 'undefined' ? cloudData.revivePotions : 3;
                 const localRevives = typeof localData?.revivePotions !== 'undefined' ? localData.revivePotions : 3;
                 const bestRevives = Math.min(cloudRevives, localRevives);
@@ -336,18 +340,19 @@ window.signInWithGoogle = async function() {
 };
 
 window.logoutAccount = async function() {
-    await window.saveGameData();
-    try {
-        await firebase.auth().signOut();
-    } catch (e) {
-        console.warn("Firebase signout error:", e);
-    }
-    
     localStorage.removeItem('brainrot_logged_in_user');
     localStorage.removeItem('brainrot_local_backup');
     window._internalPlayerData.username = "";
     
-    location.reload();
+    try {
+        if (typeof firebase !== 'undefined' && firebase.auth) {
+            await firebase.auth().signOut();
+        }
+    } catch (e) {
+        console.warn("Firebase signout error:", e);
+    }
+    
+    window.location.href = window.location.pathname;
 };
 
 window.addToDex = function(creature) {
@@ -738,9 +743,6 @@ window.setActiveFighter = function(index) {
     renderInventoryGrid();
 };
 
-// ==========================================
-// UNIVERSAL BUTTON ALIASES & MODALS
-// ==========================================
 window.openInventory = function() {
     window.openInventoryModal();
 };
@@ -815,10 +817,6 @@ window.closeDex = function() {
 window.openReviveModal = function() {
     window.useRevivePotionMenu();
 };
-
-// ==========================================
-// SECURE CLOUD ADMIN PANEL FUNCTIONS
-// ==========================================
 
 window.openAdminPanel = function() {
     const passwordInput = prompt("Enter Admin Secret Key:");
@@ -935,10 +933,6 @@ window.clearAllAccounts = async function() {
         }
     }
 };
-
-// ==========================================
-// AUTO-SAVE THROTTLING & SAFETY NET
-// ==========================================
 
 setInterval(() => {
     if (window.playerData && window.playerData.username) {
