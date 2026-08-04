@@ -70,10 +70,11 @@ function getRandomBrainrot() {
   return pool[randomIndex];
 }
 
-// Helper to get rarity color for the cards
+// Helper to get rarity color for the cards (OG gets brilliant gold, Secret gets neon magenta)
 function getRarityColor(rarity) {
   switch ((rarity || '').toLowerCase()) {
-    case 'secret': return '#ff0055';    
+    case 'og': return '#ffd700';        // Brilliant Gold for ultimate OGs
+    case 'secret': return '#ff00ea';    // Neon Magenta for Secrets
     case 'mythic': return '#9900ff';    
     case 'legendary': return '#ffaa00'; 
     case 'epic': return '#0088ff';      
@@ -184,29 +185,71 @@ function spawnSingleCreature(lat, lng) {
   const spawnLng = currentLng + offsetLng;
 
   const imageUrl = creatureInstance.image;
+  const rarityLower = (creatureInstance.rarity || '').toLowerCase();
   const rarityColor = getRarityColor(creatureInstance.rarity);
   const safeName = creatureInstance.name.replace(/'/g, "\\'");
     
+  // Ultra-rare styling: Square container with a badass double-line tech border and heavy glow
+  const isUltraRare = rarityLower === 'og' || rarityLower === 'secret';
+  const cardWidth = isUltraRare ? '92px' : '80px';
+  const imgHeight = isUltraRare ? '78px' : '70px';
+  
+  const cardStyling = isUltraRare ? `
+    width: ${cardWidth}; 
+    background: linear-gradient(135deg, #09090b, #181824); 
+    border: 3px solid ${rarityColor}; 
+    outline: 2px solid #ffffff; 
+    outline-offset: 2px; 
+    border-radius: 4px; 
+    box-shadow: 0 0 25px ${rarityColor}, inset 0 0 12px ${rarityColor}; 
+    padding: 5px; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center;
+  ` : `
+    width: 80px; 
+    background: linear-gradient(135deg, #111111, ${rarityColor}55); 
+    border: 3px solid ${rarityColor}; 
+    border-radius: 6px; 
+    box-shadow: 0 0 15px ${rarityColor}; 
+    padding: 4px; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center;
+  `;
+
+  const topBadge = isUltraRare ? `
+    <div style="
+      position: absolute; 
+      top: -14px; 
+      left: 50%; 
+      transform: translateX(-50%); 
+      background: ${rarityColor}; 
+      color: #000; 
+      font-size: 7px; 
+      font-family: monospace; 
+      padding: 1px 6px; 
+      border-radius: 3px; 
+      white-space: nowrap; 
+      font-weight: 900;
+      box-shadow: 0 0 8px ${rarityColor};
+      z-index: 10;
+    ">
+      ⚡ ${creatureInstance.rarity.toUpperCase()} ⚡
+    </div>
+  ` : '';
+
   const cardHtml = `
     <div style="position: relative;">
-      <div style="
-        width: 80px; 
-        background: linear-gradient(135deg, #111111, ${rarityColor}55); 
-        border: 3px solid ${rarityColor}; 
-        border-radius: 8px; 
-        box-shadow: 0 0 15px ${rarityColor}; 
-        padding: 4px; 
-        display: flex; 
-        flex-direction: column; 
-        align-items: center;
-      ">
+      ${topBadge}
+      <div style="${cardStyling}">
         <div style="
           width: 100%; 
-          height: 70px; 
+          height: ${imgHeight}; 
           background-color: #ffffff; 
-          border-radius: 4px; 
+          border-radius: 3px; 
           overflow: hidden; 
-          border: 1px solid #444;
+          border: 1px solid #333;
         ">
             <img src="${imageUrl}" style="
               width: 100%; 
@@ -222,16 +265,16 @@ function spawnSingleCreature(lat, lng) {
         bottom: -14px; 
         left: 50%; 
         transform: translateX(-50%); 
-        background: rgba(0,0,0,0.85); 
+        background: rgba(0,0,0,0.9); 
         border: 1px solid ${rarityColor}; 
         color: ${rarityColor}; 
         font-size: 8px; 
         font-family: monospace; 
-        padding: 1px 5px; 
+        padding: 1px 6px; 
         border-radius: 4px; 
         white-space: nowrap; 
         font-weight: bold;
-        box-shadow: 0 0 5px rgba(0,0,0,0.5);
+        box-shadow: 0 0 6px rgba(0,0,0,0.8);
       ">
         Lvl ${level}
       </div>
@@ -241,8 +284,8 @@ function spawnSingleCreature(lat, lng) {
   const customIcon = L.divIcon({
     className: '', 
     html: cardHtml,
-    iconSize: [80, 90], 
-    iconAnchor: [40, 45],
+    iconSize: isUltraRare ? [92, 102] : [80, 90], 
+    iconAnchor: isUltraRare ? [46, 51] : [40, 45],
     popupAnchor: [0, -40]
   });
 
@@ -251,6 +294,7 @@ function spawnSingleCreature(lat, lng) {
   marker.bindPopup(`
     <div style="text-align: center; font-family: sans-serif; min-width: 140px;">
       <b style="font-size: 15px; color: #222;">${creatureInstance.name}</b><br>
+      <span style="font-size: 11px; color: ${rarityColor}; font-weight: bold; display: block; margin-top: 2px;">${creatureInstance.rarity.toUpperCase()}</span>
       <span style="font-size: 11px; color: #555; font-weight: bold; display: block; margin-top: 2px;">Level ${level}</span>
       <span style="font-size: 11px; color: #008000; font-weight: bold; display: block; margin-top: 2px;">Reward: ${creatureInstance.reward} Rot</span>
       <button onclick="startEncounter('${safeName}', '${creatureInstance.rarity}', '${creatureInstance.reward}', '${imageUrl}', ${level}, ${maxHp})" style="
