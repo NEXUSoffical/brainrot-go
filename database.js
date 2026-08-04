@@ -2,7 +2,7 @@
 
 const brainrotCharacters = [
   // ====================
-  // 🟢 PHASE 1: COMMON ROTS
+  // PHASE 1: COMMON ROTS
   // ====================
   { name: "Noobini Pizzanini", rarity: "common", reward: 1, image: "brainrots/noobini_pizzanini.png" },
   { name: "Holy Arepa", rarity: "common", reward: 1, image: "brainrots/holy_arepa.png" },
@@ -17,19 +17,19 @@ const brainrotCharacters = [
   { name: "Racooni Jandelini", rarity: "common", reward: 1, image: "brainrots/racooni.png" },
 
   // ====================
-  // 🟡 RARE ROTS
+  // RARE ROTS
   // ====================
   { name: "Trippi Troppi", rarity: "rare", reward: 4, image: "brainrots/trippi_troppi.png" },
   { name: "Tung Tung Sahur", rarity: "rare", reward: 4, image: "brainrots/tung_tung_sahur.png" },
   { name: "Gangster Footera", rarity: "rare", reward: 5, image: "brainrots/gangster_footera.png" },
   { name: "Bandito Bobritto", rarity: "rare", reward: 5, image: "brainrots/bandito_bobritto.png" },
   { name: "Boneca Ambalabu", rarity: "rare", reward: 6, image: "brainrots/boneca_ambalabu.png" },
-  { name: "Cacto Hipopotamo", rarity: "rare", reward: 6, image: "brainrots/cacto_hipopotamo.jpg" },
+  { name: "Cacto Hipopotamo", rarity: "rare", reward: 6, image: "brainrots/cacto_hipopotamo.png" },
   { name: "Ta Ta Sahur", rarity: "rare", reward: 7, image: "brainrots/ta_ta_sahur.png" },
   { name: "Tric Trac", rarity: "rare", reward: 7, image: "brainrots/tric_trac.png" },
 
   // ====================
-  // 🔒 FUTURE UPDATES (SECRETS)
+  // FUTURE UPDATES (SECRETS)
   // ====================
   { name: "Fortunu and Cashuru", rarity: "secret", reward: 1, image: "" },
   { name: "Los Amigos", rarity: "secret", reward: 1, image: "" },
@@ -55,7 +55,7 @@ const brainrotCharacters = [
   { name: "Mamma Mia Pizzerio", rarity: "secret", reward: 1, image: "" },
   
   // ====================
-  // ✨ OG
+  // OG
   // ====================
   { name: "Strawberry Elephant", rarity: "og", reward: 1, image: "" },
   { name: "Skibidi Toilet", rarity: "og", reward: 1, image: "" },
