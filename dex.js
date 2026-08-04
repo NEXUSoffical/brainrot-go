@@ -16,6 +16,7 @@ if (!window._internalPlayerData) {
         username: "",
         rotBalance: 500,
         accountLevel: 1,
+        accountXp: 0,
         dex: [],         
         inventory: [],   
         activeFighterIndex: 0,
@@ -42,9 +43,10 @@ function setPlayerData(newData) {
     window._internalPlayerData.username = newData.username || window._internalPlayerData.username || "";
     window._internalPlayerData.rotBalance = typeof newData.rotBalance !== 'undefined' ? newData.rotBalance : (window._internalPlayerData.rotBalance || 500);
     
-    // Safeguard: Always take the highest level between existing data and incoming data, never allow a blind reset to 1
+    // Safeguard: Preserve highest level and XP correctly
     const incomingLevel = newData.accountLevel || newData.accLvl || 1;
     window._internalPlayerData.accountLevel = Math.max(window._internalPlayerData.accountLevel || 1, incomingLevel);
+    window._internalPlayerData.accountXp = typeof newData.accountXp !== 'undefined' ? newData.accountXp : (window._internalPlayerData.accountXp || 0);
 
     window._internalPlayerData.dex = newData.dex || window._internalPlayerData.dex || [];
     window._internalPlayerData.inventory = newData.inventory || window._internalPlayerData.inventory || [];
@@ -52,6 +54,27 @@ function setPlayerData(newData) {
     window._internalPlayerData.revivePotions = typeof newData.revivePotions !== 'undefined' ? newData.revivePotions : (window._internalPlayerData.revivePotions || 3);
     window._internalPlayerData.luckyEggs = typeof newData.luckyEggs !== 'undefined' ? newData.luckyEggs : (window._internalPlayerData.luckyEggs || 0);
 }
+
+// Balanced Account XP & Leveling System
+window.addAccountXp = function(amount) {
+    const hasLuckyEgg = window.activeLuckyEggTime && Date.now() < window.activeLuckyEggTime;
+    const finalXp = hasLuckyEgg ? amount * 2 : amount;
+
+    window._internalPlayerData.accountXp = (window._internalPlayerData.accountXp || 0) + finalXp;
+    
+    // Required XP scales per level (Level * 300)
+    let requiredXp = (window._internalPlayerData.accountLevel || 1) * 300;
+    
+    while (window._internalPlayerData.accountXp >= requiredXp) {
+        window._internalPlayerData.accountXp -= requiredXp;
+        window._internalPlayerData.accountLevel = (window._internalPlayerData.accountLevel || 1) + 1;
+        requiredXp = window._internalPlayerData.accountLevel * 300;
+        console.log(`🎉 Account leveled up to Level ${window._internalPlayerData.accountLevel}!`);
+    }
+
+    window.saveGameData();
+    updateHUD();
+};
 
 window.saveGameData = async function() {
     if (!window._internalPlayerData) return;
@@ -99,7 +122,6 @@ window.loadGameData = async function() {
                 
                 const mergedDex = Array.from(new Set([...(localData?.dex || []), ...(cloudData.dex || [])]));
                 
-                // Merge inventory safely by rot name, keeping the version with the highest level/XP
                 const inventoryMap = new Map();
                 const allItems = [...(cloudData.inventory || []), ...(localData?.inventory || [])];
                 allItems.forEach(item => {
@@ -119,6 +141,12 @@ window.loadGameData = async function() {
                     window._internalPlayerData.accountLevel || 1
                 );
 
+                const bestAccountXp = Math.max(
+                    cloudData.accountXp || 0,
+                    localData?.accountXp || 0,
+                    window._internalPlayerData.accountXp || 0
+                );
+
                 const cloudRevives = typeof cloudData.revivePotions !== 'undefined' ? cloudData.revivePotions : 3;
                 const localRevives = typeof localData?.revivePotions !== 'undefined' ? localData.revivePotions : 3;
                 const bestRevives = Math.min(cloudRevives, localRevives);
@@ -131,6 +159,7 @@ window.loadGameData = async function() {
                     username: cloudData.username || activeUser,
                     rotBalance: Math.max(cloudData.rotBalance || 0, localData?.rotBalance || 0),
                     accountLevel: bestAccountLevel,
+                    accountXp: bestAccountXp,
                     dex: mergedDex,
                     inventory: mergedInventory,
                     activeFighterIndex: cloudData.activeFighterIndex || localData?.activeFighterIndex || 0,
@@ -242,6 +271,7 @@ window.handleAccountAction = async function() {
                 username: rawUsername,
                 rotBalance: 500,
                 accountLevel: 1,
+                accountXp: 0,
                 dex: [window.selectedStarter.name],
                 inventory: [starterInstance],
                 activeFighterIndex: 0,
@@ -309,6 +339,7 @@ window.signInWithGoogle = async function() {
                 username: rawUsername,
                 rotBalance: 500,
                 accountLevel: 1,
+                accountXp: 0,
                 dex: [window.selectedStarter.name],
                 inventory: [starterInstance],
                 activeFighterIndex: 0,
@@ -375,6 +406,9 @@ window.addToDex = function(creature) {
         window.playerData.dex.push(creature.name);
     }
 
+    // Give a controlled amount of Account XP when catching a rot instead of a full level
+    window.addAccountXp(50);
+
     window.saveGameData();
     updateHUD();
 };
@@ -397,7 +431,8 @@ function updateHUD() {
     const inventoryCountEl = document.getElementById('inventoryCount');
     const rotBalanceEl = document.getElementById('rotBalance');
     const hudTitle = document.getElementById('hudTitle');
-    const accLvlEls = document.querySelectorAll('#accLvl, .accLvlDisplay');
+    const accLvlEls = document.querySelectorAll('#accLvl, .accLvlDisplay, #accountLevelVal, #widgetAccLevel');
+    const widgetXpBar = document.getElementById('widgetXpBar');
 
     const totalPossible = (typeof brainrotCharacters !== 'undefined' && brainrotCharacters) ? brainrotCharacters.length : 0;
     const dexCount = (window.playerData.dex) ? window.playerData.dex.length : 0;
@@ -409,9 +444,23 @@ function updateHUD() {
     if (rotBalanceEl) rotBalanceEl.innerText = window.playerData.rotBalance || 500;
     if (hudTitle && window.playerData.username) hudTitle.innerText = `🕹️ ${window.playerData.username.toUpperCase()}`;
     
+    const currentLevel = window.playerData.accountLevel || 1;
+    const currentXp = window.playerData.accountXp || 0;
+    const requiredXp = currentLevel * 300;
+    const xpPercent = Math.min(100, Math.max(0, (currentXp / requiredXp) * 100));
+
     accLvlEls.forEach(el => {
-        el.innerText = window.playerData.accountLevel || 1;
+        el.innerText = currentLevel;
     });
+
+    if (widgetXpBar) {
+        widgetXpBar.style.width = xpPercent + '%';
+    }
+
+    const widgetUsername = document.getElementById('widgetUsername');
+    if (widgetUsername && window.playerData.username) {
+        widgetUsername.innerText = window.playerData.username;
+    }
 
     renderInventoryGrid();
     renderDexGrid();
@@ -545,7 +594,7 @@ function renderInventoryGrid() {
             </div>
         `;
     }
-}
+};
 
 window.switchInventoryTab = function(tabName) {
     window.currentInventoryTab = tabName;
@@ -566,6 +615,7 @@ window.useLuckyEgg = function() {
         return;
     }
     window.playerData.luckyEggs--;
+    window.activeLuckyEggTime = Date.now() + 3600000; // 1 hour
     window.saveGameData();
     alert("🥚 Lucky Egg activated! Double Account XP is now active for 1 hour!");
     renderInventoryGrid();
