@@ -1,10 +1,11 @@
-// dex.js - Cloud-Connected Account Management, Sticker Dex & Admin System
+// dex.js - Cloud-Connected Account Management, Sticker Dex, Inventory & Admin System
 
 const db = firebase.firestore();
 const auth = firebase.auth();
 
 let isSignUpMode = false;
 let selectedStarter = null;
+let currentInventoryTab = 'rots'; // 'rots' or 'items'
 
 // 🛡️ SECURE STATE WRAPPER (ANTI-CHEAT GUARD DOG)
 let _internalPlayerData = {
@@ -12,7 +13,9 @@ let _internalPlayerData = {
     rotBalance: 500,
     dex: [],         
     inventory: [],   
-    activeFighterIndex: 0
+    activeFighterIndex: 0,
+    revivePotions: 3,
+    luckyEggs: 0
 };
 
 window.playerData = new Proxy(_internalPlayerData, {
@@ -33,9 +36,10 @@ function setPlayerData(newData) {
     _internalPlayerData.dex = newData.dex || [];
     _internalPlayerData.inventory = newData.inventory || [];
     _internalPlayerData.activeFighterIndex = newData.activeFighterIndex || 0;
+    _internalPlayerData.revivePotions = typeof newData.revivePotions !== 'undefined' ? newData.revivePotions : 3;
+    _internalPlayerData.luckyEggs = typeof newData.luckyEggs !== 'undefined' ? newData.luckyEggs : 0;
 }
 
-// Save player data to Cloud & Local Storage backup instantly (Strikes out Leaflet markers to prevent circular crashes)
 window.saveGameData = async function() {
     if (!_internalPlayerData) return;
     
@@ -44,13 +48,11 @@ window.saveGameData = async function() {
     }
 
     try {
-        // Strip out Leaflet markers and internal DOM nodes using a replacer function to avoid circular structure errors
         const cleanDataString = JSON.stringify(_internalPlayerData, (key, value) => {
             if (key === 'marker' || key === '_popup' || key === '_source') return undefined;
             return value;
         });
 
-        // Always save to browser local storage first so it is instantly safe
         localStorage.setItem('brainrot_local_backup', cleanDataString);
 
         const cleanDataObject = JSON.parse(cleanDataString);
@@ -62,7 +64,6 @@ window.saveGameData = async function() {
     }
 };
 
-// Load and safely merge saved player data from Local Storage and Cloud
 window.loadGameData = async function() {
     let localData = null;
     const localBackup = localStorage.getItem('brainrot_local_backup');
@@ -82,10 +83,8 @@ window.loadGameData = async function() {
             if (doc.exists) {
                 const cloudData = doc.data();
                 
-                // Smart Merge: Combine local and cloud Dex items so nothing ever gets wiped
                 const mergedDex = Array.from(new Set([...(localData?.dex || []), ...(cloudData.dex || [])]));
                 
-                // Smart Merge: Combine inventories to keep all caught rots safe
                 const inventoryMap = new Map();
                 if (cloudData.inventory) {
                     cloudData.inventory.forEach(item => inventoryMap.set(item.name + (item.level || 1), item));
@@ -100,7 +99,9 @@ window.loadGameData = async function() {
                     rotBalance: Math.max(cloudData.rotBalance || 0, localData?.rotBalance || 0),
                     dex: mergedDex,
                     inventory: mergedInventory,
-                    activeFighterIndex: cloudData.activeFighterIndex || localData?.activeFighterIndex || 0
+                    activeFighterIndex: cloudData.activeFighterIndex || localData?.activeFighterIndex || 0,
+                    revivePotions: typeof cloudData.revivePotions !== 'undefined' ? cloudData.revivePotions : (localData?.revivePotions || 3),
+                    luckyEggs: typeof cloudData.luckyEggs !== 'undefined' ? cloudData.luckyEggs : (localData?.luckyEggs || 0)
                 });
 
                 console.log("Game data successfully synced and merged from cloud!");
@@ -114,7 +115,6 @@ window.loadGameData = async function() {
     if (!window.playerData.inventory) window.playerData.inventory = [];
 };
 
-// Check existing session on load
 (async function checkExistingSession() {
     await window.loadGameData();
     if (_internalPlayerData.username && _internalPlayerData.username !== "player") {
@@ -174,7 +174,6 @@ function setupStarterOptions() {
     });
 }
 
-// Handle Cloud Authentication (Sign Up / Login)
 window.handleAccountAction = async function() {
     const usernameInput = document.getElementById('usernameInput');
     const passwordInput = document.getElementById('passwordInput');
@@ -210,7 +209,9 @@ window.handleAccountAction = async function() {
                 rotBalance: 500,
                 dex: [selectedStarter.name],
                 inventory: [starterInstance],
-                activeFighterIndex: 0
+                activeFighterIndex: 0,
+                revivePotions: 3,
+                luckyEggs: 0
             });
 
             await window.saveGameData();
@@ -245,7 +246,6 @@ window.handleAccountAction = async function() {
     }
 };
 
-// Google Sign-In Magic
 window.signInWithGoogle = async function() {
     try {
         const provider = new firebase.auth.GoogleAuthProvider();
@@ -275,10 +275,11 @@ window.signInWithGoogle = async function() {
                 rotBalance: 500,
                 dex: [selectedStarter.name],
                 inventory: [starterInstance],
-                activeFighterIndex: 0
+                activeFighterIndex: 0,
+                revivePotions: 3,
+                luckyEggs: 0
             });
 
-            // Clean save before storing starter doc via helper logic
             const cleanDataString = JSON.stringify(_internalPlayerData, (key, value) => {
                 if (key === 'marker' || key === '_popup' || key === '_source') return undefined;
                 return value;
@@ -318,7 +319,7 @@ window.addToDex = function(creature) {
 
     window.playerData.inventory.push({
         ...creature,
-        marker: undefined, // Strip marker reference out on addition
+        marker: undefined,
         level: rotLevel,
         xp: creature.xp || 0,
         maxHp: rotMaxHp,
@@ -364,53 +365,214 @@ function updateHUD() {
 
     renderInventoryGrid();
     renderDexGrid();
+    updatePotionHud();
 }
+
+window.updatePotionHud = function() {
+    const potionHudCount = document.getElementById('potionHudCount');
+    if (potionHudCount && window.playerData) {
+        potionHudCount.innerText = window.playerData.revivePotions || 0;
+    }
+};
 
 function renderInventoryGrid() {
     const inventoryGrid = document.getElementById('inventoryGrid');
     if (!inventoryGrid) return;
 
-    inventoryGrid.innerHTML = '';
-    const inventory = window.playerData.inventory || [];
+    let modal = document.getElementById('inventoryModal');
+    if (modal && !modal.querySelector('#inventoryTabSwitcher')) {
+        const existingContent = modal.innerHTML;
+        modal.innerHTML = `
+            <div style="background: #111; border: 3px solid #ffcc00; border-radius: 15px; padding: 20px; width: 100%; max-width: 420px; text-align: center; box-shadow: 0 0 30px rgba(255,204,0,0.4);">
+                <h2 style="color: #ffcc00; font-size: 1.3rem; margin-bottom: 10px;">🎒 INVENTORY</h2>
+                <div id="inventoryTabSwitcher" style="display: flex; gap: 10px; margin-bottom: 15px;">
+                    <button onclick="switchInventoryTab('rots')" id="btnTabRots" style="flex: 1; background: ${currentInventoryTab === 'rots' ? '#ffcc00' : '#222'}; color: ${currentInventoryTab === 'rots' ? '#000' : '#fff'}; border: 2px solid #ffcc00; padding: 8px; font-weight: bold; border-radius: 6px; cursor: pointer;">🧠 ROTS</button>
+                    <button onclick="switchInventoryTab('items')" id="btnTabItems" style="flex: 1; background: ${currentInventoryTab === 'items' ? '#ffcc00' : '#222'}; color: ${currentInventoryTab === 'items' ? '#000' : '#fff'}; border: 2px solid #ffcc00; padding: 8px; font-weight: bold; border-radius: 6px; cursor: pointer;">🎒 ITEMS</button>
+                </div>
+                <div id="inventoryGrid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; max-height: 280px; overflow-y: auto; margin-bottom: 15px; padding-right: 4px;"></div>
+                <button onclick="closeInventory()" style="background: #333; color: #fff; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%;">CLOSE</button>
+            </div>
+        `;
+    }
 
-    if (inventory.length === 0) {
-        inventoryGrid.innerHTML = `<p style="grid-column: span 3; color: #777; font-size: 0.9rem; padding: 30px;">Your inventory is empty! Catch rots on the map.</p>`;
+    const actualGrid = document.getElementById('inventoryGrid') || inventoryGrid;
+    actualGrid.innerHTML = '';
+
+    if (currentInventoryTab === 'rots') {
+        const inventory = window.playerData.inventory || [];
+        if (inventory.length === 0) {
+            actualGrid.innerHTML = `<p style="grid-column: span 2; color: #777; font-size: 0.9rem; padding: 30px; text-align: center;">Your inventory is empty! Catch rots on the map.</p>`;
+            return;
+        }
+
+        inventory.forEach((rot, index) => {
+            const isActive = window.playerData.activeFighterIndex === index;
+            const isFainted = rot.fainted === true;
+            const isInGym = rot.inGym === true;
+            const rarityColor = window.getRarityColor(rot.rarity);
+            const rotLevel = rot.level || 1;
+            const requiredXp = rotLevel * 100;
+            const xpPercent = Math.min(100, Math.max(0, ((rot.xp || 0) / requiredXp) * 100));
+
+            const card = document.createElement('div');
+            card.style.cssText = `
+                background: ${isInGym ? '#1a222a' : (isFainted ? '#2a1a1a' : (isActive ? '#1a3a1a' : '#222'))};
+                border: 2px solid ${isInGym ? '#00ccff' : (isFainted ? '#ff0055' : (isActive ? '#00ff00' : rarityColor))};
+                border-radius: 8px;
+                padding: 8px;
+                text-align: center;
+            `;
+
+            card.innerHTML = `
+                <img src="${rot.image || ''}" style="width: 55px; height: 55px; object-fit: cover; border-radius: 4px; ${isFainted || isInGym ? 'filter: grayscale(100%);' : ''}" onerror="this.style.display='none';">
+                <div style="font-size: 0.75rem; font-weight: bold; margin-top: 4px; color: #fff;">${rot.name}</div>
+                <div style="font-size: 0.65rem; color: ${isInGym ? '#00ccff' : (isFainted ? '#ff0055' : '#00ff00')};">
+                    ${isInGym ? '🏢 [IN GYM]' : (isFainted ? '💀 FAINTED' : 'Lvl ' + rotLevel)}
+                </div>
+                ${!isFainted && !isInGym ? `
+                <div style="width: 100%; height: 3px; background: #111; margin-top: 4px; border-radius: 2px; overflow: hidden;">
+                    <div style="width: ${xpPercent}%; height: 100%; background: #00ccff;"></div>
+                </div>` : ''}
+                <div style="display: flex; gap: 4px; margin-top: 6px;">
+                    ${!isActive && !isInGym && !isFainted ? `<button onclick="setActiveFighter(${index})" style="background: #00ff00; color: #000; border: none; padding: 3px 6px; font-size: 0.6rem; font-weight: bold; border-radius: 4px; cursor: pointer; flex: 1;">ACTIVE</button>` : ''}
+                    <button onclick="transferRot(${index})" style="background: #ff0055; color: #fff; border: none; padding: 3px 6px; font-size: 0.6rem; font-weight: bold; border-radius: 4px; cursor: pointer; flex: 1;">TRANSFER</button>
+                </div>
+            `;
+            actualGrid.appendChild(card);
+        });
+    } else {
+        const revives = window.playerData.revivePotions || 0;
+        const luckyEggs = window.playerData.luckyEggs || 0;
+
+        actualGrid.innerHTML = `
+            <div style="grid-column: span 2; display: flex; flex-direction: column; gap: 10px; width: 100%;">
+                <div style="background: #222; border: 2px solid #00ffcc; border-radius: 8px; padding: 12px; display: flex; align-items: center; justify-content: space-between;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div style="font-size: 2rem;">🧪</div>
+                        <div style="text-align: left;">
+                            <div style="font-weight: bold; font-size: 0.9rem; color: #fff;">Revive Potion (x${revives})</div>
+                            <div style="font-size: 0.7rem; color: #00ffcc;">Wakes up a fainted rot!</div>
+                        </div>
+                    </div>
+                    <button onclick="useRevivePotionMenu()" style="background: #00ffcc; color: #000; border: none; padding: 8px 14px; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">USE</button>
+                </div>
+                <div style="background: #222; border: 2px solid #ff00ff; border-radius: 8px; padding: 12px; display: flex; align-items: center; justify-content: space-between;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div style="font-size: 2rem;">🥚</div>
+                        <div style="text-align: left;">
+                            <div style="font-weight: bold; font-size: 0.9rem; color: #fff;">Lucky Egg (x${luckyEggs})</div>
+                            <div style="font-size: 0.7rem; color: #ff00ff;">Double Account XP for 1hr!</div>
+                        </div>
+                    </div>
+                    <button onclick="useLuckyEgg()" style="background: #ff00ff; color: #000; border: none; padding: 8px 14px; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">USE</button>
+                </div>
+            </div>
+        `;
+    }
+}
+
+window.switchInventoryTab = function(tabName) {
+    currentInventoryTab = tabName;
+    const btnRots = document.getElementById('btnTabRots');
+    const btnItems = document.getElementById('btnTabItems');
+    if (btnRots && btnItems) {
+        btnRots.style.background = tabName === 'rots' ? '#ffcc00' : '#222';
+        btnRots.style.color = tabName === 'rots' ? '#000' : '#fff';
+        btnItems.style.background = tabName === 'items' ? '#ffcc00' : '#222';
+        btnItems.style.color = tabName === 'items' ? '#000' : '#fff';
+    }
+    renderInventoryGrid();
+};
+
+window.useLuckyEgg = function() {
+    if ((window.playerData.luckyEggs || 0) <= 0) {
+        alert("❌ You don't have any Lucky Eggs! Visit the shop to buy some.");
+        return;
+    }
+    window.playerData.luckyEggs--;
+    window.saveGameData();
+    alert("🥚 Lucky Egg activated! Double Account XP is now active for 1 hour!");
+    renderInventoryGrid();
+    updatePotionHud();
+};
+
+window.useRevivePotionMenu = function() {
+    if ((window.playerData.revivePotions || 0) <= 0) {
+        alert("❌ You don't have any Revive Potions! Visit the shop to buy some.");
         return;
     }
 
-    inventory.forEach((rot, index) => {
-        const isActive = window.playerData.activeFighterIndex === index;
-        const rarityColor = window.getRarityColor(rot.rarity);
-        const rotLevel = rot.level || 1;
-        const coinValue = 1;
+    const faintedRots = (window.playerData.inventory || []).filter(r => r.fainted);
+    if (faintedRots.length === 0) {
+        alert("👍 None of your rots need reviving right now!");
+        return;
+    }
 
-        const card = document.createElement('div');
-        card.style.cssText = `
-            background: linear-gradient(135deg, #111, ${rarityColor}33);
-            border: 2px solid ${isActive ? '#00ff00' : rarityColor};
-            border-radius: 10px;
-            padding: 10px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: space-between;
-        `;
+    let reviveModal = document.getElementById('reviveSelectModal');
+    if (reviveModal) reviveModal.remove();
 
-        card.innerHTML = `
-            <div style="width: 55px; height: 55px; background: #fff; border-radius: 6px; overflow: hidden; margin-bottom: 4px;">
-                <img src="${rot.image}" style="width: 100%; height: 100%; object-fit: cover;">
-            </div>
-            <span style="font-size: 10px; color: #fff; font-family: monospace; font-weight: bold;">${rot.name}</span>
-            <span style="font-size: 9px; color: #00ff00; font-family: monospace;">Lvl ${rotLevel}</span>
-            <span style="font-size: 8px; color: #ffaa00; font-family: monospace;">💰 +${coinValue} Coin</span>
-            <div style="display: flex; gap: 4px; margin-top: 6px; width: 100%;">
-                ${isActive ? '<span style="font-size: 7.5px; background: #00ff00; color: #000; padding: 3px 6px; border-radius: 4px; font-weight: bold; flex: 1; text-align: center;">FIGHTING</span>' : `<button onclick="setActiveFighter(${index})" style="font-size: 7.5px; background: #333; color: #fff; border: 1px solid #777; cursor: pointer; padding: 3px 6px; border-radius: 4px; flex: 1;">SELECT</button>`}
-                <button onclick="transferRot(${index})" style="font-size: 7.5px; background: #ff0055; color: #fff; border: none; cursor: pointer; padding: 3px 6px; border-radius: 4px; font-weight: bold;">TRANSFER</button>
-            </div>
-        `;
-        inventoryGrid.appendChild(card);
+    reviveModal = document.createElement('div');
+    reviveModal.id = 'reviveSelectModal';
+    reviveModal.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        background: rgba(0,0,0,0.95); z-index: 9999999; display: flex;
+        flex-direction: column; align-items: center; justify-content: center;
+        color: #fff; font-family: monospace; padding: 20px;
+    `;
+
+    let listHtml = '';
+    window.playerData.inventory.forEach((rot, index) => {
+        if (rot.fainted) {
+            listHtml += `
+                <div onclick="executeRevive(${index})" style="background: #222; border: 2px solid #00ffcc; border-radius: 8px; padding: 10px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <img src="${rot.image || ''}" style="width: 40px; height: 40px; object-fit: cover; filter: grayscale(100%);">
+                        <div style="text-align: left;">
+                            <div style="font-weight: bold; color: #fff;">${rot.name}</div>
+                            <div style="font-size: 0.7rem; color: #ff0055;">💀 FAINTED (Lvl ${rot.level || 1})</div>
+                        </div>
+                    </div>
+                    <button style="background: #00ffcc; color: #000; border: none; padding: 6px 10px; font-weight: bold; border-radius: 4px; cursor: pointer;">REVIVE</button>
+                </div>
+            `;
+        }
     });
-}
+
+    reviveModal.innerHTML = `
+        <div style="background: #111; border: 3px solid #00ffcc; border-radius: 15px; padding: 20px; width: 100%; max-width: 380px; text-align: center;">
+            <h3 style="color: #00ffcc; margin-bottom: 8px;">🧪 SELECT ROT TO REVIVE</h3>
+            <p style="font-size: 0.75rem; color: #aaa; margin-bottom: 12px;">Choose a fainted fighter to bring back to battle:</p>
+            <div style="max-height: 220px; overflow-y: auto; margin-bottom: 15px;">
+                ${listHtml}
+            </div>
+            <button onclick="document.getElementById('reviveSelectModal').remove()" style="background: #333; color: #fff; border: none; padding: 8px; border-radius: 6px; cursor: pointer; width: 100%;">CANCEL</button>
+        </div>
+    `;
+    document.body.appendChild(reviveModal);
+};
+
+window.executeRevive = function(index) {
+    let targetRot = window.playerData.inventory[index];
+    if (!targetRot || !targetRot.fainted) return;
+
+    if ((window.playerData.revivePotions || 0) <= 0) {
+        alert("❌ No revive potions left!");
+        return;
+    }
+
+    window.playerData.revivePotions--;
+    targetRot.fainted = false;
+    targetRot.hp = targetRot.maxHp || 50;
+
+    window.saveGameData();
+    updatePotionHud();
+
+    alert(`🧪 Successfully revived ${targetRot.name}!`);
+    
+    const rModal = document.getElementById('reviveSelectModal');
+    if (rModal) rModal.remove();
+    renderInventoryGrid();
+};
 
 window.transferRot = function(index) {
     const inventory = window.playerData.inventory || [];
@@ -490,6 +652,10 @@ window.setActiveFighter = function(index) {
 };
 
 window.openInventory = function() {
+    window.openInventoryModal();
+};
+
+window.openInventoryModal = function() {
     const modal = document.getElementById('inventoryModal');
     if (modal) {
         modal.style.display = 'flex';
