@@ -1,4 +1,4 @@
-// matchmaking.js - Real-Time Online PvP Queue & Match Sync System (Fixed undefined data bug)
+// matchmaking.js - Real-Time Online PvP Queue & Match Sync System (Instant Room Sync Fix)
 
 if (typeof window.matchmakingState === 'undefined') {
     window.matchmakingState = {
@@ -130,25 +130,34 @@ window.startOnlineMatchmaking = async function() {
 
             window.matchmakingState.myQueueId = myQueueRef.id;
 
-            window.matchmakingState.unsubscribeQueue = myQueueRef.onSnapshot(async (doc) => {
-                if (!doc.exists) {
-                    const activeMatchQuery = await db.collection('active_matches')
-                        .where('status', '==', 'active')
-                        .where('player1.username', '==', username)
-                        .get();
+            // Listen globally to active matches to instantly pick up when a room is created for us
+            window.matchmakingState.unsubscribeQueue = db.collection('active_matches')
+                .where('status', '==', 'active')
+                .onSnapshot(async (snapshot) => {
+                    snapshot.forEach(async (docSnap) => {
+                        const mData = docSnap.data();
+                        if ((mData.player1 && mData.player1.username === username) || (mData.player2 && mData.player2.username === username)) {
+                            if (window.matchmakingState.searching) {
+                                window.matchmakingState.searching = false;
+                                if (window.matchmakingState.unsubscribeQueue) {
+                                    window.matchmakingState.unsubscribeQueue();
+                                    window.matchmakingState.unsubscribeQueue = null;
+                                }
+                                try { await myQueueRef.delete(); } catch(e){}
 
-                    if (!activeMatchQuery.empty) {
-                        const matchDoc = activeMatchQuery.docs[0];
-                        window.matchmakingState.matchId = matchDoc.id;
-                        window.matchmakingState.isHost = true;
+                                window.matchmakingState.matchId = docSnap.id;
+                                window.matchmakingState.isHost = true;
 
-                        if (modal) modal.remove();
-                        if (typeof window.startPvPBattleScene === 'function') {
-                            window.startPvPBattleScene(matchDoc.id, 'player1');
+                                if (modal) modal.remove();
+
+                                const assignedRole = mData.player1.username === username ? 'player1' : 'player2';
+                                if (typeof window.startPvPBattleScene === 'function') {
+                                    window.startPvPBattleScene(docSnap.id, assignedRole);
+                                }
+                            }
                         }
-                    }
-                }
-            });
+                    });
+                });
         }
 
     } catch (err) {
