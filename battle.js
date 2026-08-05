@@ -1,4 +1,4 @@
-// battle.js - Full Card Battle Engine Logic with Faint, Level Scaling & Audio FX
+// battle.js - Full Card Battle Engine Logic with Rarity Scaling, Faint & Audio FX
 
 if (typeof window.currentWildCreature === 'undefined') {
     window.currentWildCreature = null;
@@ -7,6 +7,16 @@ if (typeof window.currentWildCreature === 'undefined') {
     window.playerHp = 50;
     window.maxPlayerHp = 50;
 }
+
+// Rarity power tier multipliers to ensure higher rarities dominate lower ones
+const rarityMultipliers = {
+    'common': 1.0,
+    'uncommon': 1.5,
+    'rare': 2.5,
+    'epic': 4.0,
+    'secret': 8.0,
+    'og': 12.0
+};
 
 // Initialize the battle when a creature is clicked
 window.initBattle = function(creature) {
@@ -140,7 +150,7 @@ function updateHpBars() {
     if (myHpText) myHpText.innerText = `${Math.ceil(window.playerHp)}/${window.maxPlayerHp} HP`;
 }
 
-// Attack Button Action with Level-Based Balance & Animations
+// Attack Button Action with Rarity Tier Scaling & Level Balance
 window.battleAttack = function() {
     if (window.wildHp <= 0) return;
 
@@ -172,17 +182,27 @@ window.battleAttack = function() {
 
         if (wildCombatant) wildCombatant.classList.add('hit-knockback');
 
-        let baseDamage = Math.floor(Math.random() * 15) + (5 + (fighterLvl * 3));
-        const levelDiff = fighterLvl - wildLvl;
+        // CALCULATE PLAYER DAMAGE WITH STRICT RARITY TIER SCALING
+        const playerRarity = (activeFighter?.rarity || 'common').toLowerCase();
+        const wildRarity = (window.currentWildCreature?.rarity || 'common').toLowerCase();
+        const playerMult = rarityMultipliers[playerRarity] || 1.0;
+        const wildMult = rarityMultipliers[wildRarity] || 1.0;
+
+        let baseDamage = Math.floor(Math.random() * 10) + (5 + (fighterLvl * 2));
         
+        // Tier advantage/disadvantage ratio (e.g. Common trying to hit a Secret deals significantly less)
+        const tierRatio = playerMult / wildMult;
+        baseDamage = Math.floor(baseDamage * tierRatio);
+
+        const levelDiff = fighterLvl - wildLvl;
         if (levelDiff < 0) {
-            const penaltyFactor = Math.max(0.05, 1 + (levelDiff * 0.08)); 
+            const penaltyFactor = Math.max(0.02, 1 + (levelDiff * 0.1)); 
             baseDamage = Math.max(1, Math.floor(baseDamage * penaltyFactor));
         } else {
             baseDamage += levelDiff * 2;
         }
 
-        const damage = baseDamage;
+        const damage = Math.max(1, baseDamage);
         window.wildHp -= damage;
         updateHpBars();
         
@@ -197,7 +217,7 @@ window.battleAttack = function() {
             window.wildHp = 0;
             updateHpBars();
             
-            // 🛡️ FIGHTER XP SYSTEM ONLY (No account XP here)
+            // 🛡️ FIGHTER XP SYSTEM ONLY
             if (activeFighter) {
                 activeFighter.xp = activeFighter.xp || 0;
                 
@@ -231,11 +251,8 @@ window.battleAttack = function() {
             } else {
                 if (battleLog) battleLog.innerText = `Victory! Click 'Defeat to Unlock Vault' to catch it!`;
             }
-
-            // ❌ DUPLICATE ACCOUNT XP REMOVED FROM HERE COMPLETELY
             
             if (typeof window.saveGameData === 'function') window.saveGameData();
-
             return;
         }
 
@@ -246,12 +263,17 @@ window.battleAttack = function() {
                 if (wildCombatant) wildCombatant.classList.remove('charge-attack');
                 if (playerCombatant) playerCombatant.classList.add('hit-knockback');
 
-                let counterDamage = Math.floor(Math.random() * 10) + (5 + (wildLvl * 4));
+                // CALCULATE WILD COUNTER-ATTACK WITH RARITY SCALING
+                let counterDamage = Math.floor(Math.random() * 10) + (8 + (wildLvl * 3));
+                const counterTierRatio = wildMult / playerMult;
+                counterDamage = Math.floor(counterDamage * counterTierRatio);
+
                 const reverseDiff = wildLvl - fighterLvl;
                 if (reverseDiff > 0) {
                     counterDamage += reverseDiff * 3;
                 }
 
+                counterDamage = Math.max(3, counterDamage);
                 window.playerHp -= counterDamage;
                 updateHpBars();
                 
@@ -369,7 +391,7 @@ window.selectNewFighter = function(index) {
     if (battleLog) battleLog.innerText = `Switched to ${newRot.name}!`;
 };
 
-// Catch / Vault Button Action
+// Catch / Vault Button Action - ULTIMATE DOM NUKE 🛑
 window.battleCatch = function() {
     const battleLog = document.getElementById('battleLog');
     if (window.wildHp > 0) {
@@ -383,24 +405,38 @@ window.battleCatch = function() {
             window.gameAudio.playCatch();
         }
 
+        // Add to your Pokedex / Inventory
         if (typeof window.addToDex === 'function') {
             window.addToDex(window.currentWildCreature);
         }
 
-        if (typeof window.removeCapturedCreature === 'function') {
-            window.removeCapturedCreature();
-        } else {
-            if (window.currentWildCreature.marker) {
-                window.currentWildCreature.marker.remove();
-            }
-            if (typeof window.activeCreatures !== 'undefined') {
-                window.activeCreatures = window.activeCreatures.filter(c => c.data !== window.currentWildCreature);
+        // 🛑 THE DOM NUKE 🛑
+        // Bypasses Leaflet entirely. Hunts the physical HTML element on the screen and destroys it.
+        const mapMarkers = document.querySelectorAll('.leaflet-marker-icon');
+        for (let i = 0; i < mapMarkers.length; i++) {
+            // Do NOT delete the player marker
+            if (mapMarkers[i].classList.contains('enhanced-player-marker')) continue;
+            
+            // If this map marker's HTML contains the exact image URL of the rot we caught, obliterate it
+            if (window.currentWildCreature.image && mapMarkers[i].innerHTML.includes(window.currentWildCreature.image)) {
+                mapMarkers[i].style.display = 'none'; // Instantly hide it
+                mapMarkers[i].remove(); // Delete it from the DOM permanently
+                break; // Stop after deleting one (in case there are duplicate spawns of the same rot)
             }
         }
 
-        // ❌ DUPLICATE ACCOUNT XP REMOVED FROM HERE (addToDex in dex.js now solely handles account XP)
+        // Cleanup the tracking array just to be safe so it doesn't cause background errors
+        if (typeof window.activeCreatures !== 'undefined' && Array.isArray(window.activeCreatures)) {
+            for (let i = window.activeCreatures.length - 1; i >= 0; i--) {
+                let c = window.activeCreatures[i];
+                if (c === window.currentWildCreature || c.data === window.currentWildCreature) {
+                    window.activeCreatures.splice(i, 1); 
+                }
+            }
+        }
 
         if (battleLog) battleLog.innerText = `Successfully captured Level ${window.currentWildCreature.level} ${window.currentWildCreature.name}!`;
+        
         setTimeout(closeBattle, 1200);
     }
 };
