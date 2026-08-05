@@ -98,6 +98,35 @@
             align-items: center; justify-content: center; color: #fff; font-family: monospace; text-align: center; padding: 20px;
         }
 
+        /* FULL SCREEN INVENTORY MODAL (NEW) */
+        #inventoryModal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 99999;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            box-sizing: border-box;
+            font-family: monospace;
+        }
+
+        /* Scrollable Grid Container (NEW) */
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 12px;
+            width: 100%;
+            max-width: 800px;
+            max-height: calc(100vh - 160px);
+            overflow-y: auto;
+            padding: 10px;
+        }
+
         /* 3D BATTLE ARENA OVERLAY */
         #battleModal {
             display: none;
@@ -379,7 +408,8 @@
     <!-- HUD Buttons -->
     <div class="hud-buttons">
         <button id="bgmToggleBtn" class="btn-hud" style="background: #ff00ff; color: #fff;" onclick="window.gameAudio.toggleBgm()">🔇 BGM: OFF</button>
-        <button class="btn-hud" onclick="openInventoryModal()">🎒 INVENTORY</button>
+        <!-- 🎒 CHANGED: Now calls the new openInventory() function -->
+        <button class="btn-hud" onclick="openInventory()">🎒 INVENTORY</button>
         <button class="btn-hud" style="background: #00ccff; color: #000;" onclick="openDex()">📖 ROT-DEX (<span id="dexCount">0</span>/<span id="totalBrainrots">0</span>)</button>
         <button class="btn-hud" style="background: #00ff55; color: #000;" onclick="openReviveModal()">🧪 REVIVE (<span id="potionHudCount">3</span>)</button>
         <button class="btn-hud" style="background: #ffcc00; color: #000;" onclick="openShopModal()">🛒 SHOP</button>

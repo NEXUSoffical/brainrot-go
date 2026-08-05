@@ -149,6 +149,16 @@ window.openCardDetails = function(inventoryIndex) {
     const stats = calculateRotStats(rot);
     const rarityColor = typeof window.getRarityColor === 'function' ? window.getRarityColor(rot.rarity) : '#00ff55';
 
+    // 🍬 THE UNIVERSAL CANDY KEY
+    const candyKey = rot.name.toUpperCase().trim();
+
+    // 🍬 Initialize candy wallet if it doesn't exist
+    if (!playerData.candies) playerData.candies = {};
+    const candyCount = playerData.candies[candyKey] || 0; 
+    
+    // Level Up Cost: Scales with level (Lvl 1 = 2 Candy, Lvl 10 = 20 Candy)
+    const levelUpCost = rot.level * 2; 
+
     let detailModal = document.getElementById('cardDetailModal');
     if (!detailModal) {
         detailModal = document.createElement('div');
@@ -164,8 +174,6 @@ window.openCardDetails = function(inventoryIndex) {
         font-family: monospace; padding: 20px; color: #fff;
     `;
 
-    // Calculate percentages for the stat bars (so they fill up based on max possible stats)
-    // Adjust these max values if your late-game stats go higher!
     const hpPercent = Math.min(100, (stats.maxHp / 2000) * 100);
     const atkPercent = Math.min(100, (stats.atk / 800) * 100);
     const defPercent = Math.min(100, (stats.def / 800) * 100);
@@ -179,14 +187,12 @@ window.openCardDetails = function(inventoryIndex) {
             <h2 style="color: ${rarityColor}; margin: 0 0 5px 0; text-transform: uppercase; font-size: 1.4rem;">${rot.name}</h2>
             <div style="font-size: 0.9rem; margin-bottom: 15px; color: #aaa; font-weight: bold;">Lvl ${rot.level || 1} | ${(rot.rarity || 'common').toUpperCase()}</div>
             
-            <div style="width: 100%; height: 220px; background: #fff; border-radius: 10px; overflow: hidden; border: 2px solid #444; margin-bottom: 20px; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);">
+            <div style="width: 100%; height: 180px; background: #fff; border-radius: 10px; overflow: hidden; border: 2px solid #444; margin-bottom: 15px; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);">
                 <img src="${rot.image || ''}" style="width: 100%; height: 100%; object-fit: cover; filter: brightness(1.1) contrast(1.2);" onerror="this.style.display='none';">
             </div>
 
             <!-- Stats Section -->
-            <div style="text-align: left; background: rgba(0,0,0,0.6); padding: 15px; border-radius: 10px; border: 1px solid #333;">
-                
-                <!-- HP Bar -->
+            <div style="text-align: left; background: rgba(0,0,0,0.6); padding: 15px; border-radius: 10px; border: 1px solid #333; margin-bottom: 15px;">
                 <div style="margin-bottom: 12px;">
                     <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px; font-weight: bold;">
                         <span style="color: #00ff55;">❤️ HEALTH</span>
@@ -197,7 +203,6 @@ window.openCardDetails = function(inventoryIndex) {
                     </div>
                 </div>
 
-                <!-- Attack Bar -->
                 <div style="margin-bottom: 12px;">
                     <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px; font-weight: bold;">
                         <span style="color: #ff0055;">⚔️ ATTACK</span>
@@ -208,7 +213,6 @@ window.openCardDetails = function(inventoryIndex) {
                     </div>
                 </div>
 
-                <!-- Defense Bar -->
                 <div style="margin-bottom: 5px;">
                     <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px; font-weight: bold;">
                         <span style="color: #00ccff;">🛡️ DEFENSE</span>
@@ -218,9 +222,245 @@ window.openCardDetails = function(inventoryIndex) {
                         <div style="width: ${defPercent}%; height: 100%; background: #00ccff; box-shadow: 0 0 8px #00ccff;"></div>
                     </div>
                 </div>
-
             </div>
+
+            <!-- 🍬 CANDY & UPGRADE UI 🍬 -->
+            <div style="background: rgba(0,0,0,0.8); padding: 10px; border-radius: 10px; border: 2px dashed ${rarityColor};">
+                <div style="font-size: 1rem; color: #fff; font-weight: bold; margin-bottom: 10px;">
+                    🍬 Candy: <span style="color: #00ccff;">${candyCount}</span>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; gap: 10px;">
+                    <button onclick="levelUpRot(${inventoryIndex})" style="flex: 1; background: #00ff55; color: #000; font-weight: bold; padding: 8px; border: none; border-radius: 5px; cursor: pointer;">
+                        LEVEL UP<br><span style="font-size: 0.7rem;">(Cost: ${levelUpCost})</span>
+                    </button>
+                    <button onclick="transferRot(${inventoryIndex})" style="flex: 1; background: #ff0055; color: #fff; font-weight: bold; padding: 8px; border: none; border-radius: 5px; cursor: pointer;">
+                        TRANSFER<br><span style="font-size: 0.7rem;">(+1 Candy)</span>
+                    </button>
+                </div>
+            </div>
+
         </div>
     `;
     detailModal.style.display = 'flex';
 };
+
+// ==========================================
+// CANDY ECONOMY LOGIC
+// ==========================================
+
+// Level Up Logic
+window.levelUpRot = function(index) {
+    if (typeof playerData === 'undefined' || !playerData.inventory || !playerData.inventory[index]) return;
+    
+    const rot = playerData.inventory[index];
+    const cost = rot.level * 2; // Dynamic cost
+    const candyKey = rot.name.toUpperCase().trim();
+    
+    if (!playerData.candies) playerData.candies = {};
+
+    if ((playerData.candies[candyKey] || 0) >= cost) {
+        // Subtract candy & level up
+        playerData.candies[candyKey] -= cost;
+        rot.level++;
+        
+        // Recalculate stats and fully heal them as a bonus!
+        const newStats = calculateRotStats(rot);
+        rot.maxHp = newStats.maxHp;
+        rot.hp = rot.maxHp;
+        
+        if (typeof window.saveGameData === 'function') window.saveGameData();
+        
+        // Refresh the screen to show the new stats and lowered candy amount
+        openCardDetails(index);
+    } else {
+        alert(`❌ Not enough candy! You need ${cost} Candies to reach Level ${rot.level + 1}.`);
+    }
+};
+
+// Transfer Logic
+window.transferRot = function(index) {
+    if (typeof playerData === 'undefined' || !playerData.inventory || !playerData.inventory[index]) return;
+    
+    if (playerData.inventory.length <= 1) {
+        alert("🛑 You cannot transfer your very last Rot! You need at least one to fight.");
+        return;
+    }
+
+    const rot = playerData.inventory[index];
+    const candyKey = rot.name.toUpperCase().trim();
+    
+    if (confirm(`⚠️ Are you sure you want to transfer this Lvl ${rot.level} ${rot.name} to the Professor? You will receive 1 Candy. This CANNOT be undone.`)) {
+        
+        if (!playerData.candies) playerData.candies = {};
+        // Add 1 candy
+        playerData.candies[candyKey] = (playerData.candies[candyKey] || 0) + 1;
+        
+        // Remove the rot from the inventory
+        playerData.inventory.splice(index, 1);
+        
+        // Safety check to ensure active fighter doesn't break
+        if (playerData.activeFighterIndex >= playerData.inventory.length) {
+            playerData.activeFighterIndex = 0;
+        } else if (playerData.activeFighterIndex === index) {
+            playerData.activeFighterIndex = 0; 
+        } else if (playerData.activeFighterIndex > index) {
+            playerData.activeFighterIndex--; 
+        }
+        
+        if (typeof window.saveGameData === 'function') window.saveGameData();
+        
+        // Close modal and refresh the inventory grid
+        document.getElementById('cardDetailModal').style.display = 'none';
+        if (typeof window.renderInventory === 'function') window.renderInventory();
+    }
+};
+
+// ==========================================
+// FULL-SCREEN INVENTORY & SORTING SYSTEM (OVERRIDE)
+// ==========================================
+
+window.currentInventorySort = 'newest';
+
+// Bind BOTH function names so no other file can override it!
+window.openInventory = window.openInventoryModal = function() {
+    let invModal = document.getElementById('inventoryModal');
+    
+    if (!invModal) {
+        invModal = document.createElement('div');
+        invModal.id = 'inventoryModal';
+        document.body.appendChild(invModal);
+    }
+
+    // Force full screen styling to blow away the old small box
+    invModal.style.cssText = `
+        position: fixed !important; 
+        top: 0 !important; 
+        left: 0 !important; 
+        width: 100vw !important; 
+        height: 100vh !important;
+        background: rgba(0, 0, 0, 0.95) !important; 
+        z-index: 9999999 !important; 
+        display: flex !important;
+        flex-direction: column !important; 
+        align-items: center !important; 
+        padding: 20px !important;
+        box-sizing: border-box !important; 
+        font-family: monospace !important; 
+        color: #fff !important;
+    `;
+
+    renderInventoryModal();
+};
+
+window.setInventorySort = function(sortType) {
+    window.currentInventorySort = sortType;
+    renderInventoryModal();
+};
+
+window.renderInventoryModal = function() {
+    const invModal = document.getElementById('inventoryModal');
+    if (!invModal) return;
+
+    if (typeof playerData === 'undefined' || !playerData.inventory) {
+        playerData = playerData || {};
+        playerData.inventory = playerData.inventory || [];
+    }
+
+    let indexedInventory = playerData.inventory.map((rot, originalIndex) => ({
+        rot: rot,
+        originalIndex: originalIndex
+    }));
+
+    const rarityRank = {
+        'og': 6,
+        'secret': 5,
+        'epic': 4,
+        'rare': 3,
+        'uncommon': 2,
+        'common': 1
+    };
+
+    if (window.currentInventorySort === 'power') {
+        indexedInventory.sort((a, b) => {
+            const statsA = calculateRotStats(a.rot);
+            const statsB = calculateRotStats(b.rot);
+            const powerA = statsA.maxHp + statsA.atk + statsA.def;
+            const powerB = statsB.maxHp + statsB.atk + statsB.def;
+            return powerB - powerA;
+        });
+    } else if (window.currentInventorySort === 'rarity') {
+        indexedInventory.sort((a, b) => {
+            const rankA = rarityRank[(a.rot.rarity || 'common').toLowerCase()] || 0;
+            const rankB = rarityRank[(b.rot.rarity || 'common').toLowerCase()] || 0;
+            return rankB - rankA;
+        });
+    } else if (window.currentInventorySort === 'newest') {
+        indexedInventory.reverse();
+    }
+
+    let html = `
+        <div style="width: 100%; max-width: 800px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h2 style="margin: 0; color: #00ff55; text-transform: uppercase;">🎒 Inventory (${playerData.inventory.length})</h2>
+            <button onclick="document.getElementById('inventoryModal').style.display='none'" style="background: #ff0055; color: #fff; border: 2px solid #fff; border-radius: 50%; width: 35px; height: 35px; font-weight: bold; cursor: pointer; font-size: 1.1rem;">X</button>
+        </div>
+
+        <!-- SORT BUTTONS BAR -->
+        <div style="width: 100%; max-width: 800px; display: flex; gap: 8px; margin-bottom: 15px;">
+            <button onclick="setInventorySort('power')" style="flex: 1; padding: 10px; background: ${window.currentInventorySort === 'power' ? '#00ff55' : '#222'}; color: ${window.currentInventorySort === 'power' ? '#000' : '#fff'}; border: 2px solid #00ff55; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: monospace;">
+                ⚔️ POWER
+            </button>
+            <button onclick="setInventorySort('rarity')" style="flex: 1; padding: 10px; background: ${window.currentInventorySort === 'rarity' ? '#00ccff' : '#222'}; color: ${window.currentInventorySort === 'rarity' ? '#000' : '#fff'}; border: 2px solid #00ccff; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: monospace;">
+                💎 RARITY
+            </button>
+            <button onclick="setInventorySort('newest')" style="flex: 1; padding: 10px; background: ${window.currentInventorySort === 'newest' ? '#ff0055' : '#222'}; color: ${window.currentInventorySort === 'newest' ? '#000' : '#fff'}; border: 2px solid #ff0055; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: monospace;">
+                🕒 NEWEST
+            </button>
+        </div>
+
+        <!-- GRID CONTAINER -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; width: 100%; max-width: 800px; max-height: calc(100vh - 160px); overflow-y: auto; padding: 5px;">
+    `;
+
+    indexedInventory.forEach(item => {
+        const rot = item.rot;
+        const origIndex = item.originalIndex;
+        const stats = calculateRotStats(rot);
+        const rarityColor = typeof window.getRarityColor === 'function' ? window.getRarityColor(rot.rarity) : '#00ff55';
+        const isFainted = rot.fainted === true;
+
+        html += `
+            <div onclick="openCardDetails(${origIndex})" style="
+                background: linear-gradient(180deg, #111, ${rarityColor}33); 
+                border: 2px solid ${rarityColor}; 
+                border-radius: 12px; 
+                padding: 8px; 
+                text-align: center; 
+                cursor: pointer; 
+                box-shadow: 0 0 10px ${rarityColor}44; 
+                position: relative;
+                opacity: ${isFainted ? '0.6' : '1'};
+            ">
+                <div style="font-size: 0.75rem; font-weight: bold; color: ${rarityColor}; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                    ${rot.name}
+                </div>
+                <div style="font-size: 0.65rem; color: #aaa; margin-bottom: 4px;">
+                    Lvl ${rot.level || 1} | ${(rot.rarity || 'common').toUpperCase()}
+                </div>
+                <div style="width: 100%; height: 90px; background: #fff; border-radius: 6px; overflow: hidden; border: 1px solid #333; margin-bottom: 6px;">
+                    <img src="${rot.image || ''}" style="width: 100%; height: 100%; object-fit: cover; ${isFainted ? 'filter: grayscale(100%);' : ''}" onerror="this.style.display='none';">
+                </div>
+                <div style="font-size: 0.65rem; color: #00ff55; font-weight: bold;">
+                    ❤️ ${stats.maxHp} | ⚔️ ${stats.atk}
+                </div>
+                ${isFainted ? '<div style="font-size: 0.6rem; color: #ff0055; font-weight: bold; margin-top: 2px;">💀 FAINTED</div>' : ''}
+            </div>
+        `;
+    });
+
+    html += `</div>`;
+    invModal.innerHTML = html;
+};
+
+// Sync back window.renderInventory if used elsewhere
+window.renderInventory = window.renderInventoryModal;

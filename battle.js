@@ -13,7 +13,6 @@ window.initBattle = function(creature) {
     window.currentWildCreature = creature;
     const wildLvl = creature.level || 1;
     
-    // Pull stats using the new RPG Engine (with fallbacks just in case)
     const wildStats = typeof window.calculateRotStats === 'function' 
         ? window.calculateRotStats(creature) 
         : { maxHp: 50 + (wildLvl - 1) * 12, atk: 10, def: 10 };
@@ -21,16 +20,14 @@ window.initBattle = function(creature) {
     window.maxWildHp = wildStats.maxHp;
     window.wildHp = window.maxWildHp;
 
-    // Safety check for player data / active fighter using inventory
     if (typeof playerData === 'undefined') {
-        window.playerData = { username: "Player", rotBalance: 500, inventory: [], activeFighterIndex: 0, revivePotions: 0 };
+        window.playerData = { username: "Player", rotBalance: 500, inventory: [], activeFighterIndex: 0, revivePotions: 0, candies: {} };
     }
     if (!playerData.inventory || playerData.inventory.length === 0) {
-        playerData.inventory = [{ name: "Skibidi", rarity: "common", image: "", level: 1, xp: 0, hp: 50, maxHp: 50, fainted: false }];
+        playerData.inventory = [{ name: "Skibidi", rarity: "common", image: "", level: 1, hp: 50, maxHp: 50, fainted: false }];
         playerData.activeFighterIndex = 0;
     }
 
-    // Check if active fighter is fainted, auto-switch to a healthy one if possible
     let activeFighter = playerData.inventory[playerData.activeFighterIndex] || playerData.inventory[0];
     if (activeFighter && activeFighter.fainted) {
         const healthyIndex = playerData.inventory.findIndex(r => !r.fainted);
@@ -42,7 +39,6 @@ window.initBattle = function(creature) {
 
     const fighterLvl = activeFighter.level || 1;
     
-    // Pull player stats using the new RPG Engine
     const pStats = typeof window.calculateRotStats === 'function' 
         ? window.calculateRotStats(activeFighter) 
         : { maxHp: 50 + (fighterLvl * 15), atk: 15, def: 10 };
@@ -50,12 +46,10 @@ window.initBattle = function(creature) {
     window.maxPlayerHp = pStats.maxHp;
     window.playerHp = activeFighter.fainted ? 0 : window.maxPlayerHp;
 
-    // Set names and headers with levels
     document.getElementById('wildName').innerText = `${(creature.name || "Unknown").toUpperCase()} (Lvl ${wildLvl})`;
     document.getElementById('wildBadgeName').innerText = `${creature.name || "Unknown"} (Lvl ${wildLvl})`;
     document.getElementById('wildRarity').innerText = `RARITY: ${(creature.rarity || 'common').toUpperCase()}`;
     
-    // Render Wild Card Graphic
     const wildRarityColor = typeof window.getRarityColor === 'function' ? window.getRarityColor(creature.rarity) : '#ff0055';
     const wildCardContainer = document.getElementById('wildCardContainer');
     if (wildCardContainer) {
@@ -79,9 +73,7 @@ window.initBattle = function(creature) {
         `;
     }
 
-    // Render Player Card Graphic with new XP Bar
     updatePlayerFighterDisplay(activeFighter, fighterLvl);
-
     updateHpBars();
     const battleLog = document.getElementById('battleLog');
     if (battleLog) {
@@ -93,16 +85,11 @@ window.initBattle = function(creature) {
     }
 };
 
-// Helper to render active player fighter graphics & XP Info
+// Helper to render active player fighter graphics
 function updatePlayerFighterDisplay(activeFighter, fighterLvl) {
     const playerRarityColor = typeof window.getRarityColor === 'function' ? window.getRarityColor(activeFighter.rarity) : '#00ff00';
     const playerCardContainer = document.getElementById('playerCardContainer');
     
-    // Calculate XP Progress for the tiny blue bar
-    const currentXp = activeFighter.xp || 0;
-    const requiredXp = fighterLvl * 100;
-    const xpPercent = Math.min(100, Math.max(0, (currentXp / requiredXp) * 100));
-
     if (playerCardContainer) {
         playerCardContainer.innerHTML = `
             <div style="
@@ -121,9 +108,6 @@ function updatePlayerFighterDisplay(activeFighter, fighterLvl) {
                 </div>
                 <div style="width: 100%; display: flex; flex-direction: column; align-items: center; margin-top: 3px;">
                     <span style="font-size: 9px; color: #fff; font-family: monospace; font-weight: bold;">Lvl ${fighterLvl}</span>
-                    <div style="width: 90%; height: 3px; background: #222; border-radius: 2px; margin-top: 2px; overflow: hidden; border: 1px solid #444;">
-                        <div style="width: ${xpPercent}%; height: 100%; background: #00ccff;"></div>
-                    </div>
                 </div>
             </div>
         `;
@@ -151,7 +135,7 @@ function updateHpBars() {
     if (myHpText) myHpText.innerText = `${Math.ceil(window.playerHp)}/${window.maxPlayerHp} HP`;
 }
 
-// Attack Button Action with NEW RPG STAT ENGINE
+// Attack Button Action
 window.battleAttack = function() {
     if (window.wildHp <= 0) return;
 
@@ -171,7 +155,6 @@ window.battleAttack = function() {
     const fighterLvl = activeFighter ? (activeFighter.level || 1) : 1;
     const wildLvl = window.currentWildCreature ? (window.currentWildCreature.level || 1) : 1;
 
-    // Grab the new RPG stats dynamically!
     const pStats = typeof window.calculateRotStats === 'function' ? window.calculateRotStats(activeFighter) : {atk: 15, def: 10};
     const wStats = typeof window.calculateRotStats === 'function' ? window.calculateRotStats(window.currentWildCreature) : {atk: 10, def: 10};
 
@@ -180,28 +163,22 @@ window.battleAttack = function() {
     setTimeout(() => {
         if (playerCombatant) playerCombatant.classList.remove('charge-attack');
         
-        // 🔊 Play chiptune attack hit sound effect!
         if (window.gameAudio && typeof window.gameAudio.playHit === 'function') {
             window.gameAudio.playHit();
         }
 
         if (wildCombatant) wildCombatant.classList.add('hit-knockback');
 
-        // CALCULATE PLAYER DAMAGE (ATTACK vs DEFENSE)
-        // Attack rolls between 80% and 120% of stat
         let attackRoll = pStats.atk * (0.8 + (Math.random() * 0.4));
-        // Defense mitigates 40% to 60% of its stat value
         let defenseRoll = wStats.def * (0.4 + (Math.random() * 0.2));
-        
         let baseDamage = Math.floor(attackRoll - defenseRoll);
 
-        // Heavy penalty if fighting something much higher level than you
         const levelDiff = fighterLvl - wildLvl;
         if (levelDiff < 0) {
             baseDamage = Math.floor(baseDamage * Math.max(0.1, 1 + (levelDiff * 0.1)));
         }
 
-        const damage = Math.max(1, baseDamage); // Always deal at least 1 damage
+        const damage = Math.max(1, baseDamage); 
         window.wildHp -= damage;
         updateHpBars();
         
@@ -216,42 +193,8 @@ window.battleAttack = function() {
             window.wildHp = 0;
             updateHpBars();
             
-            // 🛡️ FIGHTER XP SYSTEM & LEVEL UP
-            if (activeFighter) {
-                activeFighter.xp = activeFighter.xp || 0;
-                
-                const xpGained = 10 + (wildLvl * 15);
-                activeFighter.xp += xpGained;
-
-                let xpNeeded = activeFighter.level * 100;
-                let leveledUp = false;
-
-                while (activeFighter.xp >= xpNeeded) {
-                    activeFighter.xp -= xpNeeded;
-                    activeFighter.level++;
-                    xpNeeded = activeFighter.level * 100;
-                    leveledUp = true;
-                }
-
-                if (leveledUp) {
-                    // Recalculate stats immediately if they leveled up so they gain their new Max HP!
-                    const newStats = typeof window.calculateRotStats === 'function' ? window.calculateRotStats(activeFighter) : {maxHp: 50 + (activeFighter.level * 15)};
-                    activeFighter.maxHp = newStats.maxHp;
-                    activeFighter.hp = activeFighter.maxHp; // Full heal on level up
-                }
-
-                updatePlayerFighterDisplay(activeFighter, activeFighter.level);
-                
-                if (battleLog) {
-                    if (leveledUp) {
-                        battleLog.innerText = `Victory! +${xpGained} XP! ${activeFighter.name} leveled up to Lvl ${activeFighter.level}!`;
-                    } else {
-                        battleLog.innerText = `Victory! +${xpGained} XP! Click 'Defeat to Unlock Vault' to catch it!`;
-                    }
-                }
-            } else {
-                if (battleLog) battleLog.innerText = `Victory! Click 'Defeat to Unlock Vault' to catch it!`;
-            }
+            // 🔥 XP SYSTEM REMOVED: Now it just tells them to catch it for the candy!
+            if (battleLog) battleLog.innerText = `Victory! Click 'Defeat to Unlock Vault' to catch it and earn Candy!`;
             
             if (typeof window.saveGameData === 'function') window.saveGameData();
             return;
@@ -264,10 +207,8 @@ window.battleAttack = function() {
                 if (wildCombatant) wildCombatant.classList.remove('charge-attack');
                 if (playerCombatant) playerCombatant.classList.add('hit-knockback');
 
-                // CALCULATE WILD COUNTER-ATTACK (ENEMY ATTACK vs PLAYER DEFENSE)
                 let enemyAttackRoll = wStats.atk * (0.8 + (Math.random() * 0.4));
                 let playerDefenseRoll = pStats.def * (0.4 + (Math.random() * 0.2));
-                
                 let counterDamage = Math.floor(enemyAttackRoll - playerDefenseRoll);
 
                 const reverseDiff = wildLvl - fighterLvl;
@@ -305,7 +246,7 @@ window.battleAttack = function() {
     }, 300);
 };
 
-// Open a mini selection menu during battle to switch your active fighting rot
+// Open a mini selection menu during battle
 window.openBattleSwitch = function() {
     if (typeof playerData === 'undefined' || !playerData.inventory || playerData.inventory.length === 0) {
         alert("You don't have any other rots in your inventory!");
@@ -334,20 +275,12 @@ window.openBattleSwitch = function() {
     playerData.inventory.forEach((rot, index) => {
         const isCurrent = playerData.activeFighterIndex === index;
         const isFainted = rot.fainted === true;
-        const requiredXp = (rot.level || 1) * 100;
-        const xpPercent = Math.min(100, Math.max(0, ((rot.xp || 0) / requiredXp) * 100));
 
         gridHtml += `
             <div onclick="selectNewFighter(${index})" style="background: ${isFainted ? '#2a1a1a' : (isCurrent ? '#1a3a1a' : '#222')}; border: 2px solid ${isFainted ? '#ff0055' : (isCurrent ? '#00ff00' : '#555')}; border-radius: 8px; padding: 8px; cursor: pointer; text-align: center; opacity: ${isFainted ? '0.6' : '1'};">
                 <img src="${rot.image || ''}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px; ${isFainted ? 'filter: grayscale(100%);' : ''}" onerror="this.style.display='none';">
                 <div style="font-size: 0.75rem; font-weight: bold; margin-top: 4px; color: #fff;">${rot.name}</div>
                 <div style="font-size: 0.65rem; color: ${isFainted ? '#ff0055' : '#00ff00'};">${isFainted ? '💀 FAINTED' : 'Lvl ' + (rot.level || 1)}</div>
-                
-                ${!isFainted ? `
-                <div style="width: 100%; height: 2px; background: #111; margin-top: 3px; border-radius: 2px; overflow: hidden;">
-                    <div style="width: ${xpPercent}%; height: 100%; background: #00ccff;"></div>
-                </div>` : ''}
-
                 ${isCurrent ? '<div style="font-size: 0.55rem; color: #00ff00; font-weight: bold; margin-top: 2px;">(ACTIVE)</div>' : ''}
             </div>
         `;
@@ -363,7 +296,6 @@ window.openBattleSwitch = function() {
     switchModal.style.display = 'flex';
 };
 
-// Switch the active player combatant and update battle stats
 window.selectNewFighter = function(index) {
     if (typeof playerData === 'undefined' || !playerData.inventory || !playerData.inventory[index]) return;
 
@@ -376,11 +308,10 @@ window.selectNewFighter = function(index) {
     playerData.activeFighterIndex = index;
     const fighterLvl = newRot.level || 1;
 
-    // Pull stats dynamically from the engine for the newly selected fighter
     const newStats = typeof window.calculateRotStats === 'function' ? window.calculateRotStats(newRot) : {maxHp: 50 + (fighterLvl * 15)};
     
     window.maxPlayerHp = newStats.maxHp;
-    window.playerHp = window.maxPlayerHp; // Full heal when swapping to a healthy rot
+    window.playerHp = window.maxPlayerHp; 
 
     updatePlayerFighterDisplay(newRot, fighterLvl);
     updateHpBars();
@@ -396,7 +327,7 @@ window.selectNewFighter = function(index) {
     if (battleLog) battleLog.innerText = `Switched to ${newRot.name}!`;
 };
 
-// Catch / Vault Button Action - ANTI-CHEAT ULTIMATE DOM NUKE 🛑
+// Catch / Vault Button Action - ANTI-CHEAT & CANDY DROP 🍬
 window.battleCatch = function() {
     const battleLog = document.getElementById('battleLog');
     if (window.wildHp > 0) {
@@ -405,21 +336,32 @@ window.battleCatch = function() {
     }
 
     if (window.currentWildCreature) {
-        // 🔊 Play catch fanfare sound effect!
         if (window.gameAudio && typeof window.gameAudio.playCatch === 'function') {
             window.gameAudio.playCatch();
         }
 
-        // Add to your Pokedex / Inventory
+        const caughtName = window.currentWildCreature.name;
+        const caughtLevel = window.currentWildCreature.level;
+        
+        // 🍬 THE UNIVERSAL CANDY KEY (Forces UPPERCASE and removes spaces)
+        const candyKey = caughtName.toUpperCase().trim();
+
+        // 🍬 THE CANDY DROP 🍬 (MUST happen before addToDex to prevent save overwriting!)
+        if (typeof playerData !== 'undefined') {
+            if (!playerData.candies) playerData.candies = {};
+            playerData.candies[candyKey] = (playerData.candies[candyKey] || 0) + 3;
+            if (typeof window.saveGameData === 'function') window.saveGameData();
+        }
+
+        // Add to Pokedex / Inventory
         if (typeof window.addToDex === 'function') {
             window.addToDex(window.currentWildCreature);
         }
 
-        // 🛑 THE DOM NUKE (Destroys the Map Icon) 🛑
+        // 🛑 THE DOM NUKE (Destroys the Map Icon)
         const mapMarkers = document.querySelectorAll('.leaflet-marker-icon');
         for (let i = 0; i < mapMarkers.length; i++) {
             if (mapMarkers[i].classList.contains('enhanced-player-marker')) continue;
-            
             if (window.currentWildCreature.image && mapMarkers[i].innerHTML.includes(window.currentWildCreature.image)) {
                 mapMarkers[i].style.display = 'none'; 
                 mapMarkers[i].remove(); 
@@ -427,16 +369,13 @@ window.battleCatch = function() {
             }
         }
 
-        // 🛑 POPUP NUKE (Destroys the 'Fight' Popup) 🛑
-        // 1. Tell Leaflet to close the popup normally
+        // 🛑 POPUP NUKE
         if (typeof map !== 'undefined' && map && typeof map.closePopup === 'function') {
             map.closePopup();
         }
-        // 2. Force delete any lingering popup HTML from the screen to be safe
         const popups = document.querySelectorAll('.leaflet-popup');
         popups.forEach(popup => popup.remove());
 
-        // Cleanup the tracking array
         if (typeof window.activeCreatures !== 'undefined' && Array.isArray(window.activeCreatures)) {
             for (let i = window.activeCreatures.length - 1; i >= 0; i--) {
                 let c = window.activeCreatures[i];
@@ -446,21 +385,14 @@ window.battleCatch = function() {
             }
         }
 
-        // Save the name and level for the log before we erase it
-        const caughtName = window.currentWildCreature.name;
-        const caughtLevel = window.currentWildCreature.level;
-
-        if (battleLog) battleLog.innerText = `Successfully captured Level ${caughtLevel} ${caughtName}!`;
+        if (battleLog) battleLog.innerText = `Captured Lvl ${caughtLevel} ${caughtName}! (+3 Candy🍬)`;
         
-        // 🔥 ANTI-CHEAT MEMORY WIPE 🔥
-        // Erase the creature from the active game memory so the fight button breaks if they try to click it again!
         window.currentWildCreature = null;
 
-        setTimeout(closeBattle, 1200);
+        setTimeout(closeBattle, 1500);
     }
 };
 
-// Close Battle Modal
 window.closeBattle = function() {
     const modal = document.getElementById('battleModal');
     if (modal) {
