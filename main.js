@@ -12,8 +12,16 @@ function startStrictLocation() {
     navigator.geolocation.watchPosition(
         function(position) {
             // SUCCESS! They clicked "Allow"
-            let lat = position.coords.latitude;
-            let lng = position.coords.longitude;
+            let lat = parseFloat(position.coords.latitude);
+            let lng = parseFloat(position.coords.longitude);
+
+            // 🔥 THE ANTI-BLACK-SCREEN FIX 🔥
+            // If the browser GPS glitches and sends "NaN", force valid numbers so the map doesn't crash!
+            if (isNaN(lat) || isNaN(lng)) {
+                console.warn("GPS sent NaN! Falling back to safe coordinates.");
+                lat = 53.4808; // Safe default Latitude
+                lng = -2.2426; // Safe default Longitude
+            }
             
             // Hide the error box so they can play
             document.getElementById('locationErrorModal').style.display = 'none';
@@ -35,6 +43,11 @@ function startStrictLocation() {
                     maxZoom: 19,
                     attribution: '&copy; OpenStreetMap contributors'
                 }).addTo(map);
+
+                // 🛠️ THE FIX: Force Leaflet to recalculate screen size after 1 second
+                setTimeout(() => {
+                    map.invalidateSize();
+                }, 1000);
 
                 // Now that we have THEIR location, start the player 
                 if (typeof initPlayer === 'function') {
@@ -99,10 +112,27 @@ window.calculateRotStats = function(rot) {
     
     const mult = rarityGrowth[(rot.rarity || 'common').toLowerCase()] || 1.0;
 
-    // Fallbacks just in case an old caught rot doesn't have base stats yet
-    const baseHp = rot.baseHp || 50;
-    const baseAtk = rot.baseAtk || 10;
-    const baseDef = rot.baseDef || 10;
+    // 🔥 THE ULTIMATE FIX: ALWAYS pull base stats directly from the master database!
+    let baseHp = 50;
+    let baseAtk = 10;
+    let baseDef = 10;
+
+    if (typeof brainrotCharacters !== 'undefined') {
+        // Find the exact character in your database
+        const dbChar = brainrotCharacters.find(c => c.name.toLowerCase().trim() === rot.name.toLowerCase().trim());
+        
+        if (dbChar) {
+            // Apply the true database stats!
+            baseHp = dbChar.baseHp || 50;
+            baseAtk = dbChar.baseAtk || 10;
+            baseDef = dbChar.baseDef || 10;
+        }
+    } else {
+        // Failsafe fallback
+        baseHp = rot.baseHp || 50;
+        baseAtk = rot.baseAtk || 10;
+        baseDef = rot.baseDef || 10;
+    }
 
     return {
         maxHp: Math.floor(baseHp + (level * 5 * mult)),
