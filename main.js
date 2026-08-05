@@ -78,3 +78,119 @@ window.addEventListener('DOMContentLoaded', () => {
         rotDexElement.innerText = `ROT-DEX (0/${brainrotCharacters.length})`;
     }
 });
+
+// ==========================================
+// RPG STAT ENGINE & FULL-SCREEN CARD UI
+// ==========================================
+
+// Calculate a rot's true stats based on Level, Rarity, and Base Stats
+window.calculateRotStats = function(rot) {
+    const level = rot.level || 1;
+    
+    // Growth multiplier: OGs gain stats WAY faster than Commons
+    const rarityGrowth = {
+        'common': 1.0,
+        'uncommon': 1.5,
+        'rare': 2.2,
+        'epic': 3.5,
+        'secret': 6.0,
+        'og': 8.5
+    };
+    
+    const mult = rarityGrowth[(rot.rarity || 'common').toLowerCase()] || 1.0;
+
+    // Fallbacks just in case an old caught rot doesn't have base stats yet
+    const baseHp = rot.baseHp || 50;
+    const baseAtk = rot.baseAtk || 10;
+    const baseDef = rot.baseDef || 10;
+
+    return {
+        maxHp: Math.floor(baseHp + (level * 5 * mult)),
+        atk: Math.floor(baseAtk + (level * 2 * mult)),
+        def: Math.floor(baseDef + (level * 2 * mult))
+    };
+};
+
+// Open the Full-Screen Card Details Modal
+window.openCardDetails = function(inventoryIndex) {
+    if (typeof playerData === 'undefined' || !playerData.inventory || !playerData.inventory[inventoryIndex]) return;
+    
+    const rot = playerData.inventory[inventoryIndex];
+    const stats = calculateRotStats(rot);
+    const rarityColor = typeof window.getRarityColor === 'function' ? window.getRarityColor(rot.rarity) : '#00ff55';
+
+    let detailModal = document.getElementById('cardDetailModal');
+    if (!detailModal) {
+        detailModal = document.createElement('div');
+        detailModal.id = 'cardDetailModal';
+        document.body.appendChild(detailModal);
+    }
+
+    // Modal styling
+    detailModal.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        background: rgba(0, 0, 0, 0.95); z-index: 9999999; display: flex;
+        flex-direction: column; align-items: center; justify-content: center;
+        font-family: monospace; padding: 20px; color: #fff;
+    `;
+
+    // Calculate percentages for the stat bars (so they fill up based on max possible stats)
+    // Adjust these max values if your late-game stats go higher!
+    const hpPercent = Math.min(100, (stats.maxHp / 2000) * 100);
+    const atkPercent = Math.min(100, (stats.atk / 800) * 100);
+    const defPercent = Math.min(100, (stats.def / 800) * 100);
+
+    // The UI Layout
+    detailModal.innerHTML = `
+        <div style="background: linear-gradient(180deg, #111, ${rarityColor}44); border: 4px solid ${rarityColor}; border-radius: 20px; padding: 20px; width: 100%; max-width: 320px; text-align: center; box-shadow: 0 0 50px ${rarityColor}88; position: relative;">
+            
+            <button onclick="document.getElementById('cardDetailModal').style.display='none'" style="position: absolute; top: -15px; right: -15px; background: #ff0055; color: white; border: 3px solid #fff; border-radius: 50%; width: 40px; height: 40px; font-weight: bold; font-size: 1.2rem; cursor: pointer; z-index: 10;">X</button>
+
+            <h2 style="color: ${rarityColor}; margin: 0 0 5px 0; text-transform: uppercase; font-size: 1.4rem;">${rot.name}</h2>
+            <div style="font-size: 0.9rem; margin-bottom: 15px; color: #aaa; font-weight: bold;">Lvl ${rot.level || 1} | ${(rot.rarity || 'common').toUpperCase()}</div>
+            
+            <div style="width: 100%; height: 220px; background: #fff; border-radius: 10px; overflow: hidden; border: 2px solid #444; margin-bottom: 20px; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);">
+                <img src="${rot.image || ''}" style="width: 100%; height: 100%; object-fit: cover; filter: brightness(1.1) contrast(1.2);" onerror="this.style.display='none';">
+            </div>
+
+            <!-- Stats Section -->
+            <div style="text-align: left; background: rgba(0,0,0,0.6); padding: 15px; border-radius: 10px; border: 1px solid #333;">
+                
+                <!-- HP Bar -->
+                <div style="margin-bottom: 12px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px; font-weight: bold;">
+                        <span style="color: #00ff55;">❤️ HEALTH</span>
+                        <span style="color: #fff;">${stats.maxHp}</span>
+                    </div>
+                    <div style="width: 100%; height: 12px; background: #222; border-radius: 6px; overflow: hidden; border: 1px solid #444;">
+                        <div style="width: ${hpPercent}%; height: 100%; background: #00ff55; box-shadow: 0 0 8px #00ff55;"></div>
+                    </div>
+                </div>
+
+                <!-- Attack Bar -->
+                <div style="margin-bottom: 12px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px; font-weight: bold;">
+                        <span style="color: #ff0055;">⚔️ ATTACK</span>
+                        <span style="color: #fff;">${stats.atk}</span>
+                    </div>
+                    <div style="width: 100%; height: 12px; background: #222; border-radius: 6px; overflow: hidden; border: 1px solid #444;">
+                        <div style="width: ${atkPercent}%; height: 100%; background: #ff0055; box-shadow: 0 0 8px #ff0055;"></div>
+                    </div>
+                </div>
+
+                <!-- Defense Bar -->
+                <div style="margin-bottom: 5px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px; font-weight: bold;">
+                        <span style="color: #00ccff;">🛡️ DEFENSE</span>
+                        <span style="color: #fff;">${stats.def}</span>
+                    </div>
+                    <div style="width: 100%; height: 12px; background: #222; border-radius: 6px; overflow: hidden; border: 1px solid #444;">
+                        <div style="width: ${defPercent}%; height: 100%; background: #00ccff; box-shadow: 0 0 8px #00ccff;"></div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    `;
+    detailModal.style.display = 'flex';
+};

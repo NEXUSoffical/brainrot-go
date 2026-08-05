@@ -594,7 +594,11 @@ function renderInventoryGrid() {
                 padding: 8px;
                 text-align: center;
                 box-shadow: ${isShiny ? '0 0 10px rgba(0,255,255,0.4)' : 'none'};
+                cursor: pointer;
             `;
+            
+            // This links the card to the new Stats screen in main.js
+            card.setAttribute('onclick', `openCardDetails(${index})`);
 
             card.innerHTML = `
                 ${isShiny ? '<div style="font-size:0.6rem; color:#00ffff; font-family:monospace; font-weight:bold; margin-bottom:2px;">💎 SHINY</div>' : ''}
@@ -608,8 +612,8 @@ function renderInventoryGrid() {
                     <div style="width: ${xpPercent}%; height: 100%; background: #00ccff;"></div>
                 </div>` : ''}
                 <div style="display: flex; gap: 4px; margin-top: 6px;">
-                    ${!isActive && !isInGym && !isFainted ? `<button onclick="setActiveFighter(${index})" style="background: #00ff00; color: #000; border: none; padding: 3px 6px; font-size: 0.6rem; font-weight: bold; border-radius: 4px; cursor: pointer; flex: 1;">ACTIVE</button>` : ''}
-                    <button onclick="transferRot(${index})" style="background: #ff0055; color: #fff; border: none; padding: 3px 6px; font-size: 0.6rem; font-weight: bold; border-radius: 4px; cursor: pointer; flex: 1;">TRANSFER</button>
+                    ${!isActive && !isInGym && !isFainted ? `<button onclick="event.stopPropagation(); setActiveFighter(${index})" style="background: #00ff00; color: #000; border: none; padding: 3px 6px; font-size: 0.6rem; font-weight: bold; border-radius: 4px; cursor: pointer; flex: 1;">ACTIVE</button>` : ''}
+                    <button onclick="event.stopPropagation(); transferRot(${index})" style="background: #ff0055; color: #fff; border: none; padding: 3px 6px; font-size: 0.6rem; font-weight: bold; border-radius: 4px; cursor: pointer; flex: 1;">TRANSFER</button>
                 </div>
             `;
             inventoryGrid.appendChild(card);
@@ -928,7 +932,7 @@ window.openDex = function() {
         ">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                 <h2 style="color: #00ccff; font-size: 1.1rem; margin: 0;">📖 STICKER BOOK</h2>
-                <button onclick="closeDex()" style="background: #ff0055; color: #fff; border: none; width: 28px; height: 28px; border-radius: 50%; font-weight: bold; cursor: pointer;">✕</button>
+                <button onclick="closeDex()" style="background: #ff0055; color: #fff; border: none; width: 28px; height: 28px; border-radius: 50%; font-weight: bold; cursor: pointer;">✖</button>
             </div>
             
             <div style="display: flex; gap: 8px; justify-content: center; margin-bottom: 10px;">
