@@ -1,4 +1,4 @@
-// teamSelect.js - 3-Rot Battle Party Selection System (Mobile Responsive Fix)
+// teamSelect.js - 3-Rot Battle Party Selection System (Pinned Action Button Fix)
 
 if (typeof window.selectedBattleParty === 'undefined') {
     window.selectedBattleParty = []; // Stores inventory indices of the 3 chosen rots
@@ -26,8 +26,8 @@ window.openTeamSelect = function(mode = 'ai') {
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
-        justify-content: space-between !important;
-        padding: 12px !important;
+        justify-content: flex-start !important;
+        padding: 10px !important;
         box-sizing: border-box !important;
         font-family: monospace !important;
         color: #fff !important;
@@ -84,16 +84,16 @@ window.renderTeamSelectModal = function() {
             const rot = playerData.inventory[invIndex];
             const rarityColor = typeof getRarityColor === 'function' ? getRarityColor(rot.rarity) : '#00ff55';
             slotsHtml += `
-                <div style="width: 75px; height: 95px; background: #111; border: 2px solid ${rarityColor}; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; padding: 4px; box-shadow: 0 0 8px ${rarityColor}66;">
-                    <button onclick="toggleTeamMember(${invIndex})" style="position: absolute; top: -4px; right: -4px; background: #ff0055; color: #fff; border: none; border-radius: 50%; width: 20px; height: 20px; font-weight: bold; cursor: pointer; font-size: 0.65rem;">X</button>
-                    <img src="${rot.image || ''}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px; margin-bottom: 3px;" onerror="this.style.display='none';">
-                    <div style="font-size: 0.55rem; font-weight: bold; color: ${rarityColor}; white-space: nowrap; overflow: hidden; max-width: 65px;">${rot.name}</div>
-                    <div style="font-size: 0.5rem; color: #aaa;">Lvl ${rot.level || 1}</div>
+                <div style="width: 70px; height: 85px; background: #111; border: 2px solid ${rarityColor}; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; padding: 4px; box-shadow: 0 0 8px ${rarityColor}66;">
+                    <button onclick="toggleTeamMember(${invIndex})" style="position: absolute; top: -4px; right: -4px; background: #ff0055; color: #fff; border: none; border-radius: 50%; width: 18px; height: 18px; font-weight: bold; cursor: pointer; font-size: 0.6rem;">X</button>
+                    <img src="${rot.image || ''}" style="width: 35px; height: 35px; object-fit: cover; border-radius: 4px; margin-bottom: 2px;" onerror="this.style.display='none';">
+                    <div style="font-size: 0.5rem; font-weight: bold; color: ${rarityColor}; white-space: nowrap; overflow: hidden; max-width: 60px;">${rot.name}</div>
+                    <div style="font-size: 0.45rem; color: #aaa;">Lvl ${rot.level || 1}</div>
                 </div>
             `;
         } else {
             slotsHtml += `
-                <div style="width: 75px; height: 95px; background: #1a1a1a; border: 2px dashed #444; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #555; font-size: 0.6rem; font-weight: bold;">
+                <div style="width: 70px; height: 85px; background: #1a1a1a; border: 2px dashed #444; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #555; font-size: 0.55rem; font-weight: bold;">
                     SLOT ${i + 1}
                 </div>
             `;
@@ -113,22 +113,23 @@ window.renderTeamSelectModal = function() {
                 background: ${isSelected ? '#1a3a1a' : '#111'};
                 border: 2px solid ${isSelected ? '#00ff55' : (isFainted || isInGym ? '#333' : rarityColor)};
                 border-radius: 10px;
-                padding: 8px;
+                padding: 6px 10px;
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
                 cursor: ${isFainted || isInGym ? 'not-allowed' : 'pointer'};
                 opacity: ${isFainted || isInGym ? '0.4' : '1'};
+                min-height: 50px;
             ">
                 <div style="display: flex; align-items: center; gap: 8px;">
-                    <img src="${rot.image || ''}" style="width: 40px; height: 40px; object-fit: cover; border-radius: 6px;" onerror="this.style.display='none';">
+                    <img src="${rot.image || ''}" style="width: 35px; height: 35px; object-fit: cover; border-radius: 6px;" onerror="this.style.display='none';">
                     <div style="text-align: left;">
-                        <div style="font-weight: bold; color: ${rarityColor}; font-size: 0.8rem;">${rot.name}</div>
-                        <div style="font-size: 0.65rem; color: #aaa;">Lvl ${rot.level || 1} | ❤️ ${stats.maxHp} | ⚔️ ${stats.atk}</div>
-                        ${isFainted ? '<div style="font-size: 0.6rem; color: #ff0055; font-weight: bold;">💀 FAINTED</div>' : (isInGym ? '<div style="font-size: 0.6rem; color: #00ccff; font-weight: bold;">🏰 IN GYM</div>' : '')}
+                        <div style="font-weight: bold; color: ${rarityColor}; font-size: 0.75rem;">${rot.name}</div>
+                        <div style="font-size: 0.6rem; color: #aaa;">Lvl ${rot.level || 1} | ❤️ ${stats.maxHp} | ⚔️ ${stats.atk}</div>
+                        ${isFainted ? '<div style="font-size: 0.55rem; color: #ff0055; font-weight: bold;">💀 FAINTED</div>' : (isInGym ? '<div style="font-size: 0.55rem; color: #00ccff; font-weight: bold;">🏰 IN GYM</div>' : '')}
                     </div>
                 </div>
-                <div style="font-weight: bold; font-size: 0.75rem; color: ${isSelected ? '#00ff55' : '#666'};">
+                <div style="font-weight: bold; font-size: 0.7rem; color: ${isSelected ? '#00ff55' : '#666'};">
                     ${isSelected ? '✅ SELECTED' : (isFainted || isInGym ? 'LOCKED' : 'SELECT')}
                 </div>
             </div>
@@ -140,38 +141,38 @@ window.renderTeamSelectModal = function() {
 
     modal.innerHTML = `
         <!-- HEADER -->
-        <div style="width: 100%; max-width: 500px; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
-            <h2 style="margin: 0; color: #00ff55; text-transform: uppercase; font-size: 1.1rem;">⚔️ SELECT SQUAD (3 ROTS)</h2>
-            <button onclick="closeTeamSelect()" style="background: #ff0055; color: #fff; border: 2px solid #fff; border-radius: 50%; width: 30px; height: 30px; font-weight: bold; cursor: pointer; font-size: 1rem;">X</button>
+        <div style="width: 100%; max-width: 500px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <h2 style="margin: 0; color: #00ff55; text-transform: uppercase; font-size: 1rem;">⚔️ SELECT SQUAD (3 ROTS)</h2>
+            <button onclick="closeTeamSelect()" style="background: #ff0055; color: #fff; border: 2px solid #fff; border-radius: 50%; width: 28px; height: 28px; font-weight: bold; cursor: pointer; font-size: 0.9rem;">X</button>
+        </div>
+
+        <!-- ACTION BUTTON (PINNED AT TOP RIGHT BELOW HEADER FOR INSTANT ACCESS) -->
+        <div style="width: 100%; max-width: 500px; margin-bottom: 6px;">
+            <button onclick="${canBattle ? `launchBattleWithTeam()` : `alert('You must select exactly 3 healthy Rots to enter battle!')`}" style="
+                width: 100%;
+                padding: 10px;
+                background: ${canBattle ? '#00ff55' : '#222'};
+                color: ${canBattle ? '#000' : '#555'};
+                border: 2px solid ${canBattle ? '#00ff55' : '#444'};
+                border-radius: 8px;
+                font-weight: bold;
+                font-size: 0.85rem;
+                cursor: ${canBattle ? 'pointer' : 'not-allowed'};
+                font-family: monospace;
+                box-shadow: ${canBattle ? '0 0 12px #00ff5566' : 'none'};
+            ">
+                ${canBattle ? modeLabel : `🔒 SELECT 3 ROTS TO UNLOCK BATTLE`}
+            </button>
         </div>
 
         <!-- BATTLE SLOTS DISPLAY -->
-        <div style="display: flex; gap: 10px; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 10px; border: 1px solid #333; width: 100%; max-width: 500px; justify-content: center; box-sizing: border-box; flex-shrink: 0; margin-top: 8px;">
+        <div style="display: flex; gap: 8px; background: rgba(0,0,0,0.5); padding: 8px; border-radius: 8px; border: 1px solid #333; width: 100%; max-width: 500px; justify-content: center; box-sizing: border-box; margin-bottom: 6px;">
             ${slotsHtml}
         </div>
 
         <!-- INVENTORY SELECTION LIST (SCROLLABLE AREA) -->
-        <div style="width: 100%; max-width: 500px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding: 4px; box-sizing: border-box; margin: 8px 0;">
+        <div style="width: 100%; max-width: 500px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 4px; box-sizing: border-box;">
             ${inventoryListHtml}
-        </div>
-
-        <!-- ACTION BUTTON (PINNED AT BOTTOM) -->
-        <div style="width: 100%; max-width: 500px; flex-shrink: 0;">
-            <button onclick="${canBattle ? `launchBattleWithTeam()` : `alert('You must select exactly 3 healthy Rots to enter battle!')`}" style="
-                width: 100%;
-                padding: 12px;
-                background: ${canBattle ? '#00ff55' : '#333'};
-                color: ${canBattle ? '#000' : '#777'};
-                border: none;
-                border-radius: 10px;
-                font-weight: bold;
-                font-size: 0.95rem;
-                cursor: ${canBattle ? 'pointer' : 'not-allowed'};
-                font-family: monospace;
-                box-shadow: ${canBattle ? '0 0 15px #00ff5566' : 'none'};
-            ">
-                ${canBattle ? modeLabel : `SELECT ${3 - party.length} MORE ROT(S)`}
-            </button>
         </div>
     `;
     modal.style.display = 'flex';
