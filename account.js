@@ -182,4 +182,35 @@ window.logoutAccount = async function() {
     }
     
     window.location.href = window.location.pathname;
+};// ==========================================
+// UNIVERSAL CLOUD SAVE SYSTEM
+// ==========================================
+
+// Global Save Function: Uploads to the Cloud (Firebase) AND saves a local backup!
+window.saveGameData = async function() {
+    // If there is no player logged in, stop right here
+    if (typeof playerData === 'undefined' || !playerData.username) return;
+
+    // 1. Clean the data! 
+    // (Firebase hates it when we try to save live map markers, so we strip them out)
+    const cleanDataString = JSON.stringify(playerData, (key, value) => {
+        if (key === 'marker' || key === '_popup' || key === '_source') return undefined;
+        return value;
+    });
+    
+    const cleanData = JSON.parse(cleanDataString);
+
+    // 2. Save a quick backup to the device's local memory just in case
+    localStorage.setItem('brainrot_local_backup', cleanDataString);
+
+    // 3. ☁️ UPLOAD TO THE CLOUD! ☁️
+    // This tells Firebase to update your master save file on the internet
+    try {
+        if (typeof firebase !== 'undefined' && firebase.firestore) {
+            await firebase.firestore().collection('accounts').doc(playerData.username).set(cleanData);
+            console.log("☁️ Game saved to the Cloud perfectly!");
+        }
+    } catch (error) {
+        console.error("❌ Failed to save to cloud:", error);
+    }
 };
