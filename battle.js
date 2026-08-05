@@ -1,4 +1,4 @@
-// battle.js - Full Card Battle Engine Logic with Rarity Scaling, Faint & Audio FX
+// battle.js - Full Card Battle Engine Logic with RPG Stats, Rarity Scaling, Faint & Audio FX
 
 if (typeof window.currentWildCreature === 'undefined') {
     window.currentWildCreature = null;
@@ -8,22 +8,17 @@ if (typeof window.currentWildCreature === 'undefined') {
     window.maxPlayerHp = 50;
 }
 
-// Rarity power tier multipliers to ensure higher rarities dominate lower ones
-const rarityMultipliers = {
-    'common': 1.0,
-    'uncommon': 1.5,
-    'rare': 2.5,
-    'epic': 4.0,
-    'secret': 8.0,
-    'og': 12.0
-};
-
 // Initialize the battle when a creature is clicked
 window.initBattle = function(creature) {
     window.currentWildCreature = creature;
-    
     const wildLvl = creature.level || 1;
-    window.maxWildHp = creature.maxHp || (50 + (wildLvl - 1) * 12);
+    
+    // Pull stats using the new RPG Engine (with fallbacks just in case)
+    const wildStats = typeof window.calculateRotStats === 'function' 
+        ? window.calculateRotStats(creature) 
+        : { maxHp: 50 + (wildLvl - 1) * 12, atk: 10, def: 10 };
+        
+    window.maxWildHp = wildStats.maxHp;
     window.wildHp = window.maxWildHp;
 
     // Safety check for player data / active fighter using inventory
@@ -46,7 +41,13 @@ window.initBattle = function(creature) {
     }
 
     const fighterLvl = activeFighter.level || 1;
-    window.maxPlayerHp = 50 + (fighterLvl * 15);
+    
+    // Pull player stats using the new RPG Engine
+    const pStats = typeof window.calculateRotStats === 'function' 
+        ? window.calculateRotStats(activeFighter) 
+        : { maxHp: 50 + (fighterLvl * 15), atk: 15, def: 10 };
+
+    window.maxPlayerHp = pStats.maxHp;
     window.playerHp = activeFighter.fainted ? 0 : window.maxPlayerHp;
 
     // Set names and headers with levels
@@ -150,7 +151,7 @@ function updateHpBars() {
     if (myHpText) myHpText.innerText = `${Math.ceil(window.playerHp)}/${window.maxPlayerHp} HP`;
 }
 
-// Attack Button Action with Rarity Tier Scaling & Level Balance
+// Attack Button Action with NEW RPG STAT ENGINE
 window.battleAttack = function() {
     if (window.wildHp <= 0) return;
 
@@ -170,6 +171,10 @@ window.battleAttack = function() {
     const fighterLvl = activeFighter ? (activeFighter.level || 1) : 1;
     const wildLvl = window.currentWildCreature ? (window.currentWildCreature.level || 1) : 1;
 
+    // Grab the new RPG stats dynamically!
+    const pStats = typeof window.calculateRotStats === 'function' ? window.calculateRotStats(activeFighter) : {atk: 15, def: 10};
+    const wStats = typeof window.calculateRotStats === 'function' ? window.calculateRotStats(window.currentWildCreature) : {atk: 10, def: 10};
+
     if (playerCombatant) playerCombatant.classList.add('charge-attack');
 
     setTimeout(() => {
@@ -182,27 +187,21 @@ window.battleAttack = function() {
 
         if (wildCombatant) wildCombatant.classList.add('hit-knockback');
 
-        // CALCULATE PLAYER DAMAGE WITH STRICT RARITY TIER SCALING
-        const playerRarity = (activeFighter?.rarity || 'common').toLowerCase();
-        const wildRarity = (window.currentWildCreature?.rarity || 'common').toLowerCase();
-        const playerMult = rarityMultipliers[playerRarity] || 1.0;
-        const wildMult = rarityMultipliers[wildRarity] || 1.0;
-
-        let baseDamage = Math.floor(Math.random() * 10) + (5 + (fighterLvl * 2));
+        // CALCULATE PLAYER DAMAGE (ATTACK vs DEFENSE)
+        // Attack rolls between 80% and 120% of stat
+        let attackRoll = pStats.atk * (0.8 + (Math.random() * 0.4));
+        // Defense mitigates 40% to 60% of its stat value
+        let defenseRoll = wStats.def * (0.4 + (Math.random() * 0.2));
         
-        // Tier advantage/disadvantage ratio (e.g. Common trying to hit a Secret deals significantly less)
-        const tierRatio = playerMult / wildMult;
-        baseDamage = Math.floor(baseDamage * tierRatio);
+        let baseDamage = Math.floor(attackRoll - defenseRoll);
 
+        // Heavy penalty if fighting something much higher level than you
         const levelDiff = fighterLvl - wildLvl;
         if (levelDiff < 0) {
-            const penaltyFactor = Math.max(0.02, 1 + (levelDiff * 0.1)); 
-            baseDamage = Math.max(1, Math.floor(baseDamage * penaltyFactor));
-        } else {
-            baseDamage += levelDiff * 2;
+            baseDamage = Math.floor(baseDamage * Math.max(0.1, 1 + (levelDiff * 0.1)));
         }
 
-        const damage = Math.max(1, baseDamage);
+        const damage = Math.max(1, baseDamage); // Always deal at least 1 damage
         window.wildHp -= damage;
         updateHpBars();
         
@@ -217,7 +216,7 @@ window.battleAttack = function() {
             window.wildHp = 0;
             updateHpBars();
             
-            // 🛡️ FIGHTER XP SYSTEM ONLY
+            // 🛡️ FIGHTER XP SYSTEM & LEVEL UP
             if (activeFighter) {
                 activeFighter.xp = activeFighter.xp || 0;
                 
@@ -234,9 +233,11 @@ window.battleAttack = function() {
                     leveledUp = true;
                 }
 
-                activeFighter.maxHp = 50 + (activeFighter.level - 1) * 15;
                 if (leveledUp) {
-                    activeFighter.hp = activeFighter.maxHp; 
+                    // Recalculate stats immediately if they leveled up so they gain their new Max HP!
+                    const newStats = typeof window.calculateRotStats === 'function' ? window.calculateRotStats(activeFighter) : {maxHp: 50 + (activeFighter.level * 15)};
+                    activeFighter.maxHp = newStats.maxHp;
+                    activeFighter.hp = activeFighter.maxHp; // Full heal on level up
                 }
 
                 updatePlayerFighterDisplay(activeFighter, activeFighter.level);
@@ -263,17 +264,18 @@ window.battleAttack = function() {
                 if (wildCombatant) wildCombatant.classList.remove('charge-attack');
                 if (playerCombatant) playerCombatant.classList.add('hit-knockback');
 
-                // CALCULATE WILD COUNTER-ATTACK WITH RARITY SCALING
-                let counterDamage = Math.floor(Math.random() * 10) + (8 + (wildLvl * 3));
-                const counterTierRatio = wildMult / playerMult;
-                counterDamage = Math.floor(counterDamage * counterTierRatio);
+                // CALCULATE WILD COUNTER-ATTACK (ENEMY ATTACK vs PLAYER DEFENSE)
+                let enemyAttackRoll = wStats.atk * (0.8 + (Math.random() * 0.4));
+                let playerDefenseRoll = pStats.def * (0.4 + (Math.random() * 0.2));
+                
+                let counterDamage = Math.floor(enemyAttackRoll - playerDefenseRoll);
 
                 const reverseDiff = wildLvl - fighterLvl;
                 if (reverseDiff > 0) {
-                    counterDamage += reverseDiff * 3;
+                    counterDamage = Math.floor(counterDamage * (1 + (reverseDiff * 0.1)));
                 }
 
-                counterDamage = Math.max(3, counterDamage);
+                counterDamage = Math.max(1, counterDamage);
                 window.playerHp -= counterDamage;
                 updateHpBars();
                 
@@ -374,8 +376,11 @@ window.selectNewFighter = function(index) {
     playerData.activeFighterIndex = index;
     const fighterLvl = newRot.level || 1;
 
-    window.maxPlayerHp = 50 + (fighterLvl * 15);
-    window.playerHp = window.maxPlayerHp;
+    // Pull stats dynamically from the engine for the newly selected fighter
+    const newStats = typeof window.calculateRotStats === 'function' ? window.calculateRotStats(newRot) : {maxHp: 50 + (fighterLvl * 15)};
+    
+    window.maxPlayerHp = newStats.maxHp;
+    window.playerHp = window.maxPlayerHp; // Full heal when swapping to a healthy rot
 
     updatePlayerFighterDisplay(newRot, fighterLvl);
     updateHpBars();
@@ -391,7 +396,7 @@ window.selectNewFighter = function(index) {
     if (battleLog) battleLog.innerText = `Switched to ${newRot.name}!`;
 };
 
-// Catch / Vault Button Action - ULTIMATE DOM NUKE 🛑
+// Catch / Vault Button Action - ANTI-CHEAT ULTIMATE DOM NUKE 🛑
 window.battleCatch = function() {
     const battleLog = document.getElementById('battleLog');
     if (window.wildHp > 0) {
@@ -410,22 +415,28 @@ window.battleCatch = function() {
             window.addToDex(window.currentWildCreature);
         }
 
-        // 🛑 THE DOM NUKE 🛑
-        // Bypasses Leaflet entirely. Hunts the physical HTML element on the screen and destroys it.
+        // 🛑 THE DOM NUKE (Destroys the Map Icon) 🛑
         const mapMarkers = document.querySelectorAll('.leaflet-marker-icon');
         for (let i = 0; i < mapMarkers.length; i++) {
-            // Do NOT delete the player marker
             if (mapMarkers[i].classList.contains('enhanced-player-marker')) continue;
             
-            // If this map marker's HTML contains the exact image URL of the rot we caught, obliterate it
             if (window.currentWildCreature.image && mapMarkers[i].innerHTML.includes(window.currentWildCreature.image)) {
-                mapMarkers[i].style.display = 'none'; // Instantly hide it
-                mapMarkers[i].remove(); // Delete it from the DOM permanently
-                break; // Stop after deleting one (in case there are duplicate spawns of the same rot)
+                mapMarkers[i].style.display = 'none'; 
+                mapMarkers[i].remove(); 
+                break; 
             }
         }
 
-        // Cleanup the tracking array just to be safe so it doesn't cause background errors
+        // 🛑 POPUP NUKE (Destroys the 'Fight' Popup) 🛑
+        // 1. Tell Leaflet to close the popup normally
+        if (typeof map !== 'undefined' && map && typeof map.closePopup === 'function') {
+            map.closePopup();
+        }
+        // 2. Force delete any lingering popup HTML from the screen to be safe
+        const popups = document.querySelectorAll('.leaflet-popup');
+        popups.forEach(popup => popup.remove());
+
+        // Cleanup the tracking array
         if (typeof window.activeCreatures !== 'undefined' && Array.isArray(window.activeCreatures)) {
             for (let i = window.activeCreatures.length - 1; i >= 0; i--) {
                 let c = window.activeCreatures[i];
@@ -435,8 +446,16 @@ window.battleCatch = function() {
             }
         }
 
-        if (battleLog) battleLog.innerText = `Successfully captured Level ${window.currentWildCreature.level} ${window.currentWildCreature.name}!`;
+        // Save the name and level for the log before we erase it
+        const caughtName = window.currentWildCreature.name;
+        const caughtLevel = window.currentWildCreature.level;
+
+        if (battleLog) battleLog.innerText = `Successfully captured Level ${caughtLevel} ${caughtName}!`;
         
+        // 🔥 ANTI-CHEAT MEMORY WIPE 🔥
+        // Erase the creature from the active game memory so the fight button breaks if they try to click it again!
+        window.currentWildCreature = null;
+
         setTimeout(closeBattle, 1200);
     }
 };
