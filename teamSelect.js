@@ -1,4 +1,4 @@
-// teamSelect.js - 3-Rot Battle Party Selection System (Absolute Viewport Fit Fix)
+// teamSelect.js - 3-Rot Battle Party Selection System (Dual Button & Full Scroll Fix)
 
 if (typeof window.selectedBattleParty === 'undefined') {
     window.selectedBattleParty = []; // Stores inventory indices of the 3 chosen rots
@@ -27,11 +27,12 @@ window.openTeamSelect = function(mode = 'ai') {
         flex-direction: column !important;
         align-items: center !important;
         justify-content: flex-start !important;
-        padding: 8px !important;
+        padding: 10px 10px 40px 10px !important;
         box-sizing: border-box !important;
         font-family: monospace !important;
         color: #fff !important;
-        overflow: hidden !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch !important;
     `;
 
     renderTeamSelectModal();
@@ -84,15 +85,15 @@ window.renderTeamSelectModal = function() {
             const rot = playerData.inventory[invIndex];
             const rarityColor = typeof getRarityColor === 'function' ? getRarityColor(rot.rarity) : '#00ff55';
             slotsHtml += `
-                <div style="width: 65px; height: 75px; background: #111; border: 2px solid ${rarityColor}; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; padding: 2px; box-shadow: 0 0 6px ${rarityColor}66;">
-                    <button onclick="toggleTeamMember(${invIndex})" style="position: absolute; top: -3px; right: -3px; background: #ff0055; color: #fff; border: none; border-radius: 50%; width: 16px; height: 16px; font-weight: bold; cursor: pointer; font-size: 0.55rem;">X</button>
-                    <img src="${rot.image || ''}" style="width: 30px; height: 30px; object-fit: cover; border-radius: 4px; margin-bottom: 2px;" onerror="this.style.display='none';">
-                    <div style="font-size: 0.45rem; font-weight: bold; color: ${rarityColor}; white-space: nowrap; overflow: hidden; max-width: 55px;">${rot.name}</div>
+                <div style="width: 70px; height: 80px; background: #111; border: 2px solid ${rarityColor}; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; padding: 2px; box-shadow: 0 0 6px ${rarityColor}66; flex-shrink: 0;">
+                    <button onclick="toggleTeamMember(${invIndex})" style="position: absolute; top: -4px; right: -4px; background: #ff0055; color: #fff; border: none; border-radius: 50%; width: 18px; height: 18px; font-weight: bold; cursor: pointer; font-size: 0.6rem;">X</button>
+                    <img src="${rot.image || ''}" style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px; margin-bottom: 2px;" onerror="this.style.display='none';">
+                    <div style="font-size: 0.45rem; font-weight: bold; color: ${rarityColor}; white-space: nowrap; overflow: hidden; max-width: 60px;">${rot.name}</div>
                 </div>
             `;
         } else {
             slotsHtml += `
-                <div style="width: 65px; height: 75px; background: #1a1a1a; border: 2px dashed #444; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #555; font-size: 0.5rem; font-weight: bold;">
+                <div style="width: 70px; height: 80px; background: #1a1a1a; border: 2px dashed #444; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #555; font-size: 0.5rem; font-weight: bold; flex-shrink: 0;">
                     SLOT ${i + 1}
                 </div>
             `;
@@ -112,23 +113,22 @@ window.renderTeamSelectModal = function() {
                 background: ${isSelected ? '#1a3a1a' : '#111'};
                 border: 2px solid ${isSelected ? '#00ff55' : (isFainted || isInGym ? '#333' : rarityColor)};
                 border-radius: 8px;
-                padding: 6px 8px;
+                padding: 8px 10px;
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
                 cursor: ${isFainted || isInGym ? 'not-allowed' : 'pointer'};
                 opacity: ${isFainted || isInGym ? '0.4' : '1'};
-                min-height: 44px;
             ">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <img src="${rot.image || ''}" style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px;" onerror="this.style.display='none';">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <img src="${rot.image || ''}" style="width: 38px; height: 38px; object-fit: cover; border-radius: 6px;" onerror="this.style.display='none';">
                     <div style="text-align: left;">
-                        <div style="font-weight: bold; color: ${rarityColor}; font-size: 0.75rem;">${rot.name}</div>
-                        <div style="font-size: 0.6rem; color: #aaa;">Lvl ${rot.level || 1} | ❤️ ${stats.maxHp} | ⚔️ ${stats.atk}</div>
-                        ${isFainted ? '<div style="font-size: 0.5rem; color: #ff0055; font-weight: bold;">💀 FAINTED</div>' : (isInGym ? '<div style="font-size: 0.5rem; color: #00ccff; font-weight: bold;">🏰 IN GYM</div>' : '')}
+                        <div style="font-weight: bold; color: ${rarityColor}; font-size: 0.8rem;">${rot.name}</div>
+                        <div style="font-size: 0.65rem; color: #aaa;">Lvl ${rot.level || 1} | ❤️ ${stats.maxHp} | ⚔️ ${stats.atk}</div>
+                        ${isFainted ? '<div style="font-size: 0.55rem; color: #ff0055; font-weight: bold;">💀 FAINTED</div>' : (isInGym ? '<div style="font-size: 0.55rem; color: #00ccff; font-weight: bold;">🏰 IN GYM</div>' : '')}
                     </div>
                 </div>
-                <div style="font-weight: bold; font-size: 0.65rem; color: ${isSelected ? '#00ff55' : '#666'};">
+                <div style="font-weight: bold; font-size: 0.7rem; color: ${isSelected ? '#00ff55' : '#666'};">
                     ${isSelected ? '✅ SELECTED' : (isFainted || isInGym ? 'LOCKED' : 'SELECT')}
                 </div>
             </div>
@@ -138,40 +138,49 @@ window.renderTeamSelectModal = function() {
     const canBattle = party.length === 3;
     const modeLabel = window.currentBattleModeTarget === 'pvp' ? '🌐 START ONLINE PVP' : '🚀 START 3v3 BATTLE!';
 
+    const actionButtonHtml = `
+        <button onclick="${canBattle ? `launchBattleWithTeam()` : `alert('You must select exactly 3 healthy Rots to enter battle!')`}" style="
+            width: 100%;
+            padding: 14px;
+            background: ${canBattle ? '#00ff55' : '#1f1f1f'};
+            color: ${canBattle ? '#000' : '#666'};
+            border: 2px solid ${canBattle ? '#00ff55' : '#333'};
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 0.95rem;
+            cursor: ${canBattle ? 'pointer' : 'not-allowed'};
+            font-family: monospace;
+            box-shadow: ${canBattle ? '0 0 15px #00ff5588' : 'none'};
+        ">
+            ${canBattle ? modeLabel : `🔒 SELECT 3 ROTS TO UNLOCK BATTLE`}
+        </button>
+    `;
+
     modal.innerHTML = `
         <!-- HEADER -->
-        <div style="width: 100%; max-width: 500px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-            <h2 style="margin: 0; color: #00ff55; text-transform: uppercase; font-size: 0.95rem;">⚔️ SELECT SQUAD (3 ROTS)</h2>
-            <button onclick="closeTeamSelect()" style="background: #ff0055; color: #fff; border: 2px solid #fff; border-radius: 50%; width: 26px; height: 26px; font-weight: bold; cursor: pointer; font-size: 0.8rem;">X</button>
+        <div style="width: 100%; max-width: 500px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <h2 style="margin: 0; color: #00ff55; text-transform: uppercase; font-size: 1rem;">⚔️ SELECT SQUAD (3 ROTS)</h2>
+            <button onclick="closeTeamSelect()" style="background: #ff0055; color: #fff; border: 2px solid #fff; border-radius: 50%; width: 30px; height: 30px; font-weight: bold; cursor: pointer; font-size: 0.9rem;">X</button>
         </div>
 
-        <!-- ACTION BUTTON (PINNED AT THE TOP FOR IMMEDIATE PHONE ACCESS) -->
-        <div style="width: 100%; max-width: 500px; margin-bottom: 6px;">
-            <button onclick="${canBattle ? `launchBattleWithTeam()` : `alert('You must select exactly 3 healthy Rots to enter battle!')`}" style="
-                width: 100%;
-                padding: 10px;
-                background: ${canBattle ? '#00ff55' : '#1f1f1f'};
-                color: ${canBattle ? '#000' : '#666'};
-                border: 2px solid ${canBattle ? '#00ff55' : '#333'};
-                border-radius: 8px;
-                font-weight: bold;
-                font-size: 0.85rem;
-                cursor: ${canBattle ? 'pointer' : 'not-allowed'};
-                font-family: monospace;
-                box-shadow: ${canBattle ? '0 0 12px #00ff5566' : 'none'};
-            ">
-                ${canBattle ? modeLabel : `🔒 SELECT 3 ROTS TO UNLOCK BATTLE`}
-            </button>
+        <!-- TOP ACTION BUTTON -->
+        <div style="width: 100%; max-width: 500px; margin-bottom: 8px;">
+            ${actionButtonHtml}
         </div>
 
         <!-- BATTLE SLOTS DISPLAY -->
-        <div style="display: flex; gap: 6px; background: rgba(0,0,0,0.5); padding: 6px; border-radius: 8px; border: 1px solid #333; width: 100%; max-width: 500px; justify-content: center; box-sizing: border-box; margin-bottom: 6px;">
+        <div style="display: flex; gap: 8px; background: rgba(0,0,0,0.5); padding: 8px; border-radius: 8px; border: 1px solid #333; width: 100%; max-width: 500px; justify-content: center; box-sizing: border-box; margin-bottom: 10px;">
             ${slotsHtml}
         </div>
 
-        <!-- INVENTORY SELECTION LIST (SCROLLABLE AREA) -->
-        <div style="width: 100%; max-width: 500px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; padding-right: 4px; box-sizing: border-box;">
+        <!-- INVENTORY SELECTION LIST -->
+        <div style="width: 100%; max-width: 500px; display: flex; flex-direction: column; gap: 6px; box-sizing: border-box; margin-bottom: 15px;">
             ${inventoryListHtml}
+        </div>
+
+        <!-- BOTTOM ACTION BUTTON DUPLICATE -->
+        <div style="width: 100%; max-width: 500px; padding-bottom: 20px;">
+            ${actionButtonHtml}
         </div>
     `;
     modal.style.display = 'flex';
