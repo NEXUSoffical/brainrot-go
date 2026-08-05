@@ -1,12 +1,10 @@
-// matchmaking.js - Real-Time Online PvP Queue & Match Sync System (Atomic Pairing Fix)
+// matchmaking.js - Direct Room & Lobby PvP Matchmaking System
 
 if (typeof window.matchmakingState === 'undefined') {
     window.matchmakingState = {
         searching: false,
         matchId: null,
-        unsubscribeQueue: null,
-        unsubscribeMatch: null,
-        isHost: false
+        unsubscribe: null
     };
 }
 
@@ -23,11 +21,12 @@ window.startOnlineMatchmaking = async function() {
     }
 
     if (typeof firebase === 'undefined' || !firebase.firestore) {
-        alert("❌ Firebase is not connected. Cannot join online matchmaking.");
+        alert("❌ Firebase is not connected.");
         return;
     }
 
     const username = (typeof playerData !== 'undefined' && playerData.username) ? playerData.username : "player_" + Math.floor(Math.random()*1000);
+    const cleanSquad = sanitizeForFirebase(squad);
 
     let modal = document.getElementById('matchmakingModal');
     if (!modal) {
@@ -42,7 +41,7 @@ window.startOnlineMatchmaking = async function() {
         left: 0 !important;
         width: 100vw !important;
         height: 100vh !important;
-        background: rgba(5, 2, 10, 0.95) !important;
+        background: rgba(5, 2, 10, 0.96) !important;
         z-index: 99999999 !important;
         display: flex !important;
         flex-direction: column !important;
@@ -50,147 +49,152 @@ window.startOnlineMatchmaking = async function() {
         justify-content: center !important;
         font-family: monospace !important;
         color: #fff !important;
-        text-align: center !important;
         padding: 20px !important;
+        box-sizing: border-box !important;
     `;
 
     modal.innerHTML = `
-        <div style="background: #111; border: 3px solid #00ff55; border-radius: 20px; padding: 30px; max-width: 400px; width: 100%; box-shadow: 0 0 30px rgba(0,255,85,0.4);">
-            <h2 style="color: #00ff55; font-size: 1.4rem; margin-bottom: 15px;">🌐 ONLINE PVP QUEUE</h2>
-            <div style="font-size: 3rem; margin: 15px 0;">🔍</div>
-            <p id="matchStatusText" style="font-size: 0.9rem; color: #ccc; margin-bottom: 20px;">Searching for live opponent...</p>
-            <button onclick="cancelMatchmaking()" style="background: #ff0055; color: #fff; border: none; padding: 12px 20px; font-weight: bold; border-radius: 8px; cursor: pointer; width: 100%; font-family: monospace; font-size: 1rem;">CANCEL</button>
+        <div style="background: #111; border: 3px solid #00ff55; border-radius: 16px; padding: 20px; max-width: 400px; width: 100%; text-align: center; box-shadow: 0 0 25px rgba(0,255,85,0.4);">
+            <h2 style="color: #00ff55; font-size: 1.2rem; margin-bottom: 10px;">🌐 ONLINE PVP LOBBY</h2>
+            <p style="font-size: 0.75rem; color: #aaa; margin-bottom: 15px;">Looking for open rooms or create your own:</p>
+            <div id="roomListContainer" style="max-height: 180px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px;">
+                <div style="color: #666; font-size: 0.8rem;">Scanning for rooms...</div>
+            </div>
+            <button onclick="window.createPvPRoom('${username}', ${JSON.stringify(cleanSquad).replace(/"/g, '&quot;')})" style="background: #00ff55; color: #000; border: none; padding: 10px; font-weight: bold; border-radius: 8px; cursor: pointer; width: 100%; font-family: monospace; font-size: 0.85rem; margin-bottom: 8px;">HOST NEW ROOM</button>
+            <button onclick="cancelMatchmaking()" style="background: #ff0055; color: #fff; border: none; padding: 10px; font-weight: bold; border-radius: 8px; cursor: pointer; width: 100%; font-family: monospace; font-size: 0.85rem;">CANCEL</button>
         </div>
     `;
 
     window.matchmakingState.searching = true;
     const db = firebase.firestore();
-    const cleanSquad = sanitizeForFirebase(squad);
 
-    try {
-        const queueRef = db.collection('matchmaking_queue');
+    // Listen to open rooms waiting for player 2
+    window.matchmakingState.unsubscribe = db.collection('active_matches')
+        .where('status', '==', 'waiting')
+        .onSnapshot((snapshot) => {
+            const container = document.getElementById('roomListContainer');
+            if (!container) return;
 
-        // Add ourselves to the queue first
-        const myQueueRef = await queueRef.add(sanitizeForFirebase({
-            username: username,
-            squad: cleanSquad,
-            status: 'waiting',
-            timestamp: Date.now()
-        }));
+            let roomsHtml = '';
+            let myHostedMatchId = window.matchmakingState.myHostedMatchId;
 
-        window.matchmakingState.myQueueId = myQueueRef.id;
-
-        // Listen to queue changes to match instantly when another player appears
-        window.matchmakingState.unsubscribeQueue = queueRef.orderBy('timestamp', 'asc').onSnapshot(async (snapshot) => {
-            if (!window.matchmakingState.searching) return;
-
-            let waitingPlayers = [];
             snapshot.forEach(doc => {
-                if (doc.id !== window.matchmakingState.myQueueId) {
-                    waitingPlayers.push({ id: doc.id, ...doc.data() });
+                const room = doc.data();
+                if (room.player1.username === username) {
+                    myHostedMatchId = doc.id;
+                    window.matchmakingState.myHostedMatchId = doc.id;
+                } else {
+                    roomsHtml += `
+                        <div style="background: #1a1a1a; border: 1px solid #00ff55; padding: 8px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 0.75rem; color: #00ff55;">${room.player1.username}'s Room</span>
+                            <button onclick="window.joinPvPRoom('${doc.id}', '${username}', ${JSON.stringify(cleanSquad).replace(/"/g, '&quot;')})" style="background: #00ff55; color: #000; border: none; padding: 6px 12px; font-weight: bold; border-radius: 4px; cursor: pointer; font-size: 0.75rem;">JOIN</button>
+                        </div>
+                    `;
                 }
             });
 
-            // If there is another player waiting in the queue, let's pair with the oldest one
-            if (waitingPlayers.length > 0) {
-                const opponent = waitingPlayers[0];
-
-                // Attempt to claim the opponent by deleting their queue ticket atomically
-                try {
-                    await db.runTransaction(async (transaction) => {
-                        const oppDoc = await transaction.get(queueRef.doc(opponent.id));
-                        const myDoc = await transaction.get(queueRef.id ? queueRef.doc(window.matchmakingState.myQueueId) : null);
-
-                        if (!oppDoc.exists || (myDoc && !myDoc.exists)) {
-                            throw new Error("Match already taken");
-                        }
-
-                        transaction.delete(queueRef.doc(opponent.id));
-                        if (window.matchmakingState.myQueueId) {
-                            transaction.delete(queueRef.doc(window.matchmakingState.myQueueId));
-                        }
-                    });
-
-                    // Successfully claimed! We are Player 1, opponent is Player 2
-                    window.matchmakingState.searching = false;
-                    if (window.matchmakingState.unsubscribeQueue) {
-                        window.matchmakingState.unsubscribeQueue();
-                        window.matchmakingState.unsubscribeQueue = null;
-                    }
-
-                    const matchId = "match_" + Date.now() + "_" + Math.floor(Math.random()*1000);
-                    const matchData = {
-                        matchId: matchId,
-                        status: 'active',
-                        createdAt: Date.now(),
-                        player1: {
-                            username: username,
-                            squad: cleanSquad,
-                            activeIndex: 0,
-                            faintedCount: 0
-                        },
-                        player2: {
-                            username: opponent.username,
-                            squad: opponent.squad,
-                            activeIndex: 0,
-                            faintedCount: 0
-                        },
-                        turn: username,
-                        lastAction: "Match started! " + username + " vs " + opponent.username,
-                        winner: null
-                    };
-
-                    await db.collection('active_matches').doc(matchId).set(sanitizeForFirebase(matchData));
-
-                    if (modal) modal.remove();
-                    if (typeof window.startPvPBattleScene === 'function') {
-                        window.startPvPBattleScene(matchId, 'player1');
-                    }
-
-                } catch (e) {
-                    // Transaction failed because the other player claimed us first, which is fine—let's check active matches
-                }
+            if (myHostedMatchId) {
+                roomsHtml = `<div style="background: #222; border: 1px dashed #ffcc00; padding: 8px; border-radius: 6px; color: #ffcc00; font-size: 0.75rem;">Hosting room... waiting for opponent to join.</div>` + roomsHtml;
             }
 
-            // Also check if an active match was created for us by the other player
-            const activeMatchQuery = await db.collection('active_matches')
-                .where('status', '==', 'active')
-                .get();
-
-            activeMatchQuery.forEach(docSnap => {
-                const mData = docSnap.data();
-                if (window.matchmakingState.searching && mData.player2 && mData.player2.username === username) {
-                    window.matchmakingState.searching = false;
-                    if (window.matchmakingState.unsubscribeQueue) {
-                        window.matchmakingState.unsubscribeQueue();
-                        window.matchmakingState.unsubscribeQueue = null;
-                    }
-
-                    if (modal) modal.remove();
-                    if (typeof window.startPvPBattleScene === 'function') {
-                        window.startPvPBattleScene(docSnap.id, 'player2');
-                    }
-                }
-            });
+            if (!roomsHtml) {
+                container.innerHTML = `<div style="color: #666; font-size: 0.8rem;">No open rooms found. Click Host below!</div>`;
+            } else {
+                container.innerHTML = roomsHtml;
+            }
         });
 
-    } catch (err) {
-        console.error("Matchmaking error:", err);
-        alert("Matchmaking error: " + err.message);
-        cancelMatchmaking();
+    // Also listen if we hosted a room and someone joined it
+    db.collection('active_matches').onSnapshot((snapshot) => {
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            if (window.matchmakingState.myHostedMatchId === doc.id && data.status === 'active') {
+                if (window.matchmakingState.searching) {
+                    window.matchmakingState.searching = false;
+                    if (window.matchmakingState.unsubscribe) window.matchmakingState.unsubscribe();
+                    if (modal) modal.remove();
+                    if (typeof window.startPvPBattleScene === 'function') {
+                        window.startPvPBattleScene(doc.id, 'player1');
+                    }
+                }
+            }
+        });
+    });
+};
+
+window.createPvPRoom = async function(username, squad) {
+    const db = firebase.firestore();
+    const matchId = "match_" + Date.now() + "_" + Math.floor(Math.random()*1000);
+
+    const matchData = {
+        matchId: matchId,
+        status: 'waiting',
+        createdAt: Date.now(),
+        player1: {
+            username: username,
+            squad: squad,
+            activeIndex: 0,
+            faintedCount: 0
+        },
+        player2: null,
+        turn: username,
+        lastAction: "Waiting for opponent to join...",
+        winner: null
+    };
+
+    await db.collection('active_matches').doc(matchId).set(sanitizeForFirebase(matchData));
+    window.matchmakingState.myHostedMatchId = matchId;
+    alert("✅ Room hosted successfully! Your opponent can now see and join it in their online PvP menu.");
+};
+
+window.joinPvPRoom = async function(matchId, username, squad) {
+    const db = firebase.firestore();
+    const matchRef = db.collection('active_matches').doc(matchId);
+
+    const doc = await matchRef.get();
+    if (!doc.exists) {
+        alert("❌ This room no longer exists.");
+        return;
+    }
+
+    const roomData = doc.data();
+    if (roomData.status !== 'waiting') {
+        alert("❌ This room is already full or active.");
+        return;
+    }
+
+    await matchRef.update({
+        status: 'active',
+        player2: {
+            username: username,
+            squad: squad,
+            activeIndex: 0,
+            faintedCount: 0
+        },
+        lastAction: "Match started! " + roomData.player1.username + " vs " + username
+    });
+
+    window.matchmakingState.searching = false;
+    if (window.matchmakingState.unsubscribe) window.matchmakingState.unsubscribe();
+
+    const modal = document.getElementById('matchmakingModal');
+    if (modal) modal.remove();
+
+    if (typeof window.startPvPBattleScene === 'function') {
+        window.startPvPBattleScene(matchId, 'player2');
     }
 };
 
 window.cancelMatchmaking = async function() {
     window.matchmakingState.searching = false;
-    if (window.matchmakingState.unsubscribeQueue) {
-        window.matchmakingState.unsubscribeQueue();
-        window.matchmakingState.unsubscribeQueue = null;
+    if (window.matchmakingState.unsubscribe) {
+        window.matchmakingState.unsubscribe();
+        window.matchmakingState.unsubscribe = null;
     }
 
-    if (window.matchmakingState.myQueueId && typeof firebase !== 'undefined') {
+    if (window.matchmakingState.myHostedMatchId && typeof firebase !== 'undefined') {
         try {
-            await firebase.firestore().collection('matchmaking_queue').doc(window.matchmakingState.myQueueId).delete();
+            await firebase.firestore().collection('active_matches').doc(window.matchmakingState.myHostedMatchId).delete();
         } catch (e) {}
     }
 
