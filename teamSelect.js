@@ -136,6 +136,7 @@ window.renderTeamSelectModal = function() {
     });
 
     const canBattle = party.length === 3;
+    const modeLabel = window.currentBattleModeTarget === 'pvp' ? '🌐 START ONLINE PVP' : '🚀 START 3v3 BATTLE!';
 
     modal.innerHTML = `
         <div style="width: 100%; max-width: 600px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
@@ -168,7 +169,7 @@ window.renderTeamSelectModal = function() {
                 font-family: monospace;
                 box-shadow: ${canBattle ? '0 0 15px #00ff5566' : 'none'};
             ">
-                ${canBattle ? '🚀 START 3v3 BATTLE!' : `SELECT ${3 - party.length} MORE ROT(S)`}
+                ${canBattle ? modeLabel : `SELECT ${3 - party.length} MORE ROT(S)`}
             </button>
         </div>
     `;
@@ -197,10 +198,18 @@ window.launchBattleWithTeam = function() {
 
     closeTeamSelect();
     
-    // Proceed to battle scene creation
-    if (typeof window.startBattleScene === 'function') {
-        window.startBattleScene(window.currentBattleModeTarget);
+    // Route to Online Matchmaking or Offline AI Battle
+    if (window.currentBattleModeTarget === 'pvp') {
+        if (typeof window.startOnlineMatchmaking === 'function') {
+            window.startOnlineMatchmaking();
+        } else {
+            alert("⚠️ Online matchmaking script not loaded yet!");
+        }
     } else {
-        alert("Squad locked in successfully! Ready to build the 3v3 battle engine next.");
+        if (typeof window.startBattleScene === 'function') {
+            window.startBattleScene('ai');
+        } else {
+            alert("Squad locked in successfully!");
+        }
     }
 };
