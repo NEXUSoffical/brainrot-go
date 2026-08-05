@@ -379,7 +379,7 @@
         <p>📍 <b>LNG:</b> <span id="lngVal">Loading...</span></p>
         <hr style="margin: 6px 0; border-color: #333;">
         <p>📦 <b>INVENTORY:</b> <span id="inventoryCount">0</span> Rots</p>
-        <p>🪙 <b>ROT:</b> <span id="rotBalance">500</span></p>
+        <p>🪩 <b>ROT:</b> <span id="rotBalance">500</span></p>
     </div>
 
     <!-- PLAYER PROFILE WIDGET (TOP RIGHT) -->
@@ -408,11 +408,12 @@
     <!-- HUD Buttons -->
     <div class="hud-buttons">
         <button id="bgmToggleBtn" class="btn-hud" style="background: #ff00ff; color: #fff;" onclick="window.gameAudio.toggleBgm()">🔇 BGM: OFF</button>
-        <!-- 🎒 CHANGED: Now calls the new openInventory() function -->
+        <!-- INVENTORY BUTTON -->
         <button class="btn-hud" onclick="openInventory()">🎒 INVENTORY</button>
         <button class="btn-hud" style="background: #00ccff; color: #000;" onclick="openDex()">📖 ROT-DEX (<span id="dexCount">0</span>/<span id="totalBrainrots">0</span>)</button>
         <button class="btn-hud" style="background: #00ff55; color: #000;" onclick="openReviveModal()">🧪 REVIVE (<span id="potionHudCount">3</span>)</button>
         <button class="btn-hud" style="background: #ffcc00; color: #000;" onclick="openShopModal()">🛒 SHOP</button>
+        <button class="btn-hud" style="background: #9900ff; color: #fff;" onclick="openTeamSelect('ai')">⚔️ 3v3 BATTLE</button>
         <button class="btn-hud" style="background: #ff0055; color: #fff; font-size: 0.8rem; padding: 6px 12px;" onclick="logoutAccount()">🚪 LOGOUT</button>
     </div>
 
@@ -541,7 +542,9 @@
     <script src="firebase.js"></script>
     
     <script src="dex.js?v=4"></script>
+    <script src="teamSelect.js"></script>
     <script src="battle.js?v=2"></script>
+    <script src="battle3v3.js"></script>
     <script src="spawner.js"></script>
     <script src="gyms.js"></script>
     <script src="revive.js"></script>
