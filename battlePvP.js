@@ -1,4 +1,4 @@
-// battlePvP.js - Real-Time Online PvP Combat & Room Sync Engine
+// battlePvP.js - Real-Time Online PvP Combat & Room Sync Engine (Null-Safe Render)
 
 if (typeof window.pvpBattleState === 'undefined') {
     window.pvpBattleState = null;
@@ -42,15 +42,19 @@ window.startPvPBattleScene = function(matchId, role) {
         overflow: hidden !important;
     `;
 
-    if (typeof firebase === 'undefined' || !firebase.firestore) {
-        alert("Firebase error: Firestore not available.");
-        return;
-    }
+    // Initial loading state screen
+    modal.innerHTML = `
+        <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+            <h1 style="color: #00ff55; font-size: 1.5rem; margin-bottom: 10px;">🌐 CONNECTING TO MATCH...</h1>
+            <p style="color: #aaa; font-size: 0.85rem;">Syncing arena state with opponent...</p>
+        </div>
+    `;
 
     const db = firebase.firestore();
     window.pvpBattleState.unsubscribeMatch = db.collection('active_matches').doc(matchId).onSnapshot((doc) => {
         if (!doc.exists) {
-            console.warn("Match room closed or deleted.");
+            alert("⚠️ Match room was closed.");
+            window.exitPvPBattle();
             return;
         }
 
@@ -58,17 +62,8 @@ window.startPvPBattleScene = function(matchId, role) {
         try {
             renderPvPArena(matchData);
         } catch (err) {
-            console.error("Error rendering PvP arena:", err);
-            modal.innerHTML = `
-                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
-                    <h2 style="color: #ff0055; margin-bottom: 10px;">⚠️ SYNC ERROR</h2>
-                    <p style="color: #aaa; margin-bottom: 20px;">${err.message}</p>
-                    <button onclick="window.exitPvPBattle()" style="padding: 10px 20px; background: #ff0055; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-family: monospace;">RETURN TO MAP</button>
-                </div>
-            `;
+            console.error("PvP Render Error:", err);
         }
-    }, (error) => {
-        console.error("Match subscription error:", error);
     });
 };
 
@@ -85,8 +80,8 @@ window.renderPvPArena = function(matchData) {
     const myActiveRot = myData.squad[myData.activeIndex] || myData.squad[0];
     const enemyActiveRot = enemyData.squad[enemyData.activeIndex] || enemyData.squad[0];
 
-    const myHpPercent = Math.max(0, Math.min(100, (myActiveRot.currentHp / myActiveRot.maxHp) * 100));
-    const enemyHpPercent = Math.max(0, Math.min(100, (enemyActiveRot.currentHp / enemyActiveRot.maxHp) * 100));
+    const myHpPercent = Math.max(0, Math.min(100, ((myActiveRot.currentHp || 0) / (myActiveRot.maxHp || 1)) * 100));
+    const enemyHpPercent = Math.max(0, Math.min(100, ((enemyActiveRot.currentHp || 0) / (enemyActiveRot.maxHp || 1)) * 100));
 
     const isMyTurn = matchData.turn === myData.username;
     const isGameOver = matchData.winner !== null && matchData.winner !== undefined;
@@ -118,12 +113,12 @@ window.renderPvPArena = function(matchData) {
         <!-- HEADER / USERNAMES -->
         <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 650px; margin: 0 auto; background: rgba(15, 10, 30, 0.85); padding: 10px 18px; border-radius: 12px; border: 1px solid rgba(255, 0, 127, 0.5); z-index: 10; backdrop-filter: blur(8px);">
             <div style="text-align: left;">
-                <div style="font-size: 0.7rem; color: #ff0055; font-weight: bold;">🔴 OPPONENT: ${enemyData.username}</div>
-                <div style="font-size: 0.6rem; color: #aaa;">Active: ${enemyData.activeIndex + 1}/3</div>
+                <div style="font-size: 0.7rem; color: #ff0055; font-weight: bold;">🔴 OPPONENT: ${enemyData.username || 'Enemy'}</div>
+                <div style="font-size: 0.6rem; color: #aaa;">Active Index: ${(enemyData.activeIndex || 0) + 1}/3</div>
             </div>
             <div style="text-align: right;">
-                <div style="font-size: 0.7rem; color: #00ff55; font-weight: bold;">🟢 YOU: ${myData.username}</div>
-                <div style="font-size: 0.6rem; color: #aaa;">Active: ${myData.activeIndex + 1}/3</div>
+                <div style="font-size: 0.7rem; color: #00ff55; font-weight: bold;">🟢 YOU: ${myData.username || 'You'}</div>
+                <div style="font-size: 0.6rem; color: #aaa;">Active Index: ${(myData.activeIndex || 0) + 1}/3</div>
             </div>
         </div>
 
@@ -132,14 +127,14 @@ window.renderPvPArena = function(matchData) {
             
             <!-- ENEMY CARD -->
             <div style="background: linear-gradient(180deg, #120826, #ff005544); border: 3px solid #ff0055; border-radius: 16px; padding: 12px; width: 190px; text-align: center; box-shadow: 0 0 25px #ff005566; transform: scale(0.85);">
-                <div style="font-size: 0.8rem; color: #ff0055; font-weight: bold; margin-bottom: 4px; text-transform: uppercase;">${activeEnemyRot.name}</div>
+                <div style="font-size: 0.8rem; color: #ff0055; font-weight: bold; margin-bottom: 4px; text-transform: uppercase;">${activeEnemyRot.name || 'Unknown'}</div>
                 <div style="width: 100%; height: 100px; background: #1a102f; border-radius: 8px; overflow: hidden; margin-bottom: 6px;">
                     <img src="${activeEnemyRot.image || ''}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none';">
                 </div>
                 <div style="width: 100%; height: 8px; background: #111; border-radius: 4px; overflow: hidden; border: 1px solid #444; margin-bottom: 4px;">
                     <div style="width: ${enemyHpPercent}%; height: 100%; background: #ff0055; transition: width 0.3s;"></div>
                 </div>
-                <div style="font-size: 0.6rem; color: #aaa; text-align: right;">${activeEnemyRot.currentHp} / ${activeEnemyRot.maxHp} HP</div>
+                <div style="font-size: 0.6rem; color: #aaa; text-align: right;">${activeEnemyRot.currentHp || 0} / ${activeEnemyRot.maxHp || 100} HP</div>
             </div>
 
             <!-- LIVE LOG CHAT -->
@@ -150,14 +145,14 @@ window.renderPvPArena = function(matchData) {
 
             <!-- PLAYER CARD -->
             <div style="background: linear-gradient(180deg, #120826, #00ff5544); border: 4px solid #00ff55; border-radius: 18px; padding: 14px; width: 220px; text-align: center; box-shadow: 0 0 35px #00ff5577;">
-                <div style="font-size: 0.9rem; color: #00ff55; font-weight: bold; margin-bottom: 6px; text-transform: uppercase;">${myActiveRot.name}</div>
+                <div style="font-size: 0.9rem; color: #00ff55; font-weight: bold; margin-bottom: 6px; text-transform: uppercase;">${myActiveRot.name || 'Fighter'}</div>
                 <div style="width: 100%; height: 120px; background: #1a102f; border-radius: 10px; overflow: hidden; margin-bottom: 8px;">
                     <img src="${myActiveRot.image || ''}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none';">
                 </div>
                 <div style="width: 100%; height: 10px; background: #111; border-radius: 5px; overflow: hidden; border: 1px solid #444; margin-bottom: 4px;">
                     <div style="width: ${myHpPercent}%; height: 100%; background: #00ff55; transition: width 0.3s;"></div>
                 </div>
-                <div style="font-size: 0.65rem; color: #aaa; text-align: right;">${myActiveRot.currentHp} / ${myActiveRot.maxHp} HP</div>
+                <div style="font-size: 0.65rem; color: #aaa; text-align: right;">${myActiveRot.currentHp || 0} / ${myActiveRot.maxHp || 100} HP</div>
             </div>
 
         </div>
@@ -180,50 +175,49 @@ window.executePvPAttack = async function() {
     const db = firebase.firestore();
 
     const matchRef = db.collection('active_matches').doc(matchId);
-    
-    try {
-        await db.runTransaction(async (transaction) => {
-            const doc = await transaction.get(matchRef);
-            if (!doc.exists) throw "Match does not exist!";
+    const doc = await matchRef.get();
+    if (!doc.exists) return;
 
-            const data = doc.data();
-            const myKey = role === 'player1' ? 'player1' : 'player2';
-            const enemyKey = role === 'player1' ? 'player2' : 'player1';
+    const data = doc.data();
+    const myData = role === 'player1' ? data.player1 : data.player2;
+    const enemyData = role === 'player1' ? data.player2 : data.player1;
 
-            const myData = data[myKey];
-            const enemyData = data[enemyKey];
+    if (data.turn !== myData.username) return;
 
-            if (data.turn !== myData.username) return;
+    const myRot = myData.squad[myData.activeIndex];
+    const enemyRot = enemyData.squad[enemyData.activeIndex];
 
-            const myRot = myData.squad[myData.activeIndex];
-            const enemyRot = enemyData.squad[enemyData.activeIndex];
+    const dmg = Math.max(10, Math.floor((myRot.atk || 15) * (0.8 + Math.random() * 0.4)));
+    enemyRot.currentHp = Math.max(0, enemyRot.currentHp - dmg);
 
-            const dmg = Math.max(10, Math.floor(myRot.atk * (0.8 + Math.random() * 0.4)));
-            enemyRot.currentHp = Math.max(0, enemyRot.currentHp - dmg);
+    let nextEnemyActiveIndex = enemyData.activeIndex;
+    let winner = data.winner || null;
 
-            let nextEnemyActiveIndex = enemyData.activeIndex;
-            let winner = data.winner;
-
-            if (enemyRot.currentHp <= 0) {
-                if (nextEnemyActiveIndex < enemyData.squad.length - 1) {
-                    nextEnemyActiveIndex++;
-                } else {
-                    winner = myData.username;
-                }
-            }
-
-            const updates = {};
-            updates[`${enemyKey}.squad`] = enemyData.squad;
-            updates[`${enemyKey}.activeIndex`] = nextEnemyActiveIndex;
-            updates['turn'] = enemyData.username;
-            updates['lastAction'] = `${myData.username}'s ${myRot.name} dealt ${dmg} damage to ${enemyRot.name}!`;
-            updates['winner'] = winner;
-
-            transaction.update(matchRef, updates);
-        });
-    } catch (err) {
-        console.error("Transaction failed: ", err);
+    if (enemyRot.currentHp <= 0) {
+        if (nextEnemyActiveIndex < enemyData.squad.length - 1) {
+            nextEnemyActiveIndex++;
+        } else {
+            winner = myData.username;
+        }
     }
+
+    const nextTurnUser = enemyData.username;
+    const actionLog = `${myData.username}'s ${myRot.name} dealt ${dmg} damage to ${enemyRot.name}!`;
+
+    const updates = {};
+    if (role === 'player1') {
+        updates['player2.squad'] = enemyData.squad;
+        updates['player2.activeIndex'] = nextEnemyActiveIndex;
+    } else {
+        updates['player1.squad'] = enemyData.squad;
+        updates['player1.activeIndex'] = nextEnemyActiveIndex;
+    }
+
+    updates['turn'] = nextTurnUser;
+    updates['lastAction'] = actionLog;
+    updates['winner'] = winner;
+
+    await matchRef.update(updates);
 };
 
 window.exitPvPBattle = function() {
