@@ -1,4 +1,4 @@
-// matchmaking.js - Real-Time Online PvP Queue & Match Sync System
+// matchmaking.js - Real-Time Online PvP Queue & Match Sync System (Fixed undefined data bug)
 
 if (typeof window.matchmakingState === 'undefined') {
     window.matchmakingState = {
@@ -8,6 +8,11 @@ if (typeof window.matchmakingState === 'undefined') {
         unsubscribeMatch: null,
         isHost: false
     };
+}
+
+// Helper to clean objects of undefined fields for Firestore
+function sanitizeForFirebase(data) {
+    return JSON.parse(JSON.stringify(data, (key, value) => (value === undefined ? null : value)));
 }
 
 window.startOnlineMatchmaking = async function() {
@@ -54,7 +59,7 @@ window.startOnlineMatchmaking = async function() {
     modal.innerHTML = `
         <div style="background: #111; border: 3px solid #00ff55; border-radius: 20px; padding: 30px; max-width: 400px; width: 100%; box-shadow: 0 0 30px rgba(0,255,85,0.4);">
             <h2 style="color: #00ff55; font-size: 1.4rem; margin-bottom: 15px;">🌐 ONLINE PVP QUEUE</h2>
-            <div style="font-size: 3rem; margin: 15px 0; animation: pulse 1.5s infinite;">🔍</div>
+            <div style="font-size: 3rem; margin: 15px 0;">🔍</div>
             <p id="matchStatusText" style="font-size: 0.9rem; color: #ccc; margin-bottom: 20px;">Searching for live opponent...</p>
             <button onclick="cancelMatchmaking()" style="background: #ff0055; color: #fff; border: none; padding: 12px 20px; font-weight: bold; border-radius: 8px; cursor: pointer; width: 100%; font-family: monospace; font-size: 1rem;">CANCEL</button>
         </div>
@@ -64,7 +69,6 @@ window.startOnlineMatchmaking = async function() {
     const db = firebase.firestore();
 
     try {
-        // 1. Check if anyone is already waiting in the queue
         const queueRef = db.collection('matchmaking_queue');
         const snapshot = await queueRef.where('status', '==', 'waiting').get();
 
@@ -79,8 +83,9 @@ window.startOnlineMatchmaking = async function() {
             }
         });
 
+        const cleanSquad = sanitizeForFirebase(squad);
+
         if (opponentData && opponentDocId) {
-            // Found an opponent! Create active match room
             const matchId = "match_" + Date.now() + "_" + Math.floor(Math.random()*1000);
             
             const matchData = {
@@ -95,20 +100,20 @@ window.startOnlineMatchmaking = async function() {
                 },
                 player2: {
                     username: username,
-                    squad: squad,
+                    squad: cleanSquad,
                     activeIndex: 0,
                     faintedCount: 0
                 },
-                turn: opponentData.username, // Player 1 goes first
+                turn: opponentData.username,
                 lastAction: "Match started! " + opponentData.username + " vs " + username,
                 winner: null
             };
 
-            await db.collection('active_matches').doc(matchId).set(matchData);
-            await queueRef.doc(opponentDocId).delete(); // Remove opponent from queue
+            await db.collection('active_matches').doc(matchId).set(sanitizeForFirebase(matchData));
+            await queueRef.doc(opponentDocId).delete();
 
             window.matchmakingState.matchId = matchId;
-            window.matchmakingState.isHost = false; // Player 2 joined host
+            window.matchmakingState.isHost = false;
 
             if (modal) modal.remove();
             if (typeof window.startPvPBattleScene === 'function') {
@@ -116,20 +121,17 @@ window.startOnlineMatchmaking = async function() {
             }
 
         } else {
-            // No opponent found, put player in queue and listen
-            const myQueueRef = await queueRef.add({
+            const myQueueRef = await queueRef.add(sanitizeForFirebase({
                 username: username,
-                squad: squad,
+                squad: cleanSquad,
                 status: 'waiting',
                 timestamp: Date.now()
-            });
+            }));
 
             window.matchmakingState.myQueueId = myQueueRef.id;
 
-            // Listen to queue document to see if someone matches us
             window.matchmakingState.unsubscribeQueue = myQueueRef.onSnapshot(async (doc) => {
                 if (!doc.exists) {
-                    // Document was deleted by an opponent matching us! Let's find the active match
                     const activeMatchQuery = await db.collection('active_matches')
                         .where('status', '==', 'active')
                         .where('player1.username', '==', username)
