@@ -1,4 +1,4 @@
-// battle3v3.js - 3v3 Squad Battle Engine with Challenging AI Difficulty & Item/XP Rewards
+// battle3v3.js - Cinematic 3v3 Battle Engine with Pacing, Critical Hits & Ultimate Moves
 
 if (typeof window.battleState === 'undefined') {
     window.battleState = null;
@@ -24,7 +24,6 @@ window.startBattleScene = function(mode = 'ai') {
     const playerLvl = playerData.accountLevel || 1;
     let enemySquad = [];
 
-    // Make battles challenging: Enemies scale higher than player level with boosted stats
     for (let i = 0; i < 3; i++) {
         const randomChar = validBotChars[Math.floor(Math.random() * validBotChars.length)];
         const enemyLvl = Math.max(1, playerLvl + 2 + Math.floor(Math.random() * 4)); 
@@ -47,7 +46,10 @@ window.startBattleScene = function(mode = 'ai') {
         });
     }
 
-    squad.forEach(rot => rot.animClass = '');
+    squad.forEach(rot => {
+        rot.animClass = '';
+        rot.ultimateCooldown = 0; // Cooldown tracker for Ultimate Move
+    });
 
     window.battleState = {
         mode: mode,
@@ -56,7 +58,7 @@ window.startBattleScene = function(mode = 'ai') {
         enemySquad: enemySquad,
         enemyActiveIndex: 0,
         isTurn: true,
-        log: "Challenging 3v3 Squad battle initiated!"
+        log: "⚔️ Cinematic 3v3 Showdown Engaged!"
     };
 
     let modal = document.getElementById('battle3v3Modal');
@@ -113,11 +115,13 @@ window.renderBattle3v3Scene = function() {
         </div>
     `).join('');
 
+    const ultimateReady = (activePlayerRot.ultimateCooldown || 0) === 0;
+
     modal.innerHTML = `
         <style>
             @keyframes lungePlayer {
                 0% { transform: translateY(0) scale(1); }
-                50% { transform: translateY(-70px) scale(1.1); }
+                50% { transform: translateY(-70px) scale(1.12); }
                 100% { transform: translateY(0) scale(1); }
             }
             @keyframes lungeEnemy {
@@ -127,8 +131,10 @@ window.renderBattle3v3Scene = function() {
             }
             @keyframes shake {
                 0%, 100% { transform: translateX(0); }
-                25% { transform: translateX(-8px); filter: brightness(2) drop-shadow(0 0 15px #ff0000); }
-                75% { transform: translateX(8px); filter: brightness(2) drop-shadow(0 0 15px #ff0000); }
+                20% { transform: translateX(-10px); filter: brightness(2.5) drop-shadow(0 0 20px #ff0000); }
+                40% { transform: translateX(10px); filter: brightness(2.5) drop-shadow(0 0 20px #ff0000); }
+                60% { transform: translateX(-6px); }
+                80% { transform: translateX(6px); }
             }
             @keyframes gridPulse {
                 0% { background-position: 0 0; }
@@ -138,9 +144,9 @@ window.renderBattle3v3Scene = function() {
                 0%, 100% { transform: translateY(0) scale(1); opacity: 0.6; }
                 50% { transform: translateY(-20px) scale(1.1); opacity: 0.9; }
             }
-            .anim-lunge-player { animation: lungePlayer 0.4s ease-in-out; }
-            .anim-lunge-enemy { animation: lungeEnemy 0.4s ease-in-out; }
-            .anim-shake { animation: shake 0.4s ease-in-out; }
+            .anim-lunge-player { animation: lungePlayer 0.5s ease-in-out; }
+            .anim-lunge-enemy { animation: lungeEnemy 0.5s ease-in-out; }
+            .anim-shake { animation: shake 0.5s ease-in-out; }
         </style>
 
         <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(180deg, #090314 0%, #1a0b36 50%, #05020a 100%); z-index: 1;"></div>
@@ -187,14 +193,14 @@ window.renderBattle3v3Scene = function() {
 
                 <div style="font-size: 0.7rem; color: #fff; margin-bottom: 4px; font-weight: bold;">Lvl ${activeEnemyRot.level} | ${(activeEnemyRot.rarity || 'common').toUpperCase()}</div>
                 <div style="width: 100%; height: 8px; background: #111; border-radius: 4px; overflow: hidden; border: 1px solid #444; margin-bottom: 4px;">
-                    <div style="width: ${enemyHpPercent}%; height: 100%; background: #ff0055; transition: width 0.3s ease-out; box-shadow: 0 0 8px #ff0055;"></div>
+                    <div style="width: ${enemyHpPercent}%; height: 100%; background: #ff0055; transition: width 0.4s ease-out; box-shadow: 0 0 8px #ff0055;"></div>
                 </div>
                 <div style="font-size: 0.6rem; color: #aaa; text-align: right;">${activeEnemyRot.currentHp} / ${activeEnemyRot.maxHp} HP</div>
             </div>
 
             <!-- COMBAT LOG CHAT -->
-            <div style="background: rgba(15, 10, 30, 0.95); border: 2px solid #00ff55; padding: 10px 16px; border-radius: 12px; width: 100%; max-width: 420px; text-align: center; font-size: 0.8rem; color: #00ff55; box-shadow: 0 0 20px rgba(0,255,85,0.3); backdrop-filter: blur(5px);">
-                ⚡ ${state.log}
+            <div style="background: rgba(15, 10, 30, 0.95); border: 2px solid #00ff55; padding: 12px 18px; border-radius: 12px; width: 100%; max-width: 420px; text-align: center; font-size: 0.85rem; color: #00ff55; box-shadow: 0 0 20px rgba(0,255,85,0.3); backdrop-filter: blur(5px); font-weight: bold;">
+                ${state.log}
             </div>
 
             <!-- PLAYER LARGE CARD -->
@@ -218,7 +224,7 @@ window.renderBattle3v3Scene = function() {
 
                 <div style="font-size: 0.75rem; color: #fff; margin-bottom: 4px; font-weight: bold;">Lvl ${activePlayerRot.level || 1} | ${(activePlayerRot.rarity || 'common').toUpperCase()}</div>
                 <div style="width: 100%; height: 10px; background: #111; border-radius: 5px; overflow: hidden; border: 1px solid #444; margin-bottom: 4px;">
-                    <div style="width: ${playerHpPercent}%; height: 100%; background: #00ff55; transition: width 0.3s ease-out; box-shadow: 0 0 10px #00ff55;"></div>
+                    <div style="width: ${playerHpPercent}%; height: 100%; background: #00ff55; transition: width 0.4s ease-out; box-shadow: 0 0 10px #00ff55;"></div>
                 </div>
                 <div style="font-size: 0.65rem; color: #aaa; text-align: right;">${activePlayerRot.currentHp} / ${activePlayerRot.maxHp} HP</div>
             </div>
@@ -227,9 +233,14 @@ window.renderBattle3v3Scene = function() {
 
         <!-- BATTLE CONTROLS -->
         <div style="width: 100%; max-width: 420px; margin: 0 auto; display: flex; flex-direction: column; gap: 8px; z-index: 10;">
-            <button onclick="executePlayerAttack()" ${!state.isTurn ? 'disabled' : ''} style="width: 100%; padding: 14px; background: ${state.isTurn ? '#ff0055' : '#333'}; color: #fff; border: none; border-radius: 10px; font-weight: bold; font-size: 1.1rem; cursor: ${state.isTurn ? 'pointer' : 'not-allowed'}; font-family: monospace; box-shadow: ${state.isTurn ? '0 0 20px #ff0055aa' : 'none'};">
-                ⚔️ ATTACK
-            </button>
+            <div style="display: flex; gap: 8px;">
+                <button onclick="executePlayerAttack('standard')" ${!state.isTurn ? 'disabled' : ''} style="flex: 1; padding: 12px; background: ${state.isTurn ? '#ff0055' : '#333'}; color: #fff; border: none; border-radius: 8px; font-weight: bold; font-size: 0.95rem; cursor: ${state.isTurn ? 'pointer' : 'not-allowed'}; font-family: monospace; box-shadow: ${state.isTurn ? '0 0 15px #ff0055aa' : 'none'};">
+                    ⚔️ STANDARD
+                </button>
+                <button onclick="executePlayerAttack('ultimate')" ${!state.isTurn || !ultimateReady ? 'disabled' : ''} style="flex: 1; padding: 12px; background: ${state.isTurn && ultimateReady ? '#ffcc00' : '#333'}; color: ${state.isTurn && ultimateReady ? '#000' : '#777'}; border: none; border-radius: 8px; font-weight: bold; font-size: 0.95rem; cursor: ${state.isTurn && ultimateReady ? 'pointer' : 'not-allowed'}; font-family: monospace; box-shadow: ${state.isTurn && ultimateReady ? '0 0 15px #ffcc00aa' : 'none'};">
+                    ⚡ ULTIMATE ${!ultimateReady ? '(CD)' : ''}
+                </button>
+            </div>
             <button onclick="exitBattleScene()" style="width: 100%; padding: 10px; background: rgba(30, 20, 50, 0.9); color: #ccc; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; font-weight: bold; cursor: pointer; font-family: monospace;">
                 🏃 FLEE BATTLE
             </button>
@@ -237,7 +248,7 @@ window.renderBattle3v3Scene = function() {
     `;
 };
 
-window.executePlayerAttack = function() {
+window.executePlayerAttack = function(type = 'standard') {
     const state = window.battleState;
     if (!state || !state.isTurn) return;
 
@@ -245,83 +256,135 @@ window.executePlayerAttack = function() {
     const playerRot = state.playerSquad[state.playerActiveIndex];
     const enemyRot = state.enemySquad[state.enemyActiveIndex];
 
-    playerRot.animClass = 'anim-lunge-player';
-    enemyRot.animClass = 'anim-shake';
+    if (type === 'ultimate') {
+        playerRot.ultimateCooldown = 2; // 2 turn cooldown
+    } else if (playerRot.ultimateCooldown > 0) {
+        playerRot.ultimateCooldown--;
+    }
+
+    // Step 1: Charging / Stance
+    state.log = `⚡ ${playerRot.name} prepares to strike...`;
     renderBattle3v3Scene();
 
-    const dmgToEnemy = Math.max(5, Math.floor(playerRot.atk * (0.8 + Math.random() * 0.4)));
-    enemyRot.currentHp = Math.max(0, enemyRot.currentHp - dmgToEnemy);
-    state.log = `${playerRot.name} struck for ${dmgToEnemy} damage!`;
-
     setTimeout(() => {
-        playerRot.animClass = '';
-        enemyRot.animClass = '';
+        // Step 2: Lunge & Animation
+        playerRot.animClass = 'anim-lunge-player';
+        enemyRot.animClass = 'anim-shake';
         renderBattle3v3Scene();
 
-        if (enemyRot.currentHp <= 0) {
-            setTimeout(() => {
-                if (state.enemyActiveIndex < state.enemySquad.length - 1) {
-                    state.enemyActiveIndex++;
-                    state.log = `Enemy fainted! Enemy sent out ${state.enemySquad[state.enemyActiveIndex].name}.`;
-                    state.isTurn = true;
-                    renderBattle3v3Scene();
-                } else {
-                    handleBattleVictory();
-                }
-            }, 1000);
-            return;
+        // Calculate Damage with Critical & Miss mechanics
+        let baseDmg = type === 'ultimate' ? Math.floor(playerRot.atk * 1.8) : Math.floor(playerRot.atk * (0.8 + Math.random() * 0.4));
+        const isMiss = Math.random() < 0.10; // 10% chance to miss
+        const isCrit = !isMiss && Math.random() < 0.20; // 20% chance for critical hit
+
+        let finalDmg = baseDmg;
+        if (isMiss) {
+            finalDmg = 0;
+            state.log = `💨 ${playerRot.name} swung, but missed the target!`;
+        } else if (isCrit) {
+            finalDmg = Math.floor(baseDmg * 1.6);
+            state.log = `💥 CRITICAL BRAINROT HIT! ${playerRot.name} dealt ${finalDmg} damage!`;
+        } else {
+            state.log = `⚔️ ${playerRot.name} struck for ${finalDmg} damage!`;
         }
 
+        enemyRot.currentHp = Math.max(0, enemyRot.currentHp - finalDmg);
+        renderBattle3v3Scene();
+
+        // Step 3: Recovery & Check Enemy Status
         setTimeout(() => {
-            enemyRot.animClass = 'anim-lunge-enemy';
-            playerRot.animClass = 'anim-shake';
+            playerRot.animClass = '';
+            enemyRot.animClass = '';
             renderBattle3v3Scene();
 
-            const dmgToPlayer = Math.max(3, Math.floor(enemyRot.atk * (0.8 + Math.random() * 0.4)));
-            playerRot.currentHp = Math.max(0, playerRot.currentHp - dmgToPlayer);
-            state.log = `${enemyRot.name} counter-attacked for ${dmgToPlayer} damage!`;
+            if (enemyRot.currentHp <= 0) {
+                setTimeout(() => {
+                    if (state.enemyActiveIndex < state.enemySquad.length - 1) {
+                        state.enemyActiveIndex++;
+                        state.log = `🏆 Enemy fainted! Next up: ${state.enemySquad[state.enemyActiveIndex].name}.`;
+                        state.isTurn = true;
+                        renderBattle3v3Scene();
+                    } else {
+                        handleBattleVictory();
+                    }
+                }, 1200);
+                return;
+            }
 
+            // Step 4: Enemy Counter-Attack Sequence (with cinematic pause)
             setTimeout(() => {
-                enemyRot.animClass = '';
-                playerRot.animClass = '';
+                state.log = `⚠️ ${activeEnemyName(state)} prepares to counter-attack...`;
                 renderBattle3v3Scene();
 
-                if (playerRot.currentHp <= 0) {
-                    if (typeof playerData !== 'undefined' && playerData.inventory) {
-                        const invIdx = playerRot.inventoryIndex;
-                        if (playerData.inventory[invIdx]) playerData.inventory[invIdx].fainted = true;
+                setTimeout(() => {
+                    enemyRot.animClass = 'anim-lunge-enemy';
+                    playerRot.animClass = 'anim-shake';
+                    renderBattle3v3Scene();
+
+                    const enemyMiss = Math.random() < 0.08;
+                    const enemyCrit = !enemyMiss && Math.random() < 0.15;
+                    let enemyDmg = Math.floor(enemyRot.atk * (0.8 + Math.random() * 0.4));
+
+                    if (enemyMiss) {
+                        enemyDmg = 0;
+                        state.log = `🛡️ ${enemyRot.name} attacked, but your fighter dodged!`;
+                    } else if (enemyCrit) {
+                        enemyDmg = Math.floor(enemyDmg * 1.5);
+                        state.log = `💥 OUCH! Critical counter-attack for ${enemyDmg} damage!`;
+                    } else {
+                        state.log = `🔴 ${enemyRot.name} counter-attacked for ${enemyDmg} damage!`;
                     }
 
+                    playerRot.currentHp = Math.max(0, playerRot.currentHp - enemyDmg);
+                    renderBattle3v3Scene();
+
                     setTimeout(() => {
-                        let nextIdx = state.playerActiveIndex + 1;
-                        while (nextIdx < state.playerSquad.length && state.playerSquad[nextIdx].currentHp <= 0) {
-                            nextIdx++;
-                        }
-                        if (nextIdx < state.playerSquad.length) {
-                            state.playerActiveIndex = nextIdx;
-                            state.log = `${playerRot.name} fainted! Go ${state.playerSquad[state.playerActiveIndex].name}!`;
+                        enemyRot.animClass = '';
+                        playerRot.animClass = '';
+                        renderBattle3v3Scene();
+
+                        if (playerRot.currentHp <= 0) {
+                            if (typeof playerData !== 'undefined' && playerData.inventory) {
+                                const invIdx = playerRot.inventoryIndex;
+                                if (playerData.inventory[invIdx]) playerData.inventory[invIdx].fainted = true;
+                            }
+
+                            setTimeout(() => {
+                                let nextIdx = state.playerActiveIndex + 1;
+                                while (nextIdx < state.playerSquad.length && state.playerSquad[nextIdx].currentHp <= 0) {
+                                    nextIdx++;
+                                }
+                                if (nextIdx < state.playerSquad.length) {
+                                    state.playerActiveIndex = nextIdx;
+                                    state.log = `💀 ${playerRot.name} fainted! Sent out ${state.playerSquad[state.playerActiveIndex].name}!`;
+                                    state.isTurn = true;
+                                    renderBattle3v3Scene();
+                                    return;
+                                }
+                                handleBattleDefeat();
+                            }, 1200);
+                        } else {
                             state.isTurn = true;
                             renderBattle3v3Scene();
-                            return;
                         }
-                        handleBattleDefeat();
-                    }, 1000);
-                } else {
-                    state.isTurn = true;
-                    renderBattle3v3Scene();
-                }
-            }, 400);
-        }, 800);
-    }, 400);
+                    }, 500);
+                }, 1000);
+            }, 1200);
+        }, 500);
+    }, 800);
 };
+
+function activeEnemyName(state) {
+    return state.enemySquad[state.enemyActiveIndex].name;
+}
 
 window.handleBattleVictory = function() {
     const modal = document.getElementById('battle3v3Modal');
     if (!modal) return;
 
-    const xpReward = 200;
+    const xpReward = 250;
     const potionReward = 1;
-    const luckyEggChance = Math.random() < 0.4 ? 1 : 0; // 40% chance for a Lucky Egg
+    const luckyEggChance = Math.random() < 0.5 ? 1 : 0; 
 
     if (typeof playerData !== 'undefined') {
         if (typeof addAccountXp === 'function') addAccountXp(xpReward);
