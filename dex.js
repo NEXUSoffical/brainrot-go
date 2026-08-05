@@ -1,4 +1,4 @@
-// dex.js - Cloud-Connected Account Management, Sticker Dex, Inventory & Admin System
+// dex.js - Cloud-Connected Account Management, Full-Screen Sticker Dex, Inventory & Admin System
 
 if (typeof window.isSignUpMode === 'undefined') {
     window.isSignUpMode = false;
@@ -11,6 +11,9 @@ if (typeof window.currentInventoryTab === 'undefined') {
 }
 if (typeof window.currentDexTab === 'undefined') {
     window.currentDexTab = 'standard';
+}
+if (typeof window.currentInventorySort === 'undefined') {
+    window.currentInventorySort = 'newest';
 }
 
 // 🛡️ SECURE STATE WRAPPER (ANTI-CHEAT GUARD DOG)
@@ -441,7 +444,6 @@ window.addToDex = function(creature) {
         }
     }
 
-    // Give 20 XP for catching a rot
     window.addAccountXp(20);
 
     window.saveGameData();
@@ -472,7 +474,6 @@ function updateHUD() {
 
     const totalPossible = (typeof brainrotCharacters !== 'undefined' && brainrotCharacters) ? brainrotCharacters.length : 0;
     
-    // Choose active count depending on active dex view tab
     const dexCount = (window.currentDexTab === 'shiny') 
         ? ((window.playerData.shinyDex) ? window.playerData.shinyDex.length : 0)
         : ((window.playerData.dex) ? window.playerData.dex.length : 0);
@@ -483,7 +484,7 @@ function updateHUD() {
     if (totalBrainrotsEl) totalBrainrotsEl.innerText = totalPossible;
     if (inventoryCountEl) inventoryCountEl.innerText = inventoryCount;
     if (rotBalanceEl) rotBalanceEl.innerText = window.playerData.rotBalance || 500;
-    if (hudTitle && window.playerData.username) hudTitle.innerText = `🖥️ ${window.playerData.username.toUpperCase()}`;
+    if (hudTitle && window.playerData.username) hudTitle.innerText = `📺 ${window.playerData.username.toUpperCase()}`;
     
     const currentLevel = window.playerData.accountLevel || 1;
     const currentXp = window.playerData.accountXp || 0;
@@ -520,6 +521,11 @@ window.updatePotionHud = function() {
     }
 };
 
+window.setInventorySort = function(sortType) {
+    window.currentInventorySort = sortType;
+    renderInventoryGrid();
+};
+
 function renderInventoryGrid() {
     let inventoryGrid = document.getElementById('inventoryGrid');
     let modal = document.getElementById('inventoryModal');
@@ -527,93 +533,138 @@ function renderInventoryGrid() {
     if (!modal) {
         modal = document.createElement('div');
         modal.id = 'inventoryModal';
-        modal.style.cssText = `
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100vw !important;
-            height: 100vh !important;
-            background: rgba(0,0,0,0.85) !important;
-            z-index: 999999 !important;
-            display: none;
-        `;
-        modal.innerHTML = `
-            <div style="
-                position: fixed !important;
-                top: 50% !important;
-                left: 50% !important;
-                transform: translate(-50%, -50%) !important;
-                background: #111 !important;
-                border: 3px solid #ffcc00 !important;
-                border-radius: 15px !important;
-                padding: 20px !important;
-                width: 90% !important;
-                max-width: 420px !important;
-                text-align: center !important;
-                box-shadow: 0 0 30px rgba(255,204,0,0.4) !important;
-                box-sizing: border-box !important;
-            ">
-                <h2 style="color: #ffcc00; font-size: 1.3rem; margin-bottom: 10px;">🎒 INVENTORY</h2>
-                <div id="inventoryTabSwitcher" style="display: flex; gap: 10px; margin-bottom: 15px;">
-                    <button onclick="switchInventoryTab('rots')" id="btnTabRots" style="flex: 1; background: ${window.currentInventoryTab === 'rots' ? '#ffcc00' : '#222'}; color: ${window.currentInventoryTab === 'rots' ? '#000' : '#fff'}; border: 2px solid #ffcc00; padding: 8px; font-weight: bold; border-radius: 6px; cursor: pointer;">🧠 ROTS</button>
-                    <button onclick="switchInventoryTab('items')" id="btnTabItems" style="flex: 1; background: ${window.currentInventoryTab === 'items' ? '#ffcc00' : '#222'}; color: ${window.currentInventoryTab === 'items' ? '#000' : '#fff'}; border: 2px solid #ffcc00; padding: 8px; font-weight: bold; border-radius: 6px; cursor: pointer;">🎒 ITEMS</button>
-                </div>
-                <div id="inventoryGrid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; max-height: 280px; overflow-y: auto; margin-bottom: 15px; padding-right: 4px;"></div>
-                <button onclick="closeInventory()" style="background: #333; color: #fff; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%;">CLOSE</button>
-            </div>
-        `;
         document.body.appendChild(modal);
-        inventoryGrid = document.getElementById('inventoryGrid');
     }
 
+    // Force true full-screen styling overriding any conflicting CSS classes
+    modal.className = '';
+    modal.style.cssText = `
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        transform: none !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        max-width: none !important;
+        max-height: none !important;
+        border-radius: 0 !important;
+        background: rgba(0,0,0,0.95) !important;
+        z-index: 9999999 !important;
+        display: none;
+        flex-direction: column !important;
+        align-items: center !important;
+        padding: 20px !important;
+        box-sizing: border-box !important;
+        font-family: monospace !important;
+        color: #fff !important;
+    `;
+
+    modal.innerHTML = `
+        <div style="width: 100%; max-width: 800px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <h2 style="margin: 0; color: #ffcc00; text-transform: uppercase; font-size: 1.4rem;">🎒 INVENTORY</h2>
+            <button onclick="closeInventory()" style="background: #ff0055; color: #fff; border: 2px solid #fff; border-radius: 50%; width: 35px; height: 35px; font-weight: bold; cursor: pointer; font-size: 1.1rem;">X</button>
+        </div>
+
+        <div id="inventoryTabSwitcher" style="width: 100%; max-width: 800px; display: flex; gap: 10px; margin-bottom: 10px;">
+            <button onclick="switchInventoryTab('rots')" id="btnTabRots" style="flex: 1; background: ${window.currentInventoryTab === 'rots' ? '#ffcc00' : '#222'}; color: ${window.currentInventoryTab === 'rots' ? '#000' : '#fff'}; border: 2px solid #ffcc00; padding: 10px; font-weight: bold; border-radius: 8px; cursor: pointer; font-family: monospace;">🧠 ROTS</button>
+            <button onclick="switchInventoryTab('items')" id="btnTabItems" style="flex: 1; background: ${window.currentInventoryTab === 'items' ? '#ffcc00' : '#222'}; color: ${window.currentInventoryTab === 'items' ? '#000' : '#fff'}; border: 2px solid #ffcc00; padding: 10px; font-weight: bold; border-radius: 8px; cursor: pointer; font-family: monospace;">🎒 ITEMS</button>
+        </div>
+
+        ${window.currentInventoryTab === 'rots' ? `
+        <!-- SORT BUTTONS BAR -->
+        <div style="width: 100%; max-width: 800px; display: flex; gap: 8px; margin-bottom: 15px;">
+            <button onclick="setInventorySort('power')" style="flex: 1; padding: 8px; background: ${window.currentInventorySort === 'power' ? '#00ff55' : '#222'}; color: ${window.currentInventorySort === 'power' ? '#000' : '#fff'}; border: 2px solid #00ff55; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: monospace; font-size: 0.8rem;">
+                ⚔️ POWER
+            </button>
+            <button onclick="setInventorySort('rarity')" style="flex: 1; padding: 8px; background: ${window.currentInventorySort === 'rarity' ? '#00ccff' : '#222'}; color: ${window.currentInventorySort === 'rarity' ? '#000' : '#fff'}; border: 2px solid #00ccff; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: monospace; font-size: 0.8rem;">
+                💎 RARITY
+            </button>
+            <button onclick="setInventorySort('newest')" style="flex: 1; padding: 8px; background: ${window.currentInventorySort === 'newest' ? '#ff0055' : '#222'}; color: ${window.currentInventorySort === 'newest' ? '#000' : '#fff'}; border: 2px solid #ff0055; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: monospace; font-size: 0.8rem;">
+                🕒 NEWEST
+            </button>
+        </div>` : ''}
+
+        <div id="inventoryGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; width: 100%; max-width: 800px; max-height: calc(100vh - 180px); overflow-y: auto; padding: 5px;"></div>
+    `;
+
+    inventoryGrid = document.getElementById('inventoryGrid');
     if (!inventoryGrid) return;
     inventoryGrid.innerHTML = '';
 
     if (window.currentInventoryTab === 'rots') {
-        const inventory = window.playerData.inventory || [];
+        let inventory = window.playerData.inventory || [];
         if (inventory.length === 0) {
-            inventoryGrid.innerHTML = `<p style="grid-column: span 2; color: #777; font-size: 0.9rem; padding: 30px; text-align: center;">Your inventory is empty! Catch rots on the map.</p>`;
+            inventoryGrid.innerHTML = `<p style="grid-column: 1 / -1; color: #777; font-size: 0.9rem; padding: 40px; text-align: center;">Your inventory is empty! Catch rots on the map.</p>`;
             return;
         }
 
-        inventory.forEach((rot, index) => {
+        let indexedInventory = inventory.map((rot, originalIndex) => ({
+            rot: rot,
+            originalIndex: originalIndex
+        }));
+
+        const rarityRank = { 'og': 6, 'secret': 5, 'mythic': 5, 'legendary': 4, 'epic': 3, 'rare': 2, 'uncommon': 1, 'common': 0 };
+
+        if (window.currentInventorySort === 'power') {
+            indexedInventory.sort((a, b) => {
+                const statsA = typeof calculateRotStats === 'function' ? calculateRotStats(a.rot) : {maxHp:50, atk:10, def:10};
+                const statsB = typeof calculateRotStats === 'function' ? calculateRotStats(b.rot) : {maxHp:50, atk:10, def:10};
+                const powerA = statsA.maxHp + statsA.atk + statsA.def;
+                const powerB = statsB.maxHp + statsB.atk + statsB.def;
+                return powerB - powerA;
+            });
+        } else if (window.currentInventorySort === 'rarity') {
+            indexedInventory.sort((a, b) => {
+                const rankA = rarityRank[(a.rot.rarity || 'common').toLowerCase()] || 0;
+                const rankB = rarityRank[(b.rot.rarity || 'common').toLowerCase()] || 0;
+                return rankB - rankA;
+            });
+        } else if (window.currentInventorySort === 'newest') {
+            indexedInventory.reverse();
+        }
+
+        indexedInventory.forEach(item => {
+            const rot = item.rot;
+            const index = item.originalIndex;
             const isActive = window.playerData.activeFighterIndex === index;
             const isFainted = rot.fainted === true;
             const isInGym = rot.inGym === true;
             const isShiny = rot.shiny === true;
             const rarityColor = window.getRarityColor(rot.rarity);
             const rotLevel = rot.level || 1;
-            const requiredXp = rotLevel * 100;
-            const xpPercent = Math.min(100, Math.max(0, ((rot.xp || 0) / requiredXp) * 100));
+            const stats = typeof calculateRotStats === 'function' ? calculateRotStats(rot) : { maxHp: 50, atk: 10, def: 10 };
 
             const card = document.createElement('div');
             card.style.cssText = `
-                background: ${isInGym ? '#1a222a' : (isFainted ? '#2a1a1a' : (isShiny ? 'linear-gradient(135deg, #0a1828, #1a3550)' : (isActive ? '#1a3a1a' : '#222')))};
+                background: ${isInGym ? '#1a222a' : (isFainted ? '#2a1a1a' : (isShiny ? 'linear-gradient(180deg, #111, #00ffff33)' : (isActive ? '#1a3a1a' : `linear-gradient(180deg, #111, ${rarityColor}33)`)))};
                 border: 2px solid ${isInGym ? '#00ccff' : (isFainted ? '#ff0055' : (isShiny ? '#00ffff' : (isActive ? '#00ff00' : rarityColor)))};
-                border-radius: 8px;
+                border-radius: 12px;
                 padding: 8px;
                 text-align: center;
-                box-shadow: ${isShiny ? '0 0 10px rgba(0,255,255,0.4)' : 'none'};
+                box-shadow: ${isShiny ? '0 0 10px rgba(0,255,255,0.4)' : `0 0 10px ${rarityColor}44`};
                 cursor: pointer;
+                position: relative;
+                opacity: ${isFainted ? '0.6' : '1'};
             `;
             
-            // This links the card to the new Stats screen in main.js
             card.setAttribute('onclick', `openCardDetails(${index})`);
 
             card.innerHTML = `
                 ${isShiny ? '<div style="font-size:0.6rem; color:#00ffff; font-family:monospace; font-weight:bold; margin-bottom:2px;">💎 SHINY</div>' : ''}
-                <img src="${rot.image || ''}" style="width: 55px; height: 55px; object-fit: cover; border-radius: 4px; ${isFainted || isInGym ? 'filter: grayscale(100%);' : (isShiny ? 'filter: brightness(1.2) contrast(2);' : '')}" onerror="this.style.display='none';">
-                <div style="font-size: 0.75rem; font-weight: bold; margin-top: 4px; color: #fff;">${rot.name}</div>
-                <div style="font-size: 0.65rem; color: ${isInGym ? '#00ccff' : (isFainted ? '#ff0055' : '#00ff00')};">
-                    ${isInGym ? '🏟️ [IN GYM]' : (isFainted ? '💀 FAINTED' : 'Lvl ' + rotLevel)}
+                <div style="font-size: 0.75rem; font-weight: bold; color: ${rarityColor}; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${rot.name}</div>
+                <div style="font-size: 0.65rem; color: #aaa; margin-bottom: 4px;">Lvl ${rotLevel} | ${(rot.rarity || 'common').toUpperCase()}</div>
+                <div style="width: 100%; height: 90px; background: #fff; border-radius: 6px; overflow: hidden; border: 1px solid #333; margin-bottom: 6px;">
+                    <img src="${rot.image || ''}" style="width: 100%; height: 100%; object-fit: cover; ${isFainted || isInGym ? 'filter: grayscale(100%);' : (isShiny ? 'filter: brightness(1.2) contrast(2);' : '')}" onerror="this.style.display='none';">
                 </div>
-                ${!isFainted && !isInGym ? `
-                <div style="width: 100%; height: 3px; background: #111; margin-top: 4px; border-radius: 2px; overflow: hidden;">
-                    <div style="width: ${xpPercent}%; height: 100%; background: #00ccff;"></div>
-                </div>` : ''}
+                <div style="font-size: 0.65rem; color: #00ff55; font-weight: bold;">
+                    ❤️ ${stats.maxHp} | ⚔️ ${stats.atk}
+                </div>
+                <div style="font-size: 0.6rem; color: ${isInGym ? '#00ccff' : (isFainted ? '#ff0055' : '#00ff00')}; margin-top: 2px;">
+                    ${isInGym ? '🏰 [IN GYM]' : (isFainted ? '💀 FAINTED' : 'READY')}
+                </div>
                 <div style="display: flex; gap: 4px; margin-top: 6px;">
-                    ${!isActive && !isInGym && !isFainted ? `<button onclick="event.stopPropagation(); setActiveFighter(${index})" style="background: #00ff00; color: #000; border: none; padding: 3px 6px; font-size: 0.6rem; font-weight: bold; border-radius: 4px; cursor: pointer; flex: 1;">ACTIVE</button>` : ''}
-                    <button onclick="event.stopPropagation(); transferRot(${index})" style="background: #ff0055; color: #fff; border: none; padding: 3px 6px; font-size: 0.6rem; font-weight: bold; border-radius: 4px; cursor: pointer; flex: 1;">TRANSFER</button>
+                    ${!isActive && !isInGym && !isFainted ? `<button onclick="event.stopPropagation(); setActiveFighter(${index})" style="background: #00ff00; color: #000; border: none; padding: 4px; font-size: 0.6rem; font-weight: bold; border-radius: 4px; cursor: pointer; flex: 1;">ACTIVE</button>` : ''}
+                    <button onclick="event.stopPropagation(); transferRot(${index})" style="background: #ff0055; color: #fff; border: none; padding: 4px; font-size: 0.6rem; font-weight: bold; border-radius: 4px; cursor: pointer; flex: 1;">TRANSFER</button>
                 </div>
             `;
             inventoryGrid.appendChild(card);
@@ -623,26 +674,26 @@ function renderInventoryGrid() {
         const luckyEggs = window.playerData.luckyEggs || 0;
 
         inventoryGrid.innerHTML = `
-            <div style="grid-column: span 2; display: flex; flex-direction: column; gap: 10px; width: 100%;">
-                <div style="background: #222; border: 2px solid #00ffcc; border-radius: 8px; padding: 12px; display: flex; align-items: center; justify-content: space-between;">
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <div style="font-size: 2rem;">🧪</div>
+            <div style="grid-column: 1 / -1; display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 500px; margin: 0 auto;">
+                <div style="background: #222; border: 2px solid #00ffcc; border-radius: 10px; padding: 15px; display: flex; align-items: center; justify-content: space-between;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="font-size: 2.2rem;">🧪</div>
                         <div style="text-align: left;">
-                            <div style="font-weight: bold; font-size: 0.9rem; color: #fff;">Revive Potion (x${revives})</div>
-                            <div style="font-size: 0.7rem; color: #00ffcc;">Wakes up a fainted rot!</div>
+                            <div style="font-weight: bold; font-size: 1rem; color: #fff;">Revive Potion (x${revives})</div>
+                            <div style="font-size: 0.75rem; color: #00ffcc;">Wakes up a fainted rot!</div>
                         </div>
                     </div>
-                    <button onclick="useRevivePotionMenu()" style="background: #00ffcc; color: #000; border: none; padding: 8px 14px; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">USE</button>
+                    <button onclick="useRevivePotionMenu()" style="background: #00ffcc; color: #000; border: none; padding: 10px 16px; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 0.85rem;">USE</button>
                 </div>
-                <div style="background: #222; border: 2px solid #ff00ff; border-radius: 8px; padding: 12px; display: flex; align-items: center; justify-content: space-between;">
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <div style="font-size: 2rem;">🥚</div>
+                <div style="background: #222; border: 2px solid #ff00ff; border-radius: 10px; padding: 15px; display: flex; align-items: center; justify-content: space-between;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div style="font-size: 2.2rem;">🥚</div>
                         <div style="text-align: left;">
-                            <div style="font-weight: bold; font-size: 0.9rem; color: #fff;">Lucky Egg (x${luckyEggs})</div>
-                            <div style="font-size: 0.7rem; color: #ff00ff;">Double Account XP for 1hr!</div>
+                            <div style="font-weight: bold; font-size: 1rem; color: #fff;">Lucky Egg (x${luckyEggs})</div>
+                            <div style="font-size: 0.75rem; color: #ff00ff;">Double Account XP for 1hr!</div>
                         </div>
                     </div>
-                    <button onclick="useLuckyEgg()" style="background: #ff00ff; color: #000; border: none; padding: 8px 14px; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 0.8rem;">USE</button>
+                    <button onclick="useLuckyEgg()" style="background: #ff00ff; color: #000; border: none; padding: 10px 16px; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 0.85rem;">USE</button>
                 </div>
             </div>
         `;
@@ -651,14 +702,6 @@ function renderInventoryGrid() {
 
 window.switchInventoryTab = function(tabName) {
     window.currentInventoryTab = tabName;
-    const btnRots = document.getElementById('btnTabRots');
-    const btnItems = document.getElementById('btnTabItems');
-    if (btnRots && btnItems) {
-        btnRots.style.background = tabName === 'rots' ? '#ffcc00' : '#222';
-        btnRots.style.color = tabName === 'rots' ? '#000' : '#fff';
-        btnItems.style.background = tabName === 'items' ? '#ffcc00' : '#222';
-        btnItems.style.color = tabName === 'items' ? '#000' : '#fff';
-    }
     renderInventoryGrid();
 };
 
@@ -698,8 +741,14 @@ window.useRevivePotionMenu = function() {
         left: 0 !important;
         width: 100vw !important;
         height: 100vh !important;
-        background: rgba(0,0,0,0.85) !important;
-        z-index: 9999999 !important;
+        background: rgba(0,0,0,0.9) !important;
+        z-index: 99999999 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-family: monospace !important;
+        color: #fff !important;
     `;
 
     let listHtml = '';
@@ -722,10 +771,6 @@ window.useRevivePotionMenu = function() {
 
     reviveModal.innerHTML = `
         <div style="
-            position: fixed !important;
-            top: 50% !important;
-            left: 50% !important;
-            transform: translate(-50%, -50%) !important;
             background: #111 !important;
             border: 3px solid #00ffcc !important;
             border-radius: 15px !important;
@@ -798,17 +843,6 @@ window.transferRot = function(index) {
 
 window.switchDexTab = function(tabName) {
     window.currentDexTab = tabName;
-    const btnStandard = document.getElementById('btnDexStandard');
-    const btnShiny = document.getElementById('btnDexShiny');
-    if (btnStandard && btnShiny) {
-        btnStandard.style.background = tabName === 'standard' ? '#00ccff' : '#222';
-        btnStandard.style.color = tabName === 'standard' ? '#000' : '#00ccff';
-        btnStandard.style.boxShadow = tabName === 'standard' ? '0 0 10px #00ccff' : 'none';
-
-        btnShiny.style.background = tabName === 'shiny' ? '#00ffff' : '#222';
-        btnShiny.style.color = tabName === 'shiny' ? '#000' : '#00ffff';
-        btnShiny.style.boxShadow = tabName === 'shiny' ? '0 0 10px #00ffff' : 'none';
-    }
     renderDexGrid();
     
     const dexCountEl = document.getElementById('dexCount');
@@ -835,32 +869,33 @@ function renderDexGrid() {
         
         const card = document.createElement('div');
         card.style.cssText = `
-            background: ${isUnlocked ? (isShinyTab ? 'linear-gradient(135deg, #0a1828, #1a3550)' : `linear-gradient(135deg, #111, ${rarityColor}33)`) : '#111'};
+            background: ${isUnlocked ? (isShinyTab ? 'linear-gradient(180deg, #111, #00ffff33)' : `linear-gradient(180deg, #111, ${rarityColor}33)`) : '#111'};
             border: 2px solid ${isUnlocked ? (isShinyTab ? '#00ffff' : rarityColor) : '#333'};
-            border-radius: 8px;
-            padding: 6px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            opacity: ${isUnlocked ? '1' : '0.3'};
-            box-shadow: ${isUnlocked && isShinyTab ? '0 0 12px rgba(0,255,255,0.4)' : 'none'};
+            border-radius: 12px;
+            padding: 8px;
+            text-align: center;
+            opacity: ${isUnlocked ? '1' : '0.4'};
+            box-shadow: ${isUnlocked && isShinyTab ? '0 0 10px rgba(0,255,255,0.4)' : (isUnlocked ? `0 0 10px ${rarityColor}44` : 'none')};
         `;
 
         if (isUnlocked) {
             card.innerHTML = `
-                ${isShinyTab ? '<div style="font-size: 5.5px; color: #00ffff; font-family: monospace; font-weight: bold; margin-bottom: 1px;">💎 SHINY</div>' : ''}
-                <div style="width: 42px; height: 42px; background: #fff; border-radius: 4px; overflow: hidden; margin-bottom: 2px;">
-                    <img src="${char.image}" style="width: 100%; height: 100%; object-fit: cover; ${isShinyTab ? 'filter: brightness(1.2) contrast(2);' : ''}">
+                ${isShinyTab ? '<div style="font-size: 0.6rem; color: #00ffff; font-family: monospace; font-weight: bold; margin-bottom: 2px;">💎 SHINY</div>' : ''}
+                <div style="font-size: 0.75rem; font-weight: bold; color: ${isShinyTab ? '#00ffff' : rarityColor}; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${char.name}</div>
+                <div style="font-size: 0.65rem; color: #888; margin-bottom: 4px;">${(char.rarity || 'common').toUpperCase()}</div>
+                <div style="width: 100%; height: 90px; background: #fff; border-radius: 6px; overflow: hidden; border: 1px solid #333; margin-bottom: 6px;">
+                    <img src="${char.image || ''}" style="width: 100%; height: 100%; object-fit: cover; ${isShinyTab ? 'filter: brightness(1.2) contrast(2);' : ''}" onerror="this.style.display='none';">
                 </div>
-                <span style="font-size: 8.5px; color: #fff; font-family: monospace; font-weight: bold;">${char.name}</span>
-                <span style="font-size: 7px; color: ${isShinyTab ? '#00ffff' : rarityColor}; font-family: monospace; text-transform: uppercase;">${isShinyTab ? 'DIAMOND' : char.rarity}</span>
+                <div style="font-size: 0.65rem; color: #00ff55; font-weight: bold;">COLLECTED</div>
             `;
         } else {
             card.innerHTML = `
-                <div style="width: 42px; height: 42px; background: #222; border-radius: 4px; display: flex; align-items: center; justify-content: center; margin-bottom: 2px; color: #555; font-size: 16px;">?</div>
-                <span style="font-size: 8.5px; color: #777; font-family: monospace;">???</span>
-                <span style="font-size: 7px; color: #444; font-family: monospace;">Locked</span>
+                <div style="font-size: 0.75rem; font-weight: bold; color: #666; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">???</div>
+                <div style="font-size: 0.65rem; color: #888; margin-bottom: 4px;">${(char.rarity || 'common').toUpperCase()}</div>
+                <div style="width: 100%; height: 90px; background: #1a1a1a; border-radius: 6px; overflow: hidden; border: 1px solid #333; margin-bottom: 6px; display: flex; align-items: center; justify-content: center;">
+                    <span style="font-size: 1.8rem; color: #444; font-weight: bold;">🔒</span>
+                </div>
+                <div style="font-size: 0.65rem; color: #555; font-weight: bold;">LOCKED</div>
             `;
         }
 
@@ -882,7 +917,7 @@ window.openInventoryModal = function() {
     renderInventoryGrid();
     const modal = document.getElementById('inventoryModal');
     if (modal) {
-        modal.style.display = 'block';
+        modal.style.display = 'flex';
     }
 };
 
@@ -892,79 +927,74 @@ window.closeInventory = function() {
 };
 
 window.openDex = function() {
-    const existingModal = document.getElementById('dexModal');
-    if (existingModal) existingModal.remove();
+    let modal = document.getElementById('dexModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'dexModal';
+        document.body.appendChild(modal);
+    }
 
-    const modal = document.createElement('div');
-    modal.id = 'dexModal';
+    // Force true full-screen styling overriding any conflicting CSS classes
+    modal.className = '';
     modal.style.cssText = `
         position: fixed !important;
         top: 0 !important;
         left: 0 !important;
+        transform: none !important;
         width: 100vw !important;
         height: 100vh !important;
-        background: rgba(0,0,0,0.85) !important;
-        z-index: 999999 !important;
-        display: block !important;
+        max-width: none !important;
+        max-height: none !important;
+        border-radius: 0 !important;
+        background: rgba(0,0,0,0.95) !important;
+        z-index: 9999999 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        padding: 20px !important;
+        box-sizing: border-box !important;
+        font-family: monospace !important;
+        color: #fff !important;
     `;
 
     const standardCount = (window.playerData.dex) ? window.playerData.dex.length : 0;
     const shinyCount = (window.playerData.shinyDex) ? window.playerData.shinyDex.length : 0;
-    const currentCount = window.currentDexTab === 'shiny' ? shinyCount : standardCount;
+    const totalCount = (typeof brainrotCharacters !== 'undefined') ? brainrotCharacters.length : 0;
 
     modal.innerHTML = `
-        <div style="
-            position: fixed !important;
-            top: 50% !important;
-            left: 50% !important;
-            transform: translate(-50%, -50%) !important;
-            background: #111 !important;
-            border: 3px solid #00ccff !important;
-            border-radius: 15px !important;
-            padding: 20px !important;
-            width: 90% !important;
-            max-width: 440px !important;
-            text-align: center !important;
-            box-shadow: 0 0 30px rgba(0,204,255,0.4) !important;
-            box-sizing: border-box !important;
-            font-family: monospace !important;
-            color: #fff !important;
-        ">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                <h2 style="color: #00ccff; font-size: 1.1rem; margin: 0;">📖 STICKER BOOK</h2>
-                <button onclick="closeDex()" style="background: #ff0055; color: #fff; border: none; width: 28px; height: 28px; border-radius: 50%; font-weight: bold; cursor: pointer;">✖</button>
+        <div style="width: 100%; max-width: 800px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <div>
+                <h2 style="margin: 0; color: #00ccff; text-transform: uppercase; font-size: 1.5rem;">📖 ROT-DEX STICKER BOOK</h2>
+                <div style="font-size: 0.85rem; color: #aaa; margin-top: 2px;">Collected: <span style="color: #00ff55; font-weight: bold;" id="dexHeaderCount">${window.currentDexTab === 'shiny' ? shinyCount : standardCount} / ${totalCount}</span></div>
             </div>
-            
-            <div style="display: flex; gap: 8px; justify-content: center; margin-bottom: 10px;">
-                <button onclick="switchDexTab('standard')" id="btnDexStandard" style="
-                    background: ${window.currentDexTab === 'standard' ? '#00ccff' : '#222'};
-                    color: ${window.currentDexTab === 'standard' ? '#000' : '#00ccff'};
-                    border: 2px solid #00ccff; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.75rem;
-                    box-shadow: ${window.currentDexTab === 'standard' ? '0 0 10px #00ccff' : 'none'};
-                    font-family: monospace;
-                ">📖 STANDARD DEX</button>
-                
-                <button onclick="switchDexTab('shiny')" id="btnDexShiny" style="
-                    background: ${window.currentDexTab === 'shiny' ? '#00ffff' : '#222'};
-                    color: ${window.currentDexTab === 'shiny' ? '#000' : '#00ffff'};
-                    border: 2px solid #00ffff; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.75rem;
-                    box-shadow: ${window.currentDexTab === 'shiny' ? '0 0 10px #00ffff' : 'none'};
-                    font-family: monospace;
-                ">💎 SHINY DEX</button>
-            </div>
-
-            <div id="dexGrid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-height: 260px; overflow-y: auto; margin-bottom: 15px; padding-right: 4px; background: #0a0a0a; padding: 10px; border-radius: 8px;"></div>
-            <button onclick="closeDex()" style="background: #333; color: #fff; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%;">CLOSE</button>
+            <button onclick="closeDex()" style="background: #ff0055; color: #fff; border: 2px solid #fff; border-radius: 50%; width: 35px; height: 35px; font-weight: bold; cursor: pointer; font-size: 1.1rem;">X</button>
         </div>
+        
+        <div style="width: 100%; max-width: 800px; display: flex; gap: 8px; margin-bottom: 15px;">
+            <button onclick="switchDexTab('standard')" id="btnDexStandard" style="
+                flex: 1; padding: 10px; background: ${window.currentDexTab === 'standard' ? '#00ccff' : '#222'};
+                color: ${window.currentDexTab === 'standard' ? '#000' : '#00ccff'};
+                border: 2px solid #00ccff; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: monospace;
+                box-shadow: ${window.currentDexTab === 'standard' ? '0 0 10px #00ccff' : 'none'};
+            ">📖 STANDARD DEX (${standardCount})</button>
+            
+            <button onclick="switchDexTab('shiny')" id="btnDexShiny" style="
+                flex: 1; padding: 10px; background: ${window.currentDexTab === 'shiny' ? '#00ffff' : '#222'};
+                color: ${window.currentDexTab === 'shiny' ? '#000' : '#00ffff'};
+                border: 2px solid #00ffff; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: monospace;
+                box-shadow: ${window.currentDexTab === 'shiny' ? '0 0 10px #00ffff' : 'none'};
+            ">💎 SHINY DEX (${shinyCount})</button>
+        </div>
+
+        <div id="dexGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; width: 100%; max-width: 800px; max-height: calc(100vh - 180px); overflow-y: auto; padding: 5px;"></div>
     `;
 
-    document.body.appendChild(modal);
     renderDexGrid();
 };
 
 window.closeDex = function() {
     const modal = document.getElementById('dexModal');
-    if (modal) modal.remove();
+    if (modal) modal.style.display = 'none';
 };
 
 window.openReviveModal = function() {
@@ -989,7 +1019,7 @@ window.openAdminPanel = function() {
             width: 100vw !important;
             height: 100vh !important;
             background: rgba(0,0,0,0.85) !important;
-            z-index: 999999 !important;
+            z-index: 99999999 !important;
         `;
         modal.innerHTML = `
             <div style="
@@ -1005,6 +1035,8 @@ window.openAdminPanel = function() {
                 max-width: 420px !important;
                 text-align: center !important;
                 box-sizing: border-box !important;
+                font-family: monospace !important;
+                color: #fff !important;
             ">
                 <h2 style="color: #ff0055; font-size: 1.3rem; margin-bottom: 10px;">🛡️ ADMIN PANEL</h2>
                 <div id="adminAccountsList" style="display: flex; flex-direction: column; gap: 8px; max-height: 250px; overflow-y: auto; margin-bottom: 15px; text-align: left;"></div>
@@ -1014,7 +1046,7 @@ window.openAdminPanel = function() {
         `;
         document.body.appendChild(modal);
     }
-    modal.style.display = 'block';
+    modal.style.display = 'flex';
     window.renderAdminPanel();
 };
 
