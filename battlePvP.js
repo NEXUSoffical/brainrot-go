@@ -42,17 +42,33 @@ window.startPvPBattleScene = function(matchId, role) {
         overflow: hidden !important;
     `;
 
-    // Start listening to live match data in Firestore
+    if (typeof firebase === 'undefined' || !firebase.firestore) {
+        alert("Firebase error: Firestore not available.");
+        return;
+    }
+
     const db = firebase.firestore();
     window.pvpBattleState.unsubscribeMatch = db.collection('active_matches').doc(matchId).onSnapshot((doc) => {
         if (!doc.exists) {
-            alert("⚠️ Match room was closed.");
-            window.exitPvPBattle();
+            console.warn("Match room closed or deleted.");
             return;
         }
 
         const matchData = doc.data();
-        renderPvPArena(matchData);
+        try {
+            renderPvPArena(matchData);
+        } catch (err) {
+            console.error("Error rendering PvP arena:", err);
+            modal.innerHTML = `
+                <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+                    <h2 style="color: #ff0055; margin-bottom: 10px;">⚠️ SYNC ERROR</h2>
+                    <p style="color: #aaa; margin-bottom: 20px;">${err.message}</p>
+                    <button onclick="window.exitPvPBattle()" style="padding: 10px 20px; background: #ff0055; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-family: monospace;">RETURN TO MAP</button>
+                </div>
+            `;
+        }
+    }, (error) => {
+        console.error("Match subscription error:", error);
     });
 };
 
@@ -64,14 +80,16 @@ window.renderPvPArena = function(matchData) {
     const myData = role === 'player1' ? matchData.player1 : matchData.player2;
     const enemyData = role === 'player1' ? matchData.player2 : matchData.player1;
 
-    const myActiveRot = myData.squad[myData.activeIndex];
-    const enemyActiveRot = enemyData.squad[enemyData.activeIndex];
+    if (!myData || !enemyData || !myData.squad || !enemyData.squad) return;
+
+    const myActiveRot = myData.squad[myData.activeIndex] || myData.squad[0];
+    const enemyActiveRot = enemyData.squad[enemyData.activeIndex] || enemyData.squad[0];
 
     const myHpPercent = Math.max(0, Math.min(100, (myActiveRot.currentHp / myActiveRot.maxHp) * 100));
     const enemyHpPercent = Math.max(0, Math.min(100, (enemyActiveRot.currentHp / enemyActiveRot.maxHp) * 100));
 
     const isMyTurn = matchData.turn === myData.username;
-    const isGameOver = matchData.winner !== null;
+    const isGameOver = matchData.winner !== null && matchData.winner !== undefined;
 
     if (isGameOver) {
         const isWinner = matchData.winner === myData.username;
@@ -101,11 +119,11 @@ window.renderPvPArena = function(matchData) {
         <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 650px; margin: 0 auto; background: rgba(15, 10, 30, 0.85); padding: 10px 18px; border-radius: 12px; border: 1px solid rgba(255, 0, 127, 0.5); z-index: 10; backdrop-filter: blur(8px);">
             <div style="text-align: left;">
                 <div style="font-size: 0.7rem; color: #ff0055; font-weight: bold;">🔴 OPPONENT: ${enemyData.username}</div>
-                <div style="font-size: 0.6rem; color: #aaa;">Active Index: ${enemyData.activeIndex + 1}/3</div>
+                <div style="font-size: 0.6rem; color: #aaa;">Active: ${enemyData.activeIndex + 1}/3</div>
             </div>
             <div style="text-align: right;">
                 <div style="font-size: 0.7rem; color: #00ff55; font-weight: bold;">🟢 YOU: ${myData.username}</div>
-                <div style="font-size: 0.6rem; color: #aaa;">Active Index: ${myData.activeIndex + 1}/3</div>
+                <div style="font-size: 0.6rem; color: #aaa;">Active: ${myData.activeIndex + 1}/3</div>
             </div>
         </div>
 
@@ -162,49 +180,50 @@ window.executePvPAttack = async function() {
     const db = firebase.firestore();
 
     const matchRef = db.collection('active_matches').doc(matchId);
-    const doc = await matchRef.get();
-    if (!doc.exists) return;
+    
+    try {
+        await db.runTransaction(async (transaction) => {
+            const doc = await transaction.get(matchRef);
+            if (!doc.exists) throw "Match does not exist!";
 
-    const data = doc.data();
-    const myData = role === 'player1' ? data.player1 : data.player2;
-    const enemyData = role === 'player1' ? data.player2 : data.player1;
+            const data = doc.data();
+            const myKey = role === 'player1' ? 'player1' : 'player2';
+            const enemyKey = role === 'player1' ? 'player2' : 'player1';
 
-    if (data.turn !== myData.username) return;
+            const myData = data[myKey];
+            const enemyData = data[enemyKey];
 
-    const myRot = myData.squad[myData.activeIndex];
-    const enemyRot = enemyData.squad[enemyData.activeIndex];
+            if (data.turn !== myData.username) return;
 
-    const dmg = Math.max(10, Math.floor(myRot.atk * (0.8 + Math.random() * 0.4)));
-    enemyRot.currentHp = Math.max(0, enemyRot.currentHp - dmg);
+            const myRot = myData.squad[myData.activeIndex];
+            const enemyRot = enemyData.squad[enemyData.activeIndex];
 
-    let nextEnemyActiveIndex = enemyData.activeIndex;
-    let winner = data.winner;
+            const dmg = Math.max(10, Math.floor(myRot.atk * (0.8 + Math.random() * 0.4)));
+            enemyRot.currentHp = Math.max(0, enemyRot.currentHp - dmg);
 
-    if (enemyRot.currentHp <= 0) {
-        if (nextEnemyActiveIndex < enemyData.squad.length - 1) {
-            nextEnemyActiveIndex++;
-        } else {
-            winner = myData.username; // All enemy rots fainted!
-        }
+            let nextEnemyActiveIndex = enemyData.activeIndex;
+            let winner = data.winner;
+
+            if (enemyRot.currentHp <= 0) {
+                if (nextEnemyActiveIndex < enemyData.squad.length - 1) {
+                    nextEnemyActiveIndex++;
+                } else {
+                    winner = myData.username;
+                }
+            }
+
+            const updates = {};
+            updates[`${enemyKey}.squad`] = enemyData.squad;
+            updates[`${enemyKey}.activeIndex`] = nextEnemyActiveIndex;
+            updates['turn'] = enemyData.username;
+            updates['lastAction'] = `${myData.username}'s ${myRot.name} dealt ${dmg} damage to ${enemyRot.name}!`;
+            updates['winner'] = winner;
+
+            transaction.update(matchRef, updates);
+        });
+    } catch (err) {
+        console.error("Transaction failed: ", err);
     }
-
-    const nextTurnUser = enemyData.username;
-    const actionLog = `${myData.username}'s ${myRot.name} dealt ${dmg} damage to ${enemyRot.name}!`;
-
-    const updates = {};
-    if (role === 'player1') {
-        updates['player2.squad'] = enemyData.squad;
-        updates['player2.activeIndex'] = nextEnemyActiveIndex;
-    } else {
-        updates['player1.squad'] = enemyData.squad;
-        updates['player1.activeIndex'] = nextEnemyActiveIndex;
-    }
-
-    updates['turn'] = nextTurnUser;
-    updates['lastAction'] = actionLog;
-    updates['winner'] = winner;
-
-    await matchRef.update(updates);
 };
 
 window.exitPvPBattle = function() {
