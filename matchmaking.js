@@ -1,4 +1,4 @@
-// matchmaking.js - Real-Time Online PvP Queue & Match Sync System (Instant Room Sync Fix)
+// matchmaking.js - Real-Time Online PvP Queue & Match Sync System (Atomic Pairing Fix)
 
 if (typeof window.matchmakingState === 'undefined') {
     window.matchmakingState = {
@@ -10,7 +10,6 @@ if (typeof window.matchmakingState === 'undefined') {
     };
 }
 
-// Helper to clean objects of undefined fields for Firestore
 function sanitizeForFirebase(data) {
     return JSON.parse(JSON.stringify(data, (key, value) => (value === undefined ? null : value)));
 }
@@ -30,7 +29,6 @@ window.startOnlineMatchmaking = async function() {
 
     const username = (typeof playerData !== 'undefined' && playerData.username) ? playerData.username : "player_" + Math.floor(Math.random()*1000);
 
-    // Show searching modal
     let modal = document.getElementById('matchmakingModal');
     if (!modal) {
         modal = document.createElement('div');
@@ -67,98 +65,114 @@ window.startOnlineMatchmaking = async function() {
 
     window.matchmakingState.searching = true;
     const db = firebase.firestore();
+    const cleanSquad = sanitizeForFirebase(squad);
 
     try {
         const queueRef = db.collection('matchmaking_queue');
-        const snapshot = await queueRef.where('status', '==', 'waiting').get();
 
-        let opponentData = null;
-        let opponentDocId = null;
+        // Add ourselves to the queue first
+        const myQueueRef = await queueRef.add(sanitizeForFirebase({
+            username: username,
+            squad: cleanSquad,
+            status: 'waiting',
+            timestamp: Date.now()
+        }));
 
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            if (data.username !== username && !opponentData) {
-                opponentData = data;
-                opponentDocId = doc.id;
-            }
-        });
+        window.matchmakingState.myQueueId = myQueueRef.id;
 
-        const cleanSquad = sanitizeForFirebase(squad);
+        // Listen to queue changes to match instantly when another player appears
+        window.matchmakingState.unsubscribeQueue = queueRef.orderBy('timestamp', 'asc').onSnapshot(async (snapshot) => {
+            if (!window.matchmakingState.searching) return;
 
-        if (opponentData && opponentDocId) {
-            const matchId = "match_" + Date.now() + "_" + Math.floor(Math.random()*1000);
-            
-            const matchData = {
-                matchId: matchId,
-                status: 'active',
-                createdAt: Date.now(),
-                player1: {
-                    username: opponentData.username,
-                    squad: opponentData.squad,
-                    activeIndex: 0,
-                    faintedCount: 0
-                },
-                player2: {
-                    username: username,
-                    squad: cleanSquad,
-                    activeIndex: 0,
-                    faintedCount: 0
-                },
-                turn: opponentData.username,
-                lastAction: "Match started! " + opponentData.username + " vs " + username,
-                winner: null
-            };
+            let waitingPlayers = [];
+            snapshot.forEach(doc => {
+                if (doc.id !== window.matchmakingState.myQueueId) {
+                    waitingPlayers.push({ id: doc.id, ...doc.data() });
+                }
+            });
 
-            await db.collection('active_matches').doc(matchId).set(sanitizeForFirebase(matchData));
-            await queueRef.doc(opponentDocId).delete();
+            // If there is another player waiting in the queue, let's pair with the oldest one
+            if (waitingPlayers.length > 0) {
+                const opponent = waitingPlayers[0];
 
-            window.matchmakingState.matchId = matchId;
-            window.matchmakingState.isHost = false;
+                // Attempt to claim the opponent by deleting their queue ticket atomically
+                try {
+                    await db.runTransaction(async (transaction) => {
+                        const oppDoc = await transaction.get(queueRef.doc(opponent.id));
+                        const myDoc = await transaction.get(queueRef.id ? queueRef.doc(window.matchmakingState.myQueueId) : null);
 
-            if (modal) modal.remove();
-            if (typeof window.startPvPBattleScene === 'function') {
-                window.startPvPBattleScene(matchId, 'player2');
-            }
+                        if (!oppDoc.exists || (myDoc && !myDoc.exists)) {
+                            throw new Error("Match already taken");
+                        }
 
-        } else {
-            const myQueueRef = await queueRef.add(sanitizeForFirebase({
-                username: username,
-                squad: cleanSquad,
-                status: 'waiting',
-                timestamp: Date.now()
-            }));
-
-            window.matchmakingState.myQueueId = myQueueRef.id;
-
-            // Listen globally to active matches to instantly pick up when a room is created for us
-            window.matchmakingState.unsubscribeQueue = db.collection('active_matches')
-                .where('status', '==', 'active')
-                .onSnapshot(async (snapshot) => {
-                    snapshot.forEach(async (docSnap) => {
-                        const mData = docSnap.data();
-                        if ((mData.player1 && mData.player1.username === username) || (mData.player2 && mData.player2.username === username)) {
-                            if (window.matchmakingState.searching) {
-                                window.matchmakingState.searching = false;
-                                if (window.matchmakingState.unsubscribeQueue) {
-                                    window.matchmakingState.unsubscribeQueue();
-                                    window.matchmakingState.unsubscribeQueue = null;
-                                }
-                                try { await myQueueRef.delete(); } catch(e){}
-
-                                window.matchmakingState.matchId = docSnap.id;
-                                window.matchmakingState.isHost = true;
-
-                                if (modal) modal.remove();
-
-                                const assignedRole = mData.player1.username === username ? 'player1' : 'player2';
-                                if (typeof window.startPvPBattleScene === 'function') {
-                                    window.startPvPBattleScene(docSnap.id, assignedRole);
-                                }
-                            }
+                        transaction.delete(queueRef.doc(opponent.id));
+                        if (window.matchmakingState.myQueueId) {
+                            transaction.delete(queueRef.doc(window.matchmakingState.myQueueId));
                         }
                     });
-                });
-        }
+
+                    // Successfully claimed! We are Player 1, opponent is Player 2
+                    window.matchmakingState.searching = false;
+                    if (window.matchmakingState.unsubscribeQueue) {
+                        window.matchmakingState.unsubscribeQueue();
+                        window.matchmakingState.unsubscribeQueue = null;
+                    }
+
+                    const matchId = "match_" + Date.now() + "_" + Math.floor(Math.random()*1000);
+                    const matchData = {
+                        matchId: matchId,
+                        status: 'active',
+                        createdAt: Date.now(),
+                        player1: {
+                            username: username,
+                            squad: cleanSquad,
+                            activeIndex: 0,
+                            faintedCount: 0
+                        },
+                        player2: {
+                            username: opponent.username,
+                            squad: opponent.squad,
+                            activeIndex: 0,
+                            faintedCount: 0
+                        },
+                        turn: username,
+                        lastAction: "Match started! " + username + " vs " + opponent.username,
+                        winner: null
+                    };
+
+                    await db.collection('active_matches').doc(matchId).set(sanitizeForFirebase(matchData));
+
+                    if (modal) modal.remove();
+                    if (typeof window.startPvPBattleScene === 'function') {
+                        window.startPvPBattleScene(matchId, 'player1');
+                    }
+
+                } catch (e) {
+                    // Transaction failed because the other player claimed us first, which is fine—let's check active matches
+                }
+            }
+
+            // Also check if an active match was created for us by the other player
+            const activeMatchQuery = await db.collection('active_matches')
+                .where('status', '==', 'active')
+                .get();
+
+            activeMatchQuery.forEach(docSnap => {
+                const mData = docSnap.data();
+                if (window.matchmakingState.searching && mData.player2 && mData.player2.username === username) {
+                    window.matchmakingState.searching = false;
+                    if (window.matchmakingState.unsubscribeQueue) {
+                        window.matchmakingState.unsubscribeQueue();
+                        window.matchmakingState.unsubscribeQueue = null;
+                    }
+
+                    if (modal) modal.remove();
+                    if (typeof window.startPvPBattleScene === 'function') {
+                        window.startPvPBattleScene(docSnap.id, 'player2');
+                    }
+                }
+            });
+        });
 
     } catch (err) {
         console.error("Matchmaking error:", err);
