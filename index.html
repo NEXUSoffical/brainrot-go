@@ -322,8 +322,9 @@
             </div>
         </div>
 
-        <!-- Bottom Social Links matching logo vibe -->
-        <div style="display: flex; gap: 20px; z-index: 2;">
+        <!-- Bottom Social Links & Docs Button matching logo vibe -->
+        <div style="display: flex; gap: 15px; z-index: 2; align-items: center; flex-wrap: wrap; justify-content: center;">
+            <a href="docs.html" style="background: rgba(0,0,0,0.9); border: 2px solid #76ff03; color: #76ff03; padding: 10px 16px; border-radius: 25px; text-decoration: none; font-weight: bold; font-size: 0.8rem; box-shadow: 0 0 10px rgba(118,255,3,0.3); display: flex; align-items: center; gap: 6px;">📖 GAME DOCS</a>
             <a href="#" target="_blank" style="width: 45px; height: 45px; background: rgba(0,0,0,0.9); border: 2px solid #76ff03; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: #76ff03; text-decoration: none; box-shadow: 0 0 10px rgba(118,255,3,0.3);">📖</a>
             <a href="https://x.com/brainr0tgo" target="_blank" style="width: 45px; height: 45px; background: rgba(0,0,0,0.9); border: 2px solid #76ff03; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: #76ff03; text-decoration: none; box-shadow: 0 0 10px rgba(118,255,3,0.3);">𝕏</a>
             <a href="#" target="_blank" style="width: 45px; height: 45px; background: rgba(0,0,0,0.9); border: 2px solid #76ff03; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: #76ff03; text-decoration: none; box-shadow: 0 0 10px rgba(118,255,3,0.3);">💬</a>
@@ -379,7 +380,7 @@
         <p>📍 <b>LNG:</b> <span id="lngVal">Loading...</span></p>
         <hr style="margin: 6px 0; border-color: #333;">
         <p>📦 <b>INVENTORY:</b> <span id="inventoryCount">0</span> Rots</p>
-        <p>🪩 <b>ROT:</b> <span id="rotBalance">500</span></p>
+        <p>🪙 <b>ROT:</b> <span id="rotBalance">500</span></p>
     </div>
 
     <!-- PLAYER PROFILE WIDGET (TOP RIGHT) -->
@@ -408,8 +409,10 @@
     <!-- HUD Buttons -->
     <div class="hud-buttons">
         <button id="bgmToggleBtn" class="btn-hud" style="background: #ff00ff; color: #fff;" onclick="window.gameAudio.toggleBgm()">🔇 BGM: OFF</button>
+        <!-- BATTLE PASS BUTTON -->
+        <button class="btn-hud" style="background: linear-gradient(135deg, #00ff55, #00ffee); color: #000; box-shadow: 0 0 15px rgba(0,255,85,0.4);" onclick="window.openBattlePassModal()">🏆 BATTLE PASS</button>
         <!-- INVENTORY BUTTON -->
-        <button class="btn-hud" onclick="openInventory()">🎒 INVENTORY</button>
+        <button class="btn-hud" onclick="openInventory()">📦 INVENTORY</button>
         <button class="btn-hud" style="background: #00ccff; color: #000;" onclick="openDex()">📖 ROT-DEX (<span id="dexCount">0</span>/<span id="totalBrainrots">0</span>)</button>
         <button class="btn-hud" style="background: #00ff55; color: #000;" onclick="openReviveModal()">🧪 REVIVE (<span id="potionHudCount">3</span>)</button>
         <button class="btn-hud" style="background: #ffcc00; color: #000;" onclick="openShopModal()">🛒 SHOP</button>
@@ -465,7 +468,7 @@
 
         <div class="battle-controls">
             <button id="attackBtn" class="btn-action" style="background: #ff0055; color: #fff;" onclick="battleAttack()">⚔️ ATTACK WILD BRAINROT</button>
-            <button id="vaultCatchBtn" class="btn-action" style="background: #76ff03; color: #000;" onclick="battleCatch()">🔒 DEFEAT TO UNLOCK VAULT</button>
+            <button id="vaultCatchBtn" class="btn-action" style="background: #76ff03; color: #000;" onclick="battleCatch()">🔐 DEFEAT TO UNLOCK VAULT</button>
             <button class="btn-action" style="background: #00ccff; color: #000;" onclick="openBattleSwitch()">🔄 SWITCH ROT</button>
             <button class="btn-action" style="background: #333; color: #fff;" onclick="closeBattle()">🏃 FLEE BATTLE</button>
         </div>
@@ -555,6 +558,8 @@
     <script src="account.js"></script>
     <script src="weather.js"></script>
     <script src="audio.js"></script>
+    <!-- LINK BATTLE PASS SCRIPT -->
+    <script src="battlePass.js"></script>
     <script src="main.js"></script>
 </body>
 </html>
