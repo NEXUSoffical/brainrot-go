@@ -41,6 +41,21 @@
         }
         .btn-hud:active { transform: scale(0.95); }
 
+        /* MAIN MENU DRAWER OVERLAY */
+        #menuModal {
+            display: none;
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(5px);
+            z-index: 99999; justify-content: center; align-items: center;
+        }
+        .menu-drawer {
+            background: #111; border: 3px solid #76ff03; border-radius: 20px;
+            padding: 20px; width: 90%; max-width: 320px; text-align: center;
+            box-shadow: 0 0 30px rgba(118, 255, 3, 0.4); font-family: monospace;
+            display: flex; flex-direction: column; gap: 10px; max-height: 85vh; overflow-y: auto;
+        }
+        .menu-drawer h2 { color: #76ff03; font-size: 1.2rem; margin-bottom: 5px; text-shadow: 0 0 8px #76ff03; }
+
         /* MOBILE TOUCH D-PAD CONTROLS */
         .mobile-dpad {
             position: absolute; bottom: 20px; left: 20px; z-index: 1000;
@@ -98,7 +113,7 @@
             align-items: center; justify-content: center; color: #fff; font-family: monospace; text-align: center; padding: 20px;
         }
 
-        /* FULL SCREEN INVENTORY MODAL (NEW) */
+        /* FULL SCREEN INVENTORY MODAL */
         #inventoryModal {
             position: fixed;
             top: 0;
@@ -115,7 +130,7 @@
             font-family: monospace;
         }
 
-        /* Scrollable Grid Container (NEW) */
+        /* Scrollable Grid Container */
         .inventory-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
@@ -189,7 +204,7 @@
 </head>
 <body>
 
-    <!-- HOME SCREEN OVERLAY WITH CORRECT PATH TO IMAGE -->
+    <!-- HOME SCREEN OVERLAY -->
     <div id="homeScreenOverlay" style="
         position: fixed !important;
         top: 0 !important;
@@ -222,7 +237,6 @@
         <!-- Center Logo-Inspired Branding -->
         <div style="display: flex; flex-direction: column; align-items: center; text-align: center; width: 100%; z-index: 2; margin-top: -10px;">
             
-            <!-- Catch. Collect. Go Crazy Subtitle -->
             <div style="font-size: 0.85rem; font-style: italic; color: #76ff03; letter-spacing: 2px; margin-bottom: 15px; text-shadow: 0 0 8px rgba(118,255,3,0.8); transform: rotate(-3deg);">
                 CATCH. COLLECT. GO CRAZY.
             </div>
@@ -240,7 +254,6 @@
                 position: relative;
                 backdrop-filter: blur(4px);
             ">
-                <!-- BRAINROT Text -->
                 <div style="
                     font-size: 2.2rem;
                     font-weight: 900;
@@ -252,7 +265,6 @@
                     margin-bottom: 8px;
                 ">BRAINROT</div>
 
-                <!-- ROT Neon Green Slime Text Box / Highlight -->
                 <div style="
                     font-size: 2.6rem;
                     font-weight: 900;
@@ -264,7 +276,6 @@
                     margin-bottom: 12px;
                 ">ROT</div>
 
-                <!-- GO Badge with Gun Sight Target -->
                 <div style="
                     display: inline-flex;
                     align-items: center;
@@ -280,7 +291,6 @@
                     gap: 8px;
                 ">
                     <span>GO</span>
-                    <!-- Target crosshair icon -->
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="9"></circle>
                         <line x1="12" y1="3" x2="12" y2="7"></line>
@@ -291,7 +301,6 @@
                 </div>
             </div>
 
-            <!-- Glowing Slime Green Play Button -->
             <button onclick="dismissHomeScreen()" style="
                 background: linear-gradient(135deg, #76ff03 0%, #00e676 100%);
                 color: #000000;
@@ -322,12 +331,10 @@
             </div>
         </div>
 
-        <!-- Bottom Social Links & Docs Button matching logo vibe -->
+        <!-- Bottom Social Links & Docs Button -->
         <div style="display: flex; gap: 15px; z-index: 2; align-items: center; flex-wrap: wrap; justify-content: center;">
             <a href="docs.html" style="background: rgba(0,0,0,0.9); border: 2px solid #76ff03; color: #76ff03; padding: 10px 16px; border-radius: 25px; text-decoration: none; font-weight: bold; font-size: 0.8rem; box-shadow: 0 0 10px rgba(118,255,3,0.3); display: flex; align-items: center; gap: 6px;">📖 GAME DOCS</a>
-            <a href="#" target="_blank" style="width: 45px; height: 45px; background: rgba(0,0,0,0.9); border: 2px solid #76ff03; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: #76ff03; text-decoration: none; box-shadow: 0 0 10px rgba(118,255,3,0.3);">📖</a>
             <a href="https://x.com/brainr0tgo" target="_blank" style="width: 45px; height: 45px; background: rgba(0,0,0,0.9); border: 2px solid #76ff03; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: #76ff03; text-decoration: none; box-shadow: 0 0 10px rgba(118,255,3,0.3);">𝕏</a>
-            <a href="#" target="_blank" style="width: 45px; height: 45px; background: rgba(0,0,0,0.9); border: 2px solid #76ff03; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: #76ff03; text-decoration: none; box-shadow: 0 0 10px rgba(118,255,3,0.3);">💬</a>
         </div>
     </div>
 
@@ -357,17 +364,6 @@
         <div style="background: #111; border: 3px solid #ff0055; border-radius: 15px; padding: 30px; max-width: 400px; box-shadow: 0 0 30px rgba(255,0,85,0.4);">
             <h2 style="color: #ff0055; font-size: 1.5rem; margin-bottom: 10px; text-shadow: 0 0 10px #ff0055;">⚠️ GPS BLOCKED!</h2>
             <p style="font-size: 0.85rem; color: #ccc; line-height: 1.4; margin-bottom: 15px;">Brainrot Go needs your real-world location to build the map.</p>
-            
-            <div style="background: rgba(255, 204, 0, 0.1); border: 1px dashed #ffcc00; padding: 10px; border-radius: 8px; margin-bottom: 20px;">
-                <p style="font-size: 0.75rem; color: #ffcc00; line-height: 1.5;">
-                    <b>HOW TO FIX IT:</b><br>
-                    Your browser is blocking the GPS. <br><br>
-                    1. Click the <b>Lock Icon 🔒</b> or <b>"aA"</b> next to the website address at the very top of your screen.<br>
-                    2. Find <b>Location</b> and change it to <b>Allow</b>.<br>
-                    3. Click the button below!
-                </p>
-            </div>
-
             <button class="btn-hud" style="background: #ff0055; color: #fff; width: 100%; border: none; padding: 12px; border-radius: 5px; font-weight: bold; cursor: pointer;" onclick="location.reload()">I FIXED IT! RELOAD GAME</button>
         </div>
     </div>
@@ -397,28 +393,38 @@
         <div style="display: flex; flex-direction: column; text-align: left; width: 100%; overflow: hidden;">
             <div style="font-size: 0.75rem; font-weight: bold; color: #76ff03; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="widgetUsername">Player</div>
             <div style="font-size: 0.65rem; color: #fff;">LVL <span id="widgetAccLevel">1</span></div>
-            <!-- XP Progress Bar -->
             <div style="width: 100%; height: 5px; background: #333; border-radius: 3px; margin-top: 3px; overflow: hidden; border: 1px solid #555;">
                 <div id="widgetXpBar" style="height: 100%; background: #76ff03; width: 0%; transition: width 0.3s ease;"></div>
             </div>
-            <!-- Numeric XP Display -->
             <div style="font-size: 0.55rem; color: #aaa; margin-top: 2px; text-align: right;"><span id="widgetXpText">0 / 200</span> XP</div>
         </div>
     </div>
 
-    <!-- HUD Buttons -->
+    <!-- CLEANED UP HUD BUTTONS (Bottom Right) -->
     <div class="hud-buttons">
         <button id="bgmToggleBtn" class="btn-hud" style="background: #ff00ff; color: #fff;" onclick="window.gameAudio.toggleBgm()">🔇 BGM: OFF</button>
-        <!-- BATTLE PASS BUTTON -->
-        <button class="btn-hud" style="background: linear-gradient(135deg, #00ff55, #00ffee); color: #000; box-shadow: 0 0 15px rgba(0,255,85,0.4);" onclick="window.openBattlePassModal()">🏆 BATTLE PASS</button>
-        <!-- INVENTORY BUTTON -->
-        <button class="btn-hud" onclick="openInventory()">📦 INVENTORY</button>
-        <button class="btn-hud" style="background: #00ccff; color: #000;" onclick="openDex()">📖 ROT-DEX (<span id="dexCount">0</span>/<span id="totalBrainrots">0</span>)</button>
-        <button class="btn-hud" style="background: #00ff55; color: #000;" onclick="openReviveModal()">🧪 REVIVE (<span id="potionHudCount">3</span>)</button>
-        <button class="btn-hud" style="background: #ffcc00; color: #000;" onclick="openShopModal()">🛒 SHOP</button>
-        <button class="btn-hud" style="background: #9900ff; color: #fff;" onclick="openTeamSelect('ai')">⚔️ 3v3 AI BATTLE</button>
-        <button class="btn-hud" style="background: #ff007f; color: #fff;" onclick="openTeamSelect('pvp')">🌐 ONLINE PVP</button>
-        <button class="btn-hud" style="background: #ff0055; color: #fff; font-size: 0.8rem; padding: 6px 12px;" onclick="logoutAccount()">🚪 LOGOUT</button>
+        <button class="btn-hud" style="background: linear-gradient(135deg, #76ff03, #00e676); color: #000; box-shadow: 0 0 20px rgba(118,255,3,0.6); font-size: 1rem; padding: 12px 22px;" onclick="toggleGameMenu()">☰ MENU</button>
+    </div>
+
+    <!-- EXPANDED GAME MENU DRAWER MODAL -->
+    <div id="menuModal">
+        <div class="menu-drawer">
+            <h2>🧠 GAME MENU</h2>
+            <p style="font-size: 0.7rem; color: #aaa; margin-bottom: 5px;">Access all features & tools</p>
+            
+            <button class="btn-hud" style="width: 100%; background: linear-gradient(135deg, #00ff55, #00ffee); color: #000;" onclick="closeGameMenu(); window.openBattlePassModal()">🏆 BATTLE PASS</button>
+            <button class="btn-hud" style="width: 100%; background: #333; color: #aaa; border: 1px dashed #777; cursor: not-allowed;" onclick="alert('🌐 TRADE MARKET & CHAT: Coming soon in the next update!')">🔒 TRADE MARKET (SOON)</button>
+            <button class="btn-hud" style="width: 100%;" onclick="closeGameMenu(); openInventory()">📦 INVENTORY</button>
+            <button class="btn-hud" style="width: 100%; background: #00ccff; color: #000;" onclick="closeGameMenu(); openDex()">📖 ROT-DEX (<span id="dexCountModal">0</span>/<span id="totalBrainrotsModal">0</span>)</button>
+            <button class="btn-hud" style="width: 100%; background: #00ff55; color: #000;" onclick="closeGameMenu(); openReviveModal()">🧪 REVIVE (<span id="potionHudCountModal">3</span>)</button>
+            <button class="btn-hud" style="width: 100%; background: #ffcc00; color: #000;" onclick="closeGameMenu(); openShopModal()">🛒 SHOP</button>
+            <button class="btn-hud" style="width: 100%; background: #9900ff; color: #fff;" onclick="closeGameMenu(); openTeamSelect('ai')">⚔️ 3v3 AI BATTLE</button>
+            <button class="btn-hud" style="width: 100%; background: #ff007f; color: #fff;" onclick="closeGameMenu(); openTeamSelect('pvp')">🌐 ONLINE PVP</button>
+            
+            <hr style="border-color: #333; margin: 5px 0;">
+            <button class="btn-hud" style="width: 100%; background: #ff0055; color: #fff; font-size: 0.8rem;" onclick="closeGameMenu(); logoutAccount()">🚪 LOGOUT</button>
+            <button class="btn-action" style="width: 100%; background: #333; color: #fff; margin-top: 5px;" onclick="toggleGameMenu()">✖ CLOSE</button>
+        </div>
     </div>
 
     <!-- MOBILE TOUCH D-PAD -->
@@ -494,7 +500,7 @@
         </div>
     </div>
 
-    <!-- Home screen, real player count fetcher, and Mobile D-pad helper script -->
+    <!-- Script Helpers -->
     <script>
         function dismissHomeScreen() {
             const overlay = document.getElementById('homeScreenOverlay');
@@ -510,21 +516,17 @@
             }
         }
 
-        // Fetch real account count from Firebase Firestore
         async function updateRealPlayerCount() {
             const countEl = document.getElementById('landingPlayerCount');
             if (!countEl) return;
-
             try {
                 if (typeof firebase !== 'undefined' && firebase.firestore) {
                     const snapshot = await firebase.firestore().collection('accounts').get();
-                    const realCount = Math.max(1, snapshot.size);
-                    countEl.innerText = realCount;
+                    countEl.innerText = Math.max(1, snapshot.size);
                 } else {
                     countEl.innerText = "1";
                 }
             } catch (err) {
-                console.warn("Could not fetch live player count, defaulting to 1", err);
                 countEl.innerText = "1";
             }
         }
@@ -535,16 +537,34 @@
             const eventType = isDown ? 'keydown' : 'keyup';
             window.dispatchEvent(new KeyboardEvent(eventType, { key: key }));
         }
+
+        function toggleGameMenu() {
+            const modal = document.getElementById('menuModal');
+            if (!modal) return;
+            const isOpen = modal.style.display === 'flex';
+            if (!isOpen) {
+                const dexCountEl = document.getElementById('dexCount');
+                const totalRotEl = document.getElementById('totalBrainrots');
+                const potionEl = document.getElementById('potionHudCount');
+                
+                if (dexCountEl && document.getElementById('dexCountModal')) document.getElementById('dexCountModal').innerText = dexCountEl.innerText;
+                if (totalRotEl && document.getElementById('totalBrainrotsModal')) document.getElementById('totalBrainrotsModal').innerText = totalRotEl.innerText;
+                if (potionEl && document.getElementById('potionHudCountModal')) document.getElementById('potionHudCountModal').innerText = potionEl.innerText;
+            }
+            modal.style.display = isOpen ? 'none' : 'flex';
+        }
+
+        function closeGameMenu() {
+            const modal = document.getElementById('menuModal');
+            if (modal) modal.style.display = 'none';
+        }
     </script>
 
-    <!-- Modular Game Logic Scripts with Cache Buster -->
+    <!-- Game Scripts -->
     <script src="database.js?v=2"></script>
     <script src="collision.js"></script>
     <script src="player.js"></script>
-    
-    <!-- FIREBASE DB & AUTH CONNECTION -->
     <script src="firebase.js"></script>
-    
     <script src="dex.js?v=4"></script>
     <script src="teamSelect.js"></script>
     <script src="battle.js?v=2"></script>
@@ -558,8 +578,8 @@
     <script src="account.js"></script>
     <script src="weather.js"></script>
     <script src="audio.js"></script>
-    <!-- LINK BATTLE PASS SCRIPT -->
     <script src="battlePass.js"></script>
+    <script src="trade.js"></script>
     <script src="main.js"></script>
 </body>
 </html>
