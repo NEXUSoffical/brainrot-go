@@ -123,8 +123,17 @@ function startMovementLoop() {
         }
 
         if (dLat !== 0 || dLng !== 0) {
+            // Normalize diagonal movement so it doesn't speed up diagonally
+            if (dLat !== 0 && dLng !== 0) {
+                dLat *= 0.7071;
+                dLng *= 0.7071;
+            }
+
+            // Compensate for longitude scaling so left/right matches up/down speed
+            const lngCorrection = 1 / Math.max(0.1, Math.cos(playerLat * (Math.PI / 180)));
+            
             playerLat += dLat;
-            playerLng += dLng;
+            playerLng += dLng * lngCorrection;
 
             // Safe checks to prevent null reference errors
             if (playerMarker && typeof playerMarker.setLatLng === 'function') {
