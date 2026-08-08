@@ -1,4 +1,4 @@
-// 🌍 REAL-WORLD GPS & KEYBOARD MOVEMENT ENGINE
+// 🌍 REAL-WORLD GPS & KEYBOARD MOVEMENT ENGINE WITH ANIMATED LEGS
 let playerLat;
 let playerLng;
 let playerMarker = null;
@@ -10,6 +10,49 @@ let activeKeys = {};
 let isRealWorldMode = false;
 let realWorldWatchId = null;
 
+// Automatically inject required walking leg styles and keyframes
+function injectPlayerStyles() {
+    if (document.getElementById('playerDynamicStyles')) return;
+    const style = document.createElement('style');
+    style.id = 'playerDynamicStyles';
+    style.innerHTML = `
+        @keyframes characterBounce {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-4px); }
+        }
+
+        .player-container.walking {
+            animation: characterBounce 0.3s ease-in-out infinite;
+        }
+
+        /* Independent alternating leg swings */
+        .player-container.walking .left-leg-group {
+            animation: swingLeftLeg 0.3s ease-in-out infinite alternate;
+            transform-origin: 41px 85px;
+        }
+
+        .player-container.walking .right-leg-group {
+            animation: swingRightLeg 0.3s ease-in-out infinite alternate;
+            transform-origin: 59px 85px;
+        }
+
+        @keyframes swingLeftLeg {
+            0% { transform: rotate(-25deg); }
+            100% { transform: rotate(25deg); }
+        }
+
+        @keyframes swingRightLeg {
+            0% { transform: rotate(25deg); }
+            100% { transform: rotate(-25deg); }
+        }
+
+        .facing-left svg { transform: scaleX(-1); }
+        .facing-right svg { transform: scaleX(1); }
+    `;
+    document.head.appendChild(style);
+}
+injectPlayerStyles();
+
 window.toggleMovementMode = function() {
     isRealWorldMode = !isRealWorldMode;
     const btn = document.getElementById('movementModeBtn');
@@ -18,7 +61,6 @@ window.toggleMovementMode = function() {
         if (btn) btn.innerText = "🗺️ MODE: REAL GPS";
         alert("📍 Switched to Real-World GPS Mode! Your character will now follow your physical steps.");
         
-        // Stop D-pad loop if running
         isWalking = false;
         clearInterval(moveInterval);
         moveInterval = null;
@@ -88,45 +130,59 @@ function startRealWorldGPS() {
 }
 
 function initPlayer() {
-    // If the map isn't built yet, wait patiently!
     if (typeof map === 'undefined' || !map) return; 
-    
-    // Stop clones from spawning
     if (playerMarker !== null) return; 
 
-    // 🚨 THE MAGIC TRICK: Steal the exact GPS location from the map! 🚨
     let mapCenter = map.getCenter();
     playerLat = mapCenter.lat;
     playerLng = mapCenter.lng;
 
-    // Custom animated player SVG marker
     const playerSvgHtml = `
-        <div id="playerAvatar" class="player-container facing-down">
-            <svg class="character-svg" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-                <!-- Back Hair (Visible when facing up) -->
-                <g class="back-hair" style="display:none;">
-                    <circle cx="32" cy="24" r="14" fill="#00ff00"/>
+        <div id="playerAvatar" class="player-container facing-down" style="width: 65px; height: 85px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.4));">
+            <svg viewBox="0 0 100 120" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+                <!-- Shadow / Ground effect -->
+                <ellipse cx="50" cy="112" rx="16" ry="5" fill="rgba(0,0,0,0.25)"/>
+                
+                <!-- Left Leg Group (Pivots smoothly from hip) -->
+                <g class="left-leg-group">
+                    <rect x="36" y="85" width="10" height="20" rx="5" fill="#222225"/>
+                    <path d="M 32 103 Q 36 100 44 103 Z" fill="#d0d0d0"/>
                 </g>
-                <!-- Body / Torso -->
-                <g class="body-group">
-                    <!-- Left Leg -->
-                    <rect class="left-leg" x="20" y="40" width="8" height="16" rx="4" fill="#111"/>
-                    <!-- Right Leg -->
-                    <rect class="right-leg" x="36" y="40" width="8" height="16" rx="4" fill="#111"/>
-                    <!-- Torso -->
-                    <rect x="18" y="22" width="28" height="22" rx="6" fill="#ff007f"/>
-                    <!-- Head -->
-                    <circle cx="32" cy="16" r="12" fill="#ffccaa"/>
-                    <!-- Cap / Hat -->
-                    <path d="M 18 14 Q 32 6 46 14 Z" fill="#00ff00"/>
-                    <rect x="28" y="10" width="16" height="4" rx="2" fill="#00ff00"/>
-                    <!-- Face Features -->
-                    <g class="face-features">
-                        <circle cx="28" cy="16" r="2" fill="#000"/>
-                        <circle cx="36" cy="16" r="2" fill="#000"/>
-                        <path d="M 30 21 Q 32 24 34 21" stroke="#000" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-                    </g>
+
+                <!-- Right Leg Group (Pivots smoothly from hip) -->
+                <g class="right-leg-group">
+                    <rect x="54" y="85" width="10" height="20" rx="5" fill="#222225"/>
+                    <path d="M 56 103 Q 60 100 68 103 Z" fill="#d0d0d0"/>
                 </g>
+
+                <!-- Torso (Gray Hoodie) -->
+                <path d="M 32 55 Q 50 50 68 55 L 70 88 Q 50 94 30 88 Z" fill="#6b7280"/>
+                <!-- Hoodie Front Pocket / Strings -->
+                <path d="M 43 72 Q 50 78 57 72" stroke="#4b5563" stroke-width="2.5" fill="none"/>
+                <line x1="45" y1="58" x2="45" y2="70" stroke="#9ca3af" stroke-width="2"/>
+                <line x1="55" y1="58" x2="55" y2="70" stroke="#9ca3af" stroke-width="2"/>
+
+                <!-- Head & Face -->
+                <circle cx="50" cy="44" r="15" fill="#fcd34d"/>
+                <!-- Expressive Cartoon Eyes -->
+                <ellipse cx="44" cy="42" rx="3" ry="3.5" fill="#1f2937"/>
+                <circle cx="45" cy="40.5" r="1" fill="#ffffff"/>
+                <ellipse cx="56" cy="42" rx="3" ry="3.5" fill="#1f2937"/>
+                <circle cx="57" cy="40.5" r="1" fill="#ffffff"/>
+                <!-- Smile -->
+                <path d="M 47 48 Q 50 51 53 48" stroke="#1f2937" stroke-width="2" fill="none" stroke-linecap="round"/>
+                <!-- Cute beak/nose detail -->
+                <path d="M 49 45 L 51 45 L 50 47 Z" fill="#ea580c"/>
+
+                <!-- Messy Top-Knot Hair (Man-bun) -->
+                <path d="M 35 40 C 33 22, 42 20, 48 24 C 52 18, 65 22, 65 38 C 67 44, 35 44, 35 40 Z" fill="#38220f"/>
+                <!-- Top bun circle -->
+                <circle cx="48" cy="18" r="7" fill="#38220f"/>
+                <circle cx="50" cy="16" r="3" fill="#4e3524"/>
+
+                <!-- Smartphone in Hand -->
+                <rect x="68" y="62" width="14" height="20" rx="3" fill="#111827"/>
+                <rect x="70" y="64" width="10" height="16" rx="1" fill="#38bdf8"/>
             </svg>
         </div>
     `;
@@ -138,13 +194,12 @@ function initPlayer() {
         iconAnchor: [32, 70]
     });
 
-    // Drop the player marker exactly where they are standing in real life!
     playerMarker = L.marker([playerLat, playerLng], { icon: playerIcon }).addTo(map);
 }
 
 // Keyboard movement listeners with bulletproof string safety
 window.addEventListener('keydown', (e) => {
-    if (isRealWorldMode) return; // 🛑 Block keyboard movement while in real GPS mode!
+    if (isRealWorldMode) return; 
     if (!e) return;
     const loginModal = document.getElementById('loginModal');
     if (loginModal && loginModal.style.display !== 'none') return;
@@ -211,19 +266,16 @@ function startMovementLoop() {
         }
 
         if (dLat !== 0 || dLng !== 0) {
-            // Normalize diagonal movement so it doesn't speed up diagonally
             if (dLat !== 0 && dLng !== 0) {
                 dLat *= 0.7071;
                 dLng *= 0.7071;
             }
 
-            // Compensate for longitude scaling so left/right matches up/down speed
             const lngCorrection = 1 / Math.max(0.1, Math.cos(playerLat * (Math.PI / 180)));
             
             playerLat += dLat;
             playerLng += dLng * lngCorrection;
 
-            // Safe checks to prevent null reference errors
             if (playerMarker && typeof playerMarker.setLatLng === 'function') {
                 playerMarker.setLatLng([playerLat, playerLng]);
             }
@@ -235,7 +287,6 @@ function startMovementLoop() {
                 avatar.className = `player-container walking ${facingClass}`;
             }
 
-            // Update HUD coordinates safely
             const latVal = document.getElementById('latVal');
             const lngVal = document.getElementById('lngVal');
             if (latVal) latVal.innerText = playerLat.toFixed(5);

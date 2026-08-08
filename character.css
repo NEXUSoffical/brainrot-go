@@ -1,26 +1,41 @@
 .player-container {
-    width: 65px; height: 85px; position: relative; pointer-events: none;
+    width: 65px; 
+    height: 85px; 
+    position: relative; 
+    pointer-events: none;
     filter: drop-shadow(0 6px 12px rgba(0,255,0,0.7));
+    transform-origin: bottom center;
 }
 
-.character-svg { width: 100%; height: 100%; transition: transform 0.1s ease; }
+.player-container svg { 
+    width: 100%; 
+    height: 100%; 
+    transition: transform 0.1s ease; 
+}
 
-.walking .left-leg { animation: legSwing 0.35s infinite alternate ease-in-out; transform-origin: 20px 42px; }
-.walking .right-leg { animation: legSwing 0.35s infinite alternate-reverse ease-in-out; transform-origin: 30px 42px; }
-.walking .left-arm { animation: armSwing 0.35s infinite alternate-reverse ease-in-out; transform-origin: 14px 26px; }
-.walking .right-arm { animation: armSwing 0.35s infinite alternate ease-in-out; transform-origin: 36px 26px; }
+/* Walking & Idle Animations for the Cartoon Avatar */
+.walking {
+    animation: characterWalk 0.35s ease-in-out infinite;
+}
 
-.idle .body-group { animation: idleBreath 1.2s infinite alternate ease-in-out; transform-origin: center bottom; }
+@keyframes characterWalk {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    25% { transform: translateY(-4px) rotate(-3deg); }
+    75% { transform: translateY(-4px) rotate(3deg); }
+}
 
-@keyframes legSwing { 0% { transform: rotate(-25deg); } 100% { transform: rotate(25deg); } }
-@keyframes armSwing { 0% { transform: rotate(-20deg); } 100% { transform: rotate(20deg); } }
-@keyframes idleBreath { 0% { transform: scaleY(1); } 100% { transform: scaleY(1.03) translateY(-1px); } }
+.idle { 
+    animation: idleBreath 1.2s infinite alternate ease-in-out; 
+    transform-origin: center bottom; 
+}
 
-.facing-left .character-svg { transform: scaleX(-1); }
-.facing-right .character-svg { transform: scaleX(1); }
-.facing-up .face-features { display: none; }
-.facing-up .back-hair { display: block !important; }
-.facing-down .face-features { display: block; }
+@keyframes idleBreath { 
+    0% { transform: scaleY(1); } 
+    100% { transform: scaleY(1.03) translateY(-1px); } 
+}
+
+.facing-left svg { transform: scaleX(-1); }
+.facing-right svg { transform: scaleX(1); }
 
 .brainrot-spawn-btn { 
     background: none; border: none; font-size: 38px; text-align: center; line-height: 1;

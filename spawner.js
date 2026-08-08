@@ -4,11 +4,23 @@ let spawnedCreatures = [];
 let lastSpawnLat = null;
 let lastSpawnLng = null;
 
+// 🌍 REAL-WORLD GPS & KEYBOARD MOVEMENT ENGINE WITH ANIMATED WALKING LEGS
+let playerLat;
+let playerLng;
+let playerMarker = null;
+let isWalking = false;
+let moveInterval = null;
+let activeKeys = {};
+
+// Mode Toggle State
+let isRealWorldMode = false;
+let realWorldWatchId = null;
+
 // Expose activeCreatures globally so battle.js can filter them out on capture
 window.activeCreatures = spawnedCreatures;
 window.currentBattleEntry = null;
 
-// Inject CSS Keyframe Animations for Hovering, Shimmer, Stars, and RAIN!
+// Inject CSS Keyframe Animations for Hovering, Shimmer, Stars, RAIN, and Walking Legs!
 function injectShinyStyles() {
   if (document.getElementById('shinyDiamondStyles')) return;
   const style = document.createElement('style');
@@ -62,6 +74,56 @@ function injectShinyStyles() {
     .rain-drop:nth-child(3) { left: 30px; animation-delay: 0.1s; }
     .rain-drop:nth-child(4) { left: 40px; animation-delay: 0.5s; }
     .rain-drop:nth-child(5) { left: 25px; animation-delay: 0.2s; }
+
+    /* Player Avatar Container & Bouncing */
+    .player-container {
+        width: 65px; 
+        height: 85px; 
+        position: relative; 
+        pointer-events: none;
+        filter: drop-shadow(0 6px 12px rgba(0,255,0,0.7));
+    }
+
+    .player-container svg { 
+        width: 100%; 
+        height: 100%; 
+        transition: transform 0.1s ease; 
+    }
+
+    .player-container.walking {
+        animation: characterBounce 0.3s ease-in-out infinite !important;
+    }
+
+    @keyframes characterBounce {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-4px); }
+    }
+
+    /* Leg Swing Animations */
+    .player-container.walking .left-leg {
+        animation: swingLeft 0.3s ease-in-out infinite alternate;
+        transform-origin: 41px 85px;
+        transform-box: userSpaceOnUse;
+    }
+
+    .player-container.walking .right-leg {
+        animation: swingRight 0.3s ease-in-out infinite alternate;
+        transform-origin: 59px 85px;
+        transform-box: userSpaceOnUse;
+    }
+
+    @keyframes swingLeft {
+        0% { transform: rotate(-25deg); }
+        100% { transform: rotate(25deg); }
+    }
+
+    @keyframes swingRight {
+        0% { transform: rotate(25deg); }
+        100% { transform: rotate(-25deg); }
+    }
+
+    .facing-left svg { transform: scaleX(-1); }
+    .facing-right svg { transform: scaleX(1); }
   `;
   document.head.appendChild(style);
 }
@@ -95,8 +157,6 @@ function getRandomBrainrot() {
     return { name: "Chad Cloud", rarity: "common", reward: 3, image: "brainrots/chad_cloud.png" };
   }
 
-  // 🍀 ULTRA RARE / SECRET ROLL: Check for Blimpy (Secret) first or let him fall into the weighted pool
-  // Filter out God Cloud, Hashtag Hell, and Blimpy from the normal random roll pool if you want Blimpy to be strictly rare/secret spawnable
   const validCharacters = brainrotCharacters.filter(char => 
     char && char.image && char.image.trim() !== "" && 
     char.name.toLowerCase().trim() !== "hashtag hell" &&
@@ -107,18 +167,17 @@ function getRandomBrainrot() {
     return { name: "Chad Cloud", rarity: "common", reward: 3, image: "brainrots/chad_cloud.png" };
   }
 
-  // Assign weighted spawn chances so commons appear much more often than rares/secrets
   const weightedPool = [];
   validCharacters.forEach(char => {
     const rarity = (char.rarity || 'common').toLowerCase();
     let weight = 1;
 
     if (rarity === 'common') {
-      weight = 10; // Commons spawn 10x more frequently (includes Pufflet and Chad Cloud)
+      weight = 10; 
     } else if (rarity === 'rare') {
-      weight = 3;  // Rares (like Hashtag & Fomo Doom) spawn less frequently
+      weight = 3;  
     } else if (rarity === 'secret') {
-      weight = 1;  // Secrets (like Hashtag Hell & Blimpy) are very scarce
+      weight = 1;  
     }
 
     for (let i = 0; i < weight; i++) {
@@ -393,6 +452,247 @@ function cleanUpFarCreatures(pLat, pLng, maxDistanceMeters = 45) {
     return true;
   });
   window.activeCreatures = spawnedCreatures;
+}
+
+window.toggleMovementMode = function() {
+    isRealWorldMode = !isRealWorldMode;
+    const btn = document.getElementById('movementModeBtn');
+
+    if (isRealWorldMode) {
+        if (btn) btn.innerText = "🗺️ MODE: REAL GPS";
+        alert("📍 Switched to Real-World GPS Mode! Your character will now follow your physical steps.");
+        
+        isWalking = false;
+        clearInterval(moveInterval);
+        moveInterval = null;
+        activeKeys = {};
+
+        startRealWorldGPS();
+    } else {
+        if (btn) btn.innerText = "🕹️ MODE: D-PAD";
+        alert("🕹️ Switched to D-Pad Mode! You can now use your keyboard or on-screen arrows to walk around.");
+
+        if (realWorldWatchId !== null) {
+            navigator.geolocation.clearWatch(realWorldWatchId);
+            realWorldWatchId = null;
+        }
+    }
+};
+
+function startRealWorldGPS() {
+    if (!navigator.geolocation) {
+        alert("❌ Geolocation is not supported by your browser");
+        isRealWorldMode = false;
+        return;
+    }
+
+    if (realWorldWatchId !== null) {
+        navigator.geolocation.clearWatch(realWorldWatchId);
+    }
+
+    realWorldWatchId = navigator.geolocation.watchPosition(
+        (position) => {
+            if (!isRealWorldMode) return;
+
+            let lat = parseFloat(position.coords.latitude);
+            let lng = parseFloat(position.coords.longitude);
+
+            if (isNaN(lat) || isNaN(lng)) return;
+
+            playerLat = lat;
+            playerLng = lng;
+
+            if (playerMarker && typeof playerMarker.setLatLng === 'function') {
+                playerMarker.setLatLng([playerLat, playerLng]);
+            }
+
+            if (typeof map !== 'undefined' && map && typeof map.panTo === 'function') {
+                map.panTo([playerLat, playerLng], { animate: true });
+            }
+
+            const latVal = document.getElementById('latVal');
+            const lngVal = document.getElementById('lngVal');
+            if (latVal) latVal.innerText = playerLat.toFixed(5);
+            if (lngVal) lngVal.innerText = playerLng.toFixed(5);
+
+            if (typeof cleanUpFarCreatures === 'function') {
+                cleanUpFarCreatures();
+            }
+        },
+        (error) => {
+            console.error("GPS tracking error:", error);
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+        }
+    );
+}
+
+function initPlayer() {
+    if (typeof map === 'undefined' || !map) return; 
+    if (playerMarker !== null) return; 
+
+    let mapCenter = map.getCenter();
+    playerLat = mapCenter.lat;
+    playerLng = mapCenter.lng;
+
+    const playerSvgHtml = `
+        <div id="playerAvatar" class="player-container idle facing-down">
+            <svg viewBox="0 0 100 120" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+                <!-- Shadow / Ground effect -->
+                <ellipse cx="50" cy="112" rx="16" ry="5" fill="rgba(0,0,0,0.25)"/>
+                
+                <!-- Explicit classes for the player walking leg animation loop -->
+                <rect class="left-leg" x="36" y="85" width="10" height="24" rx="5" fill="#222225"/>
+                <rect class="right-leg" x="54" y="85" width="10" height="24" rx="5" fill="#222225"/>
+                
+                <!-- Shoes / Sneakers -->
+                <path d="M 32 105 Q 36 102 44 105 Z" fill="#d0d0d0"/>
+                <path d="M 56 105 Q 64 102 68 105 Z" fill="#d0d0d0"/>
+
+                <!-- Torso (Gray Hoodie) -->
+                <path d="M 32 55 Q 50 50 68 55 L 70 88 Q 50 94 30 88 Z" fill="#6b7280"/>
+                <!-- Hoodie Front Pocket / Strings -->
+                <path d="M 43 72 Q 50 78 57 72" stroke="#4b5563" stroke-width="2.5" fill="none"/>
+                <line x1="45" y1="58" x2="45" y2="70" stroke="#9ca3af" stroke-width="2"/>
+                <line x1="55" y1="58" x2="55" y2="70" stroke="#9ca3af" stroke-width="2"/>
+
+                <!-- Head & Face -->
+                <circle cx="50" cy="44" r="15" fill="#fcd34d"/>
+                <!-- Expressive Cartoon Eyes -->
+                <ellipse cx="44" cy="42" rx="3" ry="3.5" fill="#1f2937"/>
+                <circle cx="45" cy="40.5" r="1" fill="#ffffff"/>
+                <ellipse cx="56" cy="42" rx="3" ry="3.5" fill="#1f2937"/>
+                <circle cx="57" cy="40.5" r="1" fill="#ffffff"/>
+                <!-- Smile -->
+                <path d="M 47 48 Q 50 51 53 48" stroke="#1f2937" stroke-width="2" fill="none" stroke-linecap="round"/>
+                <!-- Cute beak/nose detail -->
+                <path d="M 49 45 L 51 45 L 50 47 Z" fill="#ea580c"/>
+
+                <!-- Messy Top-Knot Hair (Man-bun) -->
+                <path d="M 35 40 C 33 22, 42 20, 48 24 C 52 18, 65 22, 65 38 C 67 44, 35 44, 35 40 Z" fill="#38220f"/>
+                <!-- Top bun circle -->
+                <circle cx="48" cy="18" r="7" fill="#38220f"/>
+                <circle cx="50" cy="16" r="3" fill="#4e3524"/>
+
+                <!-- Smartphone in Hand -->
+                <rect x="68" y="62" width="14" height="20" rx="3" fill="#111827"/>
+                <rect x="70" y="64" width="10" height="16" rx="1" fill="#38bdf8"/>
+            </svg>
+        </div>
+    `;
+
+    const playerIcon = L.divIcon({
+        html: playerSvgHtml,
+        className: 'player-div-icon',
+        iconSize: [65, 85],
+        iconAnchor: [32, 70]
+    });
+
+    playerMarker = L.marker([playerLat, playerLng], { icon: playerIcon }).addTo(map);
+}
+
+window.addEventListener('keydown', (e) => {
+    if (isRealWorldMode) return; 
+    if (!e) return;
+    const loginModal = document.getElementById('loginModal');
+    if (loginModal && loginModal.style.display !== 'none') return;
+    if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+
+    const key = typeof e.key === 'string' ? e.key.toLowerCase() : '';
+    if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) {
+        activeKeys[key] = true;
+        if (!isWalking) {
+            isWalking = true;
+            startMovementLoop();
+        }
+    }
+});
+
+window.addEventListener('keyup', (e) => {
+    if (isRealWorldMode) return;
+    if (!e) return;
+    const key = typeof e.key === 'string' ? e.key.toLowerCase() : '';
+    activeKeys[key] = false;
+    
+    if (!activeKeys['w'] && !activeKeys['a'] && !activeKeys['s'] && !activeKeys['d'] &&
+        !activeKeys['arrowup'] && !activeKeys['arrowdown'] && !activeKeys['arrowleft'] && !activeKeys['arrowright']) {
+        isWalking = false;
+        clearInterval(moveInterval);
+        moveInterval = null;
+        const avatar = document.getElementById('playerAvatar');
+        if (avatar) avatar.className = 'player-container idle';
+    }
+});
+
+function startMovementLoop() {
+    if (moveInterval || isRealWorldMode) return;
+
+    const moveSpeed = 0.000005; 
+    const avatar = document.getElementById('playerAvatar');
+
+    moveInterval = setInterval(() => {
+        if (isRealWorldMode) {
+            clearInterval(moveInterval);
+            moveInterval = null;
+            return;
+        }
+
+        let dLat = 0;
+        let dLng = 0;
+        let facingClass = 'facing-down';
+
+        if (activeKeys['w'] || activeKeys['arrowup']) {
+            dLat += moveSpeed;
+            facingClass = 'facing-up';
+        }
+        if (activeKeys['s'] || activeKeys['arrowdown']) {
+            dLat -= moveSpeed;
+            facingClass = 'facing-down';
+        }
+        if (activeKeys['a'] || activeKeys['arrowleft']) {
+            dLng -= moveSpeed;
+            facingClass = 'facing-left';
+        }
+        if (activeKeys['d'] || activeKeys['arrowright']) {
+            dLng += moveSpeed;
+            facingClass = 'facing-right';
+        }
+
+        if (dLat !== 0 || dLng !== 0) {
+            if (dLat !== 0 && dLng !== 0) {
+                dLat *= 0.7071;
+                dLng *= 0.7071;
+            }
+
+            const lngCorrection = 1 / Math.max(0.1, Math.cos(playerLat * (Math.PI / 180)));
+            
+            playerLat += dLat;
+            playerLng += dLng * lngCorrection;
+
+            if (playerMarker && typeof playerMarker.setLatLng === 'function') {
+                playerMarker.setLatLng([playerLat, playerLng]);
+            }
+            if (typeof map !== 'undefined' && map && typeof map.panTo === 'function') {
+                map.panTo([playerLat, playerLng], { animate: false });
+            }
+
+            if (avatar) {
+                avatar.className = `player-container walking ${facingClass}`;
+            }
+
+            const latVal = document.getElementById('latVal');
+            const lngVal = document.getElementById('lngVal');
+            if (latVal) latVal.innerText = playerLat.toFixed(5);
+            if (lngVal) lngVal.innerText = playerLng.toFixed(5);
+
+            if (typeof cleanUpFarCreatures === 'function') {
+                cleanUpFarCreatures();
+            }
+        }
+    }, 50);
 }
 
 function initSpawner() {
