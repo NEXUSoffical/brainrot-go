@@ -155,6 +155,23 @@ window.openCardDetails = function(inventoryIndex) {
     
     const levelUpCost = rot.level * 2; 
 
+    // Check if this rot has an evolution path in database.js
+    const charData = typeof brainrotCharacters !== 'undefined' 
+        ? brainrotCharacters.find(c => c.name.toLowerCase().trim() === rot.name.toLowerCase().trim())
+        : null;
+
+    let evolveButtonHtml = '';
+    if (charData && charData.evolution) {
+        const requiredCandies = charData.evolution.candyCost || 50; // Restored official candy cost lookup
+        const canEvolve = candyCount >= requiredCandies;
+
+        evolveButtonHtml = `
+            <button onclick="window.evolveRot(${inventoryIndex}); openCardDetails(${inventoryIndex});" style="width: 100%; background: ${canEvolve ? '#00ff55' : '#333'}; color: ${canEvolve ? '#000' : '#aaa'}; font-weight: bold; padding: 8px; border: none; border-radius: 5px; cursor: ${canEvolve ? 'pointer' : 'not-allowed'}; font-family: monospace; font-size: 0.8rem; margin-bottom: 8px;">
+                🧬 EVOLVE (${candyCount}/${requiredCandies})
+            </button>
+        `;
+    }
+
     let detailModal = document.getElementById('cardDetailModal');
     if (!detailModal) {
         detailModal = document.createElement('div');
@@ -224,13 +241,16 @@ window.openCardDetails = function(inventoryIndex) {
                     🍬 Candy: <span style="color: #00ccff;">${candyCount}</span>
                 </div>
                 
-                <div style="display: flex; justify-content: space-between; gap: 10px;">
-                    <button onclick="levelUpRot(${inventoryIndex})" style="flex: 1; background: #00ff55; color: #000; font-weight: bold; padding: 8px; border: none; border-radius: 5px; cursor: pointer;">
-                        LEVEL UP<br><span style="font-size: 0.7rem;">(Cost: ${levelUpCost})</span>
-                    </button>
-                    <button onclick="transferRot(${inventoryIndex})" style="flex: 1; background: #ff0055; color: #fff; font-weight: bold; padding: 8px; border: none; border-radius: 5px; cursor: pointer;">
-                        TRANSFER<br><span style="font-size: 0.7rem;">(+1 Candy)</span>
-                    </button>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    ${evolveButtonHtml}
+                    <div style="display: flex; justify-content: space-between; gap: 10px;">
+                        <button onclick="levelUpRot(${inventoryIndex})" style="flex: 1; background: #00ff55; color: #000; font-weight: bold; padding: 8px; border: none; border-radius: 5px; cursor: pointer;">
+                            LEVEL UP<br><span style="font-size: 0.7rem;">(Cost: ${levelUpCost})</span>
+                        </button>
+                        <button onclick="transferRot(${inventoryIndex})" style="flex: 1; background: #ff0055; color: #fff; font-weight: bold; padding: 8px; border: none; border-radius: 5px; cursor: pointer;">
+                            TRANSFER<br><span style="font-size: 0.7rem;">(+1 Candy)</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
