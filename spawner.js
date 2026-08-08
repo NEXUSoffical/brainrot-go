@@ -8,12 +8,20 @@ let lastSpawnLng = null;
 window.activeCreatures = spawnedCreatures;
 window.currentBattleEntry = null;
 
-// Inject CSS Keyframe Animations for Diamond Shimmer & Multi-Point Star Sparkles
+// Inject CSS Keyframe Animations for Hovering, Shimmer, Stars, and RAIN!
 function injectShinyStyles() {
   if (document.getElementById('shinyDiamondStyles')) return;
   const style = document.createElement('style');
   style.id = 'shinyDiamondStyles';
   style.innerHTML = `
+    @keyframes battleFloat {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-8px); }
+    }
+    .battle-float {
+      animation: battleFloat 2.5s ease-in-out infinite;
+    }
+
     @keyframes diamondPulse {
       0%, 100% {
         box-shadow: 0 0 15px #ffffff, 0 0 30px #ffd700, inset 0 0 10px #ffffff;
@@ -32,42 +40,39 @@ function injectShinyStyles() {
       100% { background-position: 200% 0; }
     }
 
-    @keyframes diamondStarSpin {
-      0% { transform: scale(0.7) rotate(0deg); opacity: 0.5; filter: drop-shadow(0 0 2px #fff); }
-      50% { transform: scale(1.5) rotate(180deg); opacity: 1; filter: drop-shadow(0 0 12px #00ffff) drop-shadow(0 0 6px #fff); }
-      100% { transform: scale(0.7) rotate(360deg); opacity: 0.5; filter: drop-shadow(0 0 2px #fff); }
+    @keyframes makeItRain {
+      0% { transform: translateY(0px); opacity: 0; }
+      10% { opacity: 1; }
+      80% { opacity: 1; }
+      100% { transform: translateY(35px); opacity: 0; }
     }
-
-    .shiny-diamond-card {
-      animation: diamondPulse 1.6s infinite ease-in-out;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .shiny-diamond-card::after {
-      content: '';
+    
+    .rain-drop {
       position: absolute;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.7) 45%, rgba(0, 255, 255, 0.5) 50%, transparent 70%);
-      background-size: 200% 100%;
-      animation: diamondShimmerBeam 2.2s infinite linear;
-      pointer-events: none;
-      border-radius: 4px;
+      width: 2px;
+      height: 8px;
+      background: #00ccff;
+      border-radius: 2px;
+      box-shadow: 0 0 4px #00ccff;
+      animation: makeItRain 0.8s linear infinite;
     }
-
-    .diamond-star-1 {
-      animation: diamondStarSpin 1.2s infinite ease-in-out;
-      display: inline-block;
-    }
-    .diamond-star-2 {
-      animation: diamondStarSpin 1.6s infinite ease-in-out reverse;
-      display: inline-block;
-    }
+    
+    .rain-drop:nth-child(1) { left: 10px; animation-delay: 0.0s; }
+    .rain-drop:nth-child(2) { left: 20px; animation-delay: 0.3s; }
+    .rain-drop:nth-child(3) { left: 30px; animation-delay: 0.1s; }
+    .rain-drop:nth-child(4) { left: 40px; animation-delay: 0.5s; }
+    .rain-drop:nth-child(5) { left: 25px; animation-delay: 0.2s; }
   `;
   document.head.appendChild(style);
 }
 
 injectShinyStyles();
+
+function shouldFloat(charName) {
+  if (!charName) return false;
+  const lower = charName.toLowerCase();
+  return lower.includes('cloud') || lower.includes('hashtag') || lower.includes('glitch') || lower.includes('spirit');
+}
 
 function getRandomLevel() {
   const roll = Math.random();
@@ -84,64 +89,34 @@ function getRandomLevel() {
   }
 }
 
-// 1. Get a random brainrot character safely with strict normalized rarity pools & diagnostics
 function getRandomBrainrot() {
   if (typeof brainrotCharacters === 'undefined' || !Array.isArray(brainrotCharacters)) {
     console.warn("⚠️ brainrotCharacters is missing or not an array!");
     return { name: "Noobini Pizzanini", rarity: "common", reward: 1, image: "brainrots/noobini_pizzanini.png" };
   }
 
-  const validCharacters = brainrotCharacters.filter(char => char && char.image && char.image.trim() !== "");
+  // 🍀 ULTRA RARE ROLL: 0.1% chance (0.001) to find God Cloud
+  const isGodCloudRoll = Math.random() < 0.001; 
+  if (isGodCloudRoll) {
+    const godCloud = brainrotCharacters.find(char => char && char.name.toLowerCase().trim() === "god cloud");
+    if (godCloud) {
+      return godCloud;
+    }
+  }
+
+  // Otherwise, pull from the normal character pool (excluding God Cloud and Hashtag Hell)
+  const validCharacters = brainrotCharacters.filter(char => 
+    char && char.image && char.image.trim() !== "" && 
+    char.name.toLowerCase().trim() !== "hashtag hell" &&
+    char.name.toLowerCase().trim() !== "god cloud"
+  );
+  
   if (validCharacters.length === 0) {
     return { name: "Noobini Pizzanini", rarity: "common", reward: 1, image: "brainrots/noobini_pizzanini.png" };
   }
 
-  const normalizedCharacters = validCharacters.map(char => ({
-    ...char,
-    rarity: (char.rarity || 'common').toLowerCase()
-  }));
-
-  const byRarity = {
-    og: normalizedCharacters.filter(c => c.rarity === 'og'),
-    secret: normalizedCharacters.filter(c => c.rarity === 'secret'),
-    epic: normalizedCharacters.filter(c => c.rarity === 'epic'),
-    rare: normalizedCharacters.filter(c => c.rarity === 'rare'),
-    common: normalizedCharacters.filter(c => c.rarity === 'common' || !['og', 'secret', 'epic', 'rare'].includes(c.rarity))
-  };
-
-  console.log(`📊 Rarity Pool Counts -> OG: ${byRarity.og.length} | Secret: ${byRarity.secret.length} | Epic: ${byRarity.epic.length} | Rare: ${byRarity.rare.length} | Common: ${byRarity.common.length}`);
-
-  let chosenRarity = 'common';
-  
-  // TESTING TOGGLE DISABLED: Normal live production rates active
-  const FORCE_RARITY_TEST = null; 
-
-  if (FORCE_RARITY_TEST && byRarity[FORCE_RARITY_TEST] && byRarity[FORCE_RARITY_TEST].length > 0) {
-    chosenRarity = FORCE_RARITY_TEST;
-  } else {
-    const roll = Math.random() * 10000;
-    if (roll < 5 && byRarity.og.length > 0) {
-      chosenRarity = 'og'; // 0.05%
-    } else if (roll < 50 && byRarity.secret.length > 0) {
-      chosenRarity = 'secret'; // 0.45%
-    } else if (roll < 550 && byRarity.epic.length > 0) {
-      chosenRarity = 'epic'; // 5%
-    } else if (roll < 2500 && byRarity.rare.length > 0) {
-      chosenRarity = 'rare'; // 19.5%
-    } else {
-      chosenRarity = 'common'; // 75%
-    }
-  }
-
-  let pool = byRarity[chosenRarity];
-  if (!pool || pool.length === 0) {
-    pool = byRarity.common.length > 0 ? byRarity.common : normalizedCharacters;
-  }
-
-  const randomIndex = Math.floor(Math.random() * pool.length);
-  const selected = pool[randomIndex];
-  console.log(`🎲 Rolled Rarity: [${chosenRarity.toUpperCase()}], Selected Rot: ${selected.name}`);
-  return selected;
+  const randomIndex = Math.floor(Math.random() * validCharacters.length);
+  return validCharacters[randomIndex];
 }
 
 function getRarityColor(rarity) {
@@ -266,9 +241,11 @@ function spawnSingleCreature(lat, lng) {
   const characterTemplate = getRandomBrainrot();
   const level = getRandomLevel();
   
-  const isShiny = Math.random() < 0.002;
+  const isShiny = false;
   const baseReward = Number(characterTemplate.reward) || 1;
-  const maxHp = (50 + (level - 1) * 12) * (isShiny ? 2 : 1);
+  
+  const baseHpVal = characterTemplate.baseHp || 50;
+  const maxHp = Math.floor((baseHpVal + (level - 1) * 12));
 
   const creatureInstance = {
     ...characterTemplate,
@@ -276,15 +253,10 @@ function spawnSingleCreature(lat, lng) {
     maxHp: maxHp,
     hp: maxHp,
     shiny: isShiny,
-    reward: isShiny ? baseReward * 10 : baseReward
+    reward: baseReward
   };
   
-  const rarityLower = (creatureInstance.rarity || '').toLowerCase();
-  const isUltraRare = rarityLower === 'og' || rarityLower === 'secret' || isShiny;
-
-  if (isUltraRare) {
-    playUltraRareSpawnSound();
-  }
+  playUltraRareSpawnSound();
 
   const offsetLat = (Math.random() - 0.5) * 0.0003;
   const offsetLng = (Math.random() - 0.5) * 0.0003;
@@ -295,121 +267,44 @@ function spawnSingleCreature(lat, lng) {
   const imageUrl = creatureInstance.image;
   const rarityColor = getRarityColor(creatureInstance.rarity);
   const safeName = creatureInstance.name.replace(/'/g, "\\'");
+
+  const isFloating = shouldFloat(creatureInstance.name);
+
+  let characterEffect = '';
+  if (creatureInstance.name.toLowerCase().includes("cloud")) {
+    characterEffect = `
+      <div style="position: absolute; top: 35px; left: 0; width: 50px; height: 40px; pointer-events: none; z-index: 5;">
+        <div class="rain-drop"></div>
+        <div class="rain-drop"></div>
+        <div class="rain-drop"></div>
+        <div class="rain-drop"></div>
+        <div class="rain-drop"></div>
+      </div>
+    `;
+  }
     
-  const cardWidth = isUltraRare ? '92px' : '80px';
-  const imgHeight = isUltraRare ? '78px' : '70px';
-  
-  const cardStyling = isShiny ? `
-    width: ${cardWidth}; 
-    background: linear-gradient(135deg, #0a1828, #1a3550, #0a1828); 
-    border: 3px solid #ffffff; 
-    border-radius: 6px; 
-    padding: 5px; 
-    display: flex; 
-    flex-direction: column; 
-    align-items: center;
-  ` : (isUltraRare ? `
-    width: ${cardWidth}; 
-    background: linear-gradient(135deg, #09090b, #181824); 
-    border: 3px solid ${rarityColor}; 
-    outline: 2px solid #ffffff; 
-    outline-offset: 2px; 
-    border-radius: 4px; 
-    box-shadow: 0 0 25px ${rarityColor}, inset 0 0 12px ${rarityColor}; 
-    padding: 5px; 
-    display: flex; 
-    flex-direction: column; 
-    align-items: center;
-  ` : `
-    width: 80px; 
-    background: linear-gradient(135deg, #111111, ${rarityColor}55); 
-    border: 3px solid ${rarityColor}; 
-    border-radius: 6px; 
-    box-shadow: 0 0 15px ${rarityColor}; 
-    padding: 4px; 
-    display: flex; 
-    flex-direction: column; 
-    align-items: center;
-  `);
-
-  const topBadge = isShiny ? `
-    <div style="
-      position: absolute; 
-      top: -20px; 
-      left: 50%; 
-      transform: translateX(-50%); 
-      background: linear-gradient(90deg, #ffffff, #00ffff, #ffffff); 
-      color: #000; 
-      font-size: 8px; 
-      font-family: monospace; 
-      padding: 2px 8px; 
-      border-radius: 4px; 
-      white-space: nowrap; 
-      font-weight: 900;
-      box-shadow: 0 0 12px #00ffff;
-      z-index: 10;
-    ">
-      <span class="diamond-star-1">💎</span> DIAMOND <span class="diamond-star-2">💎</span>
-    </div>
-  ` : (rarityLower === 'og' || rarityLower === 'secret' ? `
-    <div style="
-      position: absolute; 
-      top: -14px; 
-      left: 50%; 
-      transform: translateX(-50%); 
-      background: ${rarityColor}; 
-      color: #000; 
-      font-size: 7px; 
-      font-family: monospace; 
-      padding: 1px 6px; 
-      border-radius: 3px; 
-      white-space: nowrap; 
-      font-weight: 900;
-      box-shadow: 0 0 8px ${rarityColor};
-      z-index: 10;
-    ">
-      ⚡ ${creatureInstance.rarity.toUpperCase()} ⚡
-    </div>
-  ` : '');
-
   const cardHtml = `
-    <div style="position: relative;">
-      ${topBadge}
-      <div class="${isShiny ? 'shiny-diamond-card' : ''}" style="${cardStyling}">
-        <div style="
-          width: 100%; 
-          height: ${imgHeight}; 
-          background-color: #ffffff; 
-          border-radius: 3px; 
-          overflow: hidden; 
-          border: 1px solid #333;
-        ">
-            <img src="${imageUrl}" style="
-              width: 100%; 
-              height: 100%; 
-              object-fit: cover;
-              mix-blend-mode: multiply;
-              filter: brightness(1.2) contrast(3);
-            " onerror="this.style.display='none';">
+    <div class="${isFloating ? 'battle-float' : ''}" style="transform: scale(1.3); transform-origin: bottom center; position: relative; display: flex; flex-direction: column; align-items: center; pointer-events: auto;">
+      <div style="background: transparent; border: none; padding: 0; display: flex; flex-direction: column; align-items: center;">
+        <div style="width: 55px; height: 80px; background: transparent; display: flex; align-items: center; justify-content: center; overflow: visible; position: relative;">
+            <img src="${imageUrl}" style="max-width: 55px; max-height: 80px; width: 100%; height: auto; object-fit: contain; filter: drop-shadow(0px 3px 5px rgba(0,0,0,0.9)); z-index: 10;" onerror="this.style.display='none';">
+            ${characterEffect}
         </div>
       </div>
       <div style="
-        position: absolute; 
-        bottom: -14px; 
-        left: 50%; 
-        transform: translateX(-50%); 
-        background: rgba(0,0,0,0.9); 
-        border: 1px solid ${isShiny ? '#00ffff' : rarityColor}; 
-        color: ${isShiny ? '#00ffff' : rarityColor}; 
-        font-size: 8px; 
+        background: rgba(0,0,0,0.85); 
+        border: 1px solid ${rarityColor}; 
+        color: ${rarityColor}; 
+        font-size: 7px; 
         font-family: monospace; 
-        padding: 1px 6px; 
-        border-radius: 4px; 
+        padding: 1px 4px; 
+        border-radius: 3px; 
         white-space: nowrap; 
         font-weight: bold;
-        box-shadow: 0 0 6px rgba(0,0,0,0.8);
+        box-shadow: 0 0 4px rgba(0,0,0,0.8);
+        margin-top: 1px;
       ">
-        Lvl ${level}
+        ${creatureInstance.name} (Lvl ${level})
       </div>
     </div>
   `;
@@ -417,16 +312,15 @@ function spawnSingleCreature(lat, lng) {
   const customIcon = L.divIcon({
     className: '', 
     html: cardHtml,
-    iconSize: isUltraRare ? [92, 102] : [80, 90], 
-    iconAnchor: isUltraRare ? [46, 51] : [40, 45],
-    popupAnchor: [0, -40]
+    iconSize: [55, 95], 
+    iconAnchor: [27, 95],
+    popupAnchor: [0, -100]
   });
 
   const marker = L.marker([spawnLat, spawnLng], { icon: customIcon }).addTo(map);
 
   marker.bindPopup(`
     <div style="text-align: center; font-family: sans-serif; min-width: 140px;">
-      ${isShiny ? '<b style="color: #00ffff; font-size: 12px; display: block; text-shadow: 0 0 8px #00ffff;">💎 DIAMOND SHINY 💎</b>' : ''}
       <b style="font-size: 15px; color: #222;">${creatureInstance.name}</b><br>
       <span style="font-size: 11px; color: ${rarityColor}; font-weight: bold; display: block; margin-top: 2px;">${creatureInstance.rarity.toUpperCase()}</span>
       <span style="font-size: 11px; color: #555; font-weight: bold; display: block; margin-top: 2px;">Level ${level}</span>

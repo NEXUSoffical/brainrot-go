@@ -1,6 +1,24 @@
 // 🚨 STRICT LOCATION SYSTEM 🚨
 let map;
 
+// Inject the floating animation & RAIN for the map sprites
+function injectAnimationStyles() {
+    if (document.getElementById('mapSpriteAnimations')) return;
+    const style = document.createElement('style');
+    style.id = 'mapSpriteAnimations';
+    style.innerHTML = `
+        @keyframes floatSprite {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+        }
+        .animated-map-sprite {
+            animation: floatSprite 2.5s ease-in-out infinite;
+        }
+    `;
+    document.head.appendChild(style);
+}
+injectAnimationStyles();
+
 function startStrictLocation() {
     // 1. Check if the player's phone has GPS at all
     if (!navigator.geolocation) {
@@ -16,11 +34,10 @@ function startStrictLocation() {
             let lng = parseFloat(position.coords.longitude);
 
             // 🔥 THE ANTI-BLACK-SCREEN FIX 🔥
-            // If the browser GPS glitches and sends "NaN", force valid numbers so the map doesn't crash!
             if (isNaN(lat) || isNaN(lng)) {
                 console.warn("GPS sent NaN! Falling back to safe coordinates.");
-                lat = 53.4808; // Safe default Latitude
-                lng = -2.2426; // Safe default Longitude
+                lat = 53.4808; 
+                lng = -2.2426; 
             }
             
             // Hide the error box so they can play
@@ -32,60 +49,44 @@ function startStrictLocation() {
 
             // If the map hasn't been built yet, build it right where THEY are standing!
             if (!map) {
-                // Notice there are no hardcoded numbers here anymore! It uses their 'lat' and 'lng'
                 map = L.map('map', { 
                     zoomControl: false, 
                     keyboard: false 
                 }).setView([lat, lng], 19);
                 
-                // Standard OpenStreetMap - bold roads and clear streets
                 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     maxZoom: 19,
                     attribution: '&copy; OpenStreetMap contributors'
                 }).addTo(map);
 
-                // 🛠️ THE FIX: Force Leaflet to recalculate screen size after 1 second
                 setTimeout(() => {
                     map.invalidateSize();
                 }, 1000);
 
-                // Now that we have THEIR location, start the player 
                 if (typeof initPlayer === 'function') {
                     initPlayer();
-                }
-
-                // Drop the initial batch of brainrots around THEIR location, not your house!
-                if (typeof spawnBatch === 'function') {
-                    spawnBatch(lat, lng, 15); 
                 }
             }
         },
         function(error) {
-            // FAIL! But let's check WHY it failed...
             if (error.code === 1) {
-                // Error Code 1 means PERMISSION DENIED. 
-                // ONLY show the red screen if they actually told the bodyguard to block it! 🛑
                 document.getElementById('locationErrorModal').style.display = 'flex';
             } else {
-                // Error Code 2 or 3 means the GPS is just being slow or lost signal.
-                // Do NOT show the red screen. Just log it and wait patiently! ⏳
                 console.log("GPS is taking a bit long to connect, still searching...");
             }
         },
         {
-            enableHighAccuracy: true, // Exact satellite GPS, no guessing!
-            timeout: 30000,           // Wait 30 whole seconds to find them instead of panicking at 10!
-            maximumAge: 10000         // It's okay if the location is 10 seconds old
+            enableHighAccuracy: true, 
+            timeout: 30000,           
+            maximumAge: 10000         
         }
     );
 }
 
 // Single unified DOM load handler for map, player, and spawns
 window.addEventListener('DOMContentLoaded', () => {
-    // DO NOT start the map blindly anymore. Start the strict location checker!
     startStrictLocation();
 
-    // Automatically update the Rot-Dex total count based on total characters loaded
     const rotDexElement = document.querySelector('.rot-dex') || document.getElementById('rot-dex');
     if (rotDexElement && typeof brainrotCharacters !== 'undefined') {
         rotDexElement.innerText = `ROT-DEX (0/${brainrotCharacters.length})`;
@@ -96,11 +97,9 @@ window.addEventListener('DOMContentLoaded', () => {
 // RPG STAT ENGINE & FULL-SCREEN CARD UI
 // ==========================================
 
-// Calculate a rot's true stats based on Level, Rarity, and Base Stats
 window.calculateRotStats = function(rot) {
     const level = rot.level || 1;
     
-    // Growth multiplier: OGs gain stats WAY faster than Commons
     const rarityGrowth = {
         'common': 1.0,
         'uncommon': 1.5,
@@ -112,23 +111,19 @@ window.calculateRotStats = function(rot) {
     
     const mult = rarityGrowth[(rot.rarity || 'common').toLowerCase()] || 1.0;
 
-    // 🔥 THE ULTIMATE FIX: ALWAYS pull base stats directly from the master database!
     let baseHp = 50;
     let baseAtk = 10;
     let baseDef = 10;
 
     if (typeof brainrotCharacters !== 'undefined') {
-        // Find the exact character in your database
         const dbChar = brainrotCharacters.find(c => c.name.toLowerCase().trim() === rot.name.toLowerCase().trim());
         
         if (dbChar) {
-            // Apply the true database stats!
             baseHp = dbChar.baseHp || 50;
             baseAtk = dbChar.baseAtk || 10;
             baseDef = dbChar.baseDef || 10;
         }
     } else {
-        // Failsafe fallback
         baseHp = rot.baseHp || 50;
         baseAtk = rot.baseAtk || 10;
         baseDef = rot.baseDef || 10;
@@ -141,7 +136,6 @@ window.calculateRotStats = function(rot) {
     };
 };
 
-// Open the Full-Screen Card Details Modal
 window.openCardDetails = function(inventoryIndex) {
     if (typeof playerData === 'undefined' || !playerData.inventory || !playerData.inventory[inventoryIndex]) return;
     
@@ -149,14 +143,16 @@ window.openCardDetails = function(inventoryIndex) {
     const stats = calculateRotStats(rot);
     const rarityColor = typeof window.getRarityColor === 'function' ? window.getRarityColor(rot.rarity) : '#00ff55';
 
-    // 🍬 THE UNIVERSAL CANDY KEY
+    let rotImage = rot.image || '';
+    if (rot.name && rot.name.toLowerCase().replace(/[\s-]/g, '') === 'hashtaghell') {
+        rotImage = 'brainrots/hashtag_hell.png';
+    }
+
     const candyKey = rot.name.toUpperCase().trim();
 
-    // 🍬 Initialize candy wallet if it doesn't exist
     if (!playerData.candies) playerData.candies = {};
     const candyCount = playerData.candies[candyKey] || 0; 
     
-    // Level Up Cost: Scales with level (Lvl 1 = 2 Candy, Lvl 10 = 20 Candy)
     const levelUpCost = rot.level * 2; 
 
     let detailModal = document.getElementById('cardDetailModal');
@@ -166,7 +162,6 @@ window.openCardDetails = function(inventoryIndex) {
         document.body.appendChild(detailModal);
     }
 
-    // Modal styling
     detailModal.style.cssText = `
         position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
         background: rgba(0, 0, 0, 0.95); z-index: 9999999; display: flex;
@@ -178,7 +173,6 @@ window.openCardDetails = function(inventoryIndex) {
     const atkPercent = Math.min(100, (stats.atk / 800) * 100);
     const defPercent = Math.min(100, (stats.def / 800) * 100);
 
-    // The UI Layout
     detailModal.innerHTML = `
         <div style="background: linear-gradient(180deg, #111, ${rarityColor}44); border: 4px solid ${rarityColor}; border-radius: 20px; padding: 20px; width: 100%; max-width: 320px; text-align: center; box-shadow: 0 0 50px ${rarityColor}88; position: relative;">
             
@@ -187,8 +181,8 @@ window.openCardDetails = function(inventoryIndex) {
             <h2 style="color: ${rarityColor}; margin: 0 0 5px 0; text-transform: uppercase; font-size: 1.4rem;">${rot.name}</h2>
             <div style="font-size: 0.9rem; margin-bottom: 15px; color: #aaa; font-weight: bold;">Lvl ${rot.level || 1} | ${(rot.rarity || 'common').toUpperCase()}</div>
             
-            <div style="width: 100%; height: 180px; background: #fff; border-radius: 10px; overflow: hidden; border: 2px solid #444; margin-bottom: 15px; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);">
-                <img src="${rot.image || ''}" style="width: 100%; height: 100%; object-fit: cover; filter: brightness(1.1) contrast(1.2);" onerror="this.style.display='none';">
+            <div style="width: 100%; height: 180px; background: transparent; border-radius: 10px; overflow: hidden; border: 2px solid #444; margin-bottom: 15px; display: flex; align-items: center; justify-content: center;">
+                <img src="${rotImage}" style="max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.8));" onerror="this.style.display='none';">
             </div>
 
             <!-- Stats Section -->
@@ -224,7 +218,7 @@ window.openCardDetails = function(inventoryIndex) {
                 </div>
             </div>
 
-            <!-- 🍬 CANDY & UPGRADE UI 🍬 -->
+            <!-- 🍬 CANDY & UPGRADE UI -->
             <div style="background: rgba(0,0,0,0.8); padding: 10px; border-radius: 10px; border: 2px dashed ${rarityColor};">
                 <div style="font-size: 1rem; color: #fff; font-weight: bold; margin-bottom: 10px;">
                     🍬 Candy: <span style="color: #00ccff;">${candyCount}</span>
@@ -249,36 +243,31 @@ window.openCardDetails = function(inventoryIndex) {
 // CANDY ECONOMY LOGIC
 // ==========================================
 
-// Level Up Logic
 window.levelUpRot = function(index) {
     if (typeof playerData === 'undefined' || !playerData.inventory || !playerData.inventory[index]) return;
     
     const rot = playerData.inventory[index];
-    const cost = rot.level * 2; // Dynamic cost
+    const cost = rot.level * 2; 
     const candyKey = rot.name.toUpperCase().trim();
     
     if (!playerData.candies) playerData.candies = {};
 
     if ((playerData.candies[candyKey] || 0) >= cost) {
-        // Subtract candy & level up
         playerData.candies[candyKey] -= cost;
         rot.level++;
         
-        // Recalculate stats and fully heal them as a bonus!
         const newStats = calculateRotStats(rot);
         rot.maxHp = newStats.maxHp;
         rot.hp = rot.maxHp;
         
         if (typeof window.saveGameData === 'function') window.saveGameData();
         
-        // Refresh the screen to show the new stats and lowered candy amount
         openCardDetails(index);
     } else {
         alert(`❌ Not enough candy! You need ${cost} Candies to reach Level ${rot.level + 1}.`);
     }
 };
 
-// Transfer Logic
 window.transferRot = function(index) {
     if (typeof playerData === 'undefined' || !playerData.inventory || !playerData.inventory[index]) return;
     
@@ -293,13 +282,9 @@ window.transferRot = function(index) {
     if (confirm(`⚠️ Are you sure you want to transfer this Lvl ${rot.level} ${rot.name} to the Professor? You will receive 1 Candy. This CANNOT be undone.`)) {
         
         if (!playerData.candies) playerData.candies = {};
-        // Add 1 candy
         playerData.candies[candyKey] = (playerData.candies[candyKey] || 0) + 1;
-        
-        // Remove the rot from the inventory
         playerData.inventory.splice(index, 1);
         
-        // Safety check to ensure active fighter doesn't break
         if (playerData.activeFighterIndex >= playerData.inventory.length) {
             playerData.activeFighterIndex = 0;
         } else if (playerData.activeFighterIndex === index) {
@@ -310,19 +295,17 @@ window.transferRot = function(index) {
         
         if (typeof window.saveGameData === 'function') window.saveGameData();
         
-        // Close modal and refresh the inventory grid
         document.getElementById('cardDetailModal').style.display = 'none';
         if (typeof window.renderInventory === 'function') window.renderInventory();
     }
 };
 
 // ==========================================
-// FULL-SCREEN INVENTORY & SORTING SYSTEM (OVERRIDE)
+// FULL-SCREEN INVENTORY & SORTING SYSTEM
 // ==========================================
 
 window.currentInventorySort = 'newest';
 
-// Bind BOTH function names so no other file can override it!
 window.openInventory = window.openInventoryModal = function() {
     let invModal = document.getElementById('inventoryModal');
     
@@ -332,7 +315,6 @@ window.openInventory = window.openInventoryModal = function() {
         document.body.appendChild(invModal);
     }
 
-    // Force full screen styling to blow away the old small box
     invModal.style.cssText = `
         position: fixed !important; 
         top: 0 !important; 
@@ -401,7 +383,7 @@ window.renderInventoryModal = function() {
 
     let html = `
         <div style="width: 100%; max-width: 800px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <h2 style="margin: 0; color: #00ff55; text-transform: uppercase;">🎒 Inventory (${playerData.inventory.length})</h2>
+            <h2 style="margin: 0; color: #00ff55; text-transform: uppercase;">📦 Inventory (${playerData.inventory.length})</h2>
             <button onclick="document.getElementById('inventoryModal').style.display='none'" style="background: #ff0055; color: #fff; border: 2px solid #fff; border-radius: 50%; width: 35px; height: 35px; font-weight: bold; cursor: pointer; font-size: 1.1rem;">X</button>
         </div>
 
@@ -429,6 +411,11 @@ window.renderInventoryModal = function() {
         const rarityColor = typeof window.getRarityColor === 'function' ? window.getRarityColor(rot.rarity) : '#00ff55';
         const isFainted = rot.fainted === true;
 
+        let rotImage = rot.image || '';
+        if (rot.name && rot.name.toLowerCase().replace(/[\s-]/g, '') === 'hashtaghell') {
+            rotImage = 'brainrots/hashtag_hell.png';
+        }
+
         html += `
             <div onclick="openCardDetails(${origIndex})" style="
                 background: linear-gradient(180deg, #111, ${rarityColor}33); 
@@ -445,10 +432,9 @@ window.renderInventoryModal = function() {
                     ${rot.name}
                 </div>
                 <div style="font-size: 0.65rem; color: #aaa; margin-bottom: 4px;">
-                    Lvl ${rot.level || 1} | ${(rot.rarity || 'common').toUpperCase()}
-                </div>
-                <div style="width: 100%; height: 90px; background: #fff; border-radius: 6px; overflow: hidden; border: 1px solid #333; margin-bottom: 6px;">
-                    <img src="${rot.image || ''}" style="width: 100%; height: 100%; object-fit: cover; ${isFainted ? 'filter: grayscale(100%);' : ''}" onerror="this.style.display='none';">
+                    Lvl ${rot.level || 1} | ${(rot.rarity || 'common').toUpperCase()}</div>
+                <div style="width: 100%; height: 90px; background: transparent; border-radius: 6px; overflow: hidden; border: 1px solid #333; margin-bottom: 6px; display: flex; align-items: center; justify-content: center;">
+                    <img src="${rotImage}" style="max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8)); ${isFainted ? 'filter: grayscale(100%);' : ''}" onerror="this.style.display='none';">
                 </div>
                 <div style="font-size: 0.65rem; color: #00ff55; font-weight: bold;">
                     ❤️ ${stats.maxHp} | ⚔️ ${stats.atk}
@@ -462,5 +448,4 @@ window.renderInventoryModal = function() {
     invModal.innerHTML = html;
 };
 
-// Sync back window.renderInventory if used elsewhere
 window.renderInventory = window.renderInventoryModal;
