@@ -6,7 +6,7 @@ const brainrotCharacters = [
         baseHp: 65,
         baseAtk: 14,
         baseDef: 12,
-        reward: 5,
+        reward: 3,
         evolution: {
             target: "Hashtag Hell",
             candyCost: 50
@@ -19,7 +19,7 @@ const brainrotCharacters = [
         baseHp: 150,
         baseAtk: 35,
         baseDef: 28,
-        reward: 25
+        reward: 3
     },
     {
         name: "Chad Cloud",
@@ -41,7 +41,7 @@ const brainrotCharacters = [
         baseHp: 160,
         baseAtk: 38,
         baseDef: 30,
-        reward: 30
+        reward: 3
     },
     {
         name: "Fomo Phantom",
@@ -63,6 +63,24 @@ const brainrotCharacters = [
         baseHp: 120,
         baseAtk: 28,
         baseDef: 22,
-        reward: 15
+        reward: 3
+    },
+    {
+        name: "Pufflet",
+        rarity: "common",
+        image: "brainrots/pufflet.png",
+        baseHp: 50,
+        baseAtk: 11,
+        baseDef: 9,
+        reward: 3
+    },
+    {
+        name: "Blimpy",
+        rarity: "secret",
+        image: "brainrots/blimpy.png",
+        baseHp: 220,
+        baseAtk: 18,
+        baseDef: 40,
+        reward: 3
     }
 ];

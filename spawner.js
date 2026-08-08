@@ -71,7 +71,7 @@ injectShinyStyles();
 function shouldFloat(charName) {
   if (!charName) return false;
   const lower = charName.toLowerCase();
-  return lower.includes('cloud') || lower.includes('hashtag') || lower.includes('glitch') || lower.includes('spirit') || lower.includes('phantom') || lower.includes('fomo');
+  return lower.includes('cloud') || lower.includes('hashtag') || lower.includes('glitch') || lower.includes('spirit') || lower.includes('phantom') || lower.includes('fomo') || lower.includes('blimpy') || lower.includes('pufflet');
 }
 
 function getRandomLevel() {
@@ -95,16 +95,8 @@ function getRandomBrainrot() {
     return { name: "Chad Cloud", rarity: "common", reward: 3, image: "brainrots/chad_cloud.png" };
   }
 
-  // ☘️ ULTRA RARE ROLL: 0.1% chance (0.001) to find God Cloud
-  const isGodCloudRoll = Math.random() < 0.001; 
-  if (isGodCloudRoll) {
-    const godCloud = brainrotCharacters.find(char => char && char.name.toLowerCase().trim() === "god cloud");
-    if (godCloud) {
-      return godCloud;
-    }
-  }
-
-  // Filter out God Cloud and Hashtag Hell from the normal pool
+  // 🍀 ULTRA RARE / SECRET ROLL: Check for Blimpy (Secret) first or let him fall into the weighted pool
+  // Filter out God Cloud, Hashtag Hell, and Blimpy from the normal random roll pool if you want Blimpy to be strictly rare/secret spawnable
   const validCharacters = brainrotCharacters.filter(char => 
     char && char.image && char.image.trim() !== "" && 
     char.name.toLowerCase().trim() !== "hashtag hell" &&
@@ -115,18 +107,18 @@ function getRandomBrainrot() {
     return { name: "Chad Cloud", rarity: "common", reward: 3, image: "brainrots/chad_cloud.png" };
   }
 
-  // Assign weighted spawn chances so commons appear much more often than rares/evolutions
+  // Assign weighted spawn chances so commons appear much more often than rares/secrets
   const weightedPool = [];
   validCharacters.forEach(char => {
     const rarity = (char.rarity || 'common').toLowerCase();
     let weight = 1;
 
     if (rarity === 'common') {
-      weight = 10; // Commons spawn 10x more frequently
+      weight = 10; // Commons spawn 10x more frequently (includes Pufflet and Chad Cloud)
     } else if (rarity === 'rare') {
-      weight = 3;  // Rares (like Hashtag & Fomo Doom) spawn much less frequently
+      weight = 3;  // Rares (like Hashtag & Fomo Doom) spawn less frequently
     } else if (rarity === 'secret') {
-      weight = 1;  // Secrets are very scarce
+      weight = 1;  // Secrets (like Hashtag Hell & Blimpy) are very scarce
     }
 
     for (let i = 0; i < weight; i++) {
@@ -261,7 +253,7 @@ function spawnSingleCreature(lat, lng) {
   const level = getRandomLevel();
   
   const isShiny = false;
-  const baseReward = Number(characterTemplate.reward) || 1;
+  const baseReward = Number(characterTemplate.reward) || 3;
   
   const baseHpVal = characterTemplate.baseHp || 50;
   const maxHp = Math.floor((baseHpVal + (level - 1) * 12));
