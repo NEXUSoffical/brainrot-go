@@ -71,7 +71,7 @@ injectShinyStyles();
 function shouldFloat(charName) {
   if (!charName) return false;
   const lower = charName.toLowerCase();
-  return lower.includes('cloud') || lower.includes('hashtag') || lower.includes('glitch') || lower.includes('spirit');
+  return lower.includes('cloud') || lower.includes('hashtag') || lower.includes('glitch') || lower.includes('spirit') || lower.includes('phantom');
 }
 
 function getRandomLevel() {
@@ -95,7 +95,7 @@ function getRandomBrainrot() {
     return { name: "Noobini Pizzanini", rarity: "common", reward: 1, image: "brainrots/noobini_pizzanini.png" };
   }
 
-  // 🍀 ULTRA RARE ROLL: 0.1% chance (0.001) to find God Cloud
+  // ☘️ ULTRA RARE ROLL: 0.1% chance (0.001) to find God Cloud
   const isGodCloudRoll = Math.random() < 0.001; 
   if (isGodCloudRoll) {
     const godCloud = brainrotCharacters.find(char => char && char.name.toLowerCase().trim() === "god cloud");
@@ -104,7 +104,7 @@ function getRandomBrainrot() {
     }
   }
 
-  // Otherwise, pull from the normal character pool (excluding God Cloud and Hashtag Hell)
+  // Filter out God Cloud and Hashtag Hell from the normal pool
   const validCharacters = brainrotCharacters.filter(char => 
     char && char.image && char.image.trim() !== "" && 
     char.name.toLowerCase().trim() !== "hashtag hell" &&
@@ -115,8 +115,27 @@ function getRandomBrainrot() {
     return { name: "Noobini Pizzanini", rarity: "common", reward: 1, image: "brainrots/noobini_pizzanini.png" };
   }
 
-  const randomIndex = Math.floor(Math.random() * validCharacters.length);
-  return validCharacters[randomIndex];
+  // Assign weighted spawn chances so commons appear much more often than rares
+  const weightedPool = [];
+  validCharacters.forEach(char => {
+    const rarity = (char.rarity || 'common').toLowerCase();
+    let weight = 1;
+
+    if (rarity === 'common') {
+      weight = 10; // Commons (Chad Cloud, Fomo Phantom) spawn 10x more frequently
+    } else if (rarity === 'rare') {
+      weight = 3;  // Rares (Hashtag) spawn much less frequently
+    } else if (rarity === 'secret') {
+      weight = 1;  // Secrets are very scarce
+    }
+
+    for (let i = 0; i < weight; i++) {
+      weightedPool.push(char);
+    }
+  });
+
+  const randomIndex = Math.floor(Math.random() * weightedPool.length);
+  return weightedPool[randomIndex];
 }
 
 function getRarityColor(rarity) {

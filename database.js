@@ -42,5 +42,14 @@ const brainrotCharacters = [
         baseAtk: 38,
         baseDef: 30,
         reward: 30
+    },
+    {
+        name: "Fomo Phantom",
+        rarity: "common",
+        image: "brainrots/fomo_phantom.png",
+        baseHp: 50,
+        baseAtk: 12,
+        baseDef: 10,
+        reward: 3
     }
 ];
