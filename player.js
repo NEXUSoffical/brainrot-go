@@ -1,11 +1,91 @@
 // 🌍 REAL-WORLD GPS & KEYBOARD MOVEMENT ENGINE
-// Look! No more super-glued house numbers! We leave these empty now.
 let playerLat;
 let playerLng;
 let playerMarker = null;
 let isWalking = false;
 let moveInterval = null;
 let activeKeys = {};
+
+// Mode Toggle State
+let isRealWorldMode = false;
+let realWorldWatchId = null;
+
+window.toggleMovementMode = function() {
+    isRealWorldMode = !isRealWorldMode;
+    const btn = document.getElementById('movementModeBtn');
+
+    if (isRealWorldMode) {
+        if (btn) btn.innerText = "🗺️ MODE: REAL GPS";
+        alert("📍 Switched to Real-World GPS Mode! Your character will now follow your physical steps.");
+        
+        // Stop D-pad loop if running
+        isWalking = false;
+        clearInterval(moveInterval);
+        moveInterval = null;
+        activeKeys = {};
+
+        startRealWorldGPS();
+    } else {
+        if (btn) btn.innerText = "🕹️ MODE: D-PAD";
+        alert("🕹️ Switched to D-Pad Mode! You can now use your keyboard or on-screen arrows to walk around.");
+
+        if (realWorldWatchId !== null) {
+            navigator.geolocation.clearWatch(realWorldWatchId);
+            realWorldWatchId = null;
+        }
+    }
+};
+
+function startRealWorldGPS() {
+    if (!navigator.geolocation) {
+        alert("❌ Geolocation is not supported by your browser");
+        isRealWorldMode = false;
+        return;
+    }
+
+    if (realWorldWatchId !== null) {
+        navigator.geolocation.clearWatch(realWorldWatchId);
+    }
+
+    realWorldWatchId = navigator.geolocation.watchPosition(
+        (position) => {
+            if (!isRealWorldMode) return;
+
+            let lat = parseFloat(position.coords.latitude);
+            let lng = parseFloat(position.coords.longitude);
+
+            if (isNaN(lat) || isNaN(lng)) return;
+
+            playerLat = lat;
+            playerLng = lng;
+
+            if (playerMarker && typeof playerMarker.setLatLng === 'function') {
+                playerMarker.setLatLng([playerLat, playerLng]);
+            }
+
+            if (typeof map !== 'undefined' && map && typeof map.panTo === 'function') {
+                map.panTo([playerLat, playerLng], { animate: true });
+            }
+
+            const latVal = document.getElementById('latVal');
+            const lngVal = document.getElementById('lngVal');
+            if (latVal) latVal.innerText = playerLat.toFixed(5);
+            if (lngVal) lngVal.innerText = playerLng.toFixed(5);
+
+            if (typeof cleanUpFarCreatures === 'function') {
+                cleanUpFarCreatures();
+            }
+        },
+        (error) => {
+            console.error("GPS tracking error:", error);
+        },
+        {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+        }
+    );
+}
 
 function initPlayer() {
     // If the map isn't built yet, wait patiently!
@@ -64,6 +144,7 @@ function initPlayer() {
 
 // Keyboard movement listeners with bulletproof string safety
 window.addEventListener('keydown', (e) => {
+    if (isRealWorldMode) return; // 🛑 Block keyboard movement while in real GPS mode!
     if (!e) return;
     const loginModal = document.getElementById('loginModal');
     if (loginModal && loginModal.style.display !== 'none') return;
@@ -80,6 +161,7 @@ window.addEventListener('keydown', (e) => {
 });
 
 window.addEventListener('keyup', (e) => {
+    if (isRealWorldMode) return;
     if (!e) return;
     const key = typeof e.key === 'string' ? e.key.toLowerCase() : '';
     activeKeys[key] = false;
@@ -95,12 +177,18 @@ window.addEventListener('keyup', (e) => {
 });
 
 function startMovementLoop() {
-    if (moveInterval) return;
+    if (moveInterval || isRealWorldMode) return;
 
     const moveSpeed = 0.000005; 
     const avatar = document.getElementById('playerAvatar');
 
     moveInterval = setInterval(() => {
+        if (isRealWorldMode) {
+            clearInterval(moveInterval);
+            moveInterval = null;
+            return;
+        }
+
         let dLat = 0;
         let dLng = 0;
         let facingClass = 'facing-down';

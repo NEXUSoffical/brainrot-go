@@ -422,6 +422,9 @@
             <h2>🧠 GAME MENU</h2>
             <p style="font-size: 0.7rem; color: #aaa; margin-bottom: 5px;">Access all features & tools</p>
             
+            <!-- Movement Mode Toggle Button -->
+            <button id="movementModeBtn" class="btn-hud" style="width: 100%; background: #ffcc00; color: #000;" onclick="closeGameMenu(); window.toggleMovementMode()">🕹️ MODE: D-PAD</button>
+            
             <button class="btn-hud" style="width: 100%; background: linear-gradient(135deg, #00ff55, #00ffee); color: #000;" onclick="closeGameMenu(); window.openBattlePassModal()">🏆 BATTLE PASS</button>
             <button class="btn-hud" style="width: 100%; background: #333; color: #aaa; border: 1px dashed #777; cursor: not-allowed;" onclick="alert('🌐 TRADE MARKET & CHAT: Coming soon in the next update!')">🔒 TRADE MARKET (SOON)</button>
             <button class="btn-hud" style="width: 100%;" onclick="closeGameMenu(); openInventory()">📦 INVENTORY</button>
@@ -576,7 +579,7 @@
     <script src="database.js?v=2"></script>
     <script src="collision.js"></script>
     <script src="player.js"></script>
-    <script src="evolution.js"></script> <!-- Evolution Script Added Here -->
+    <script src="evolution.js"></script>
     <script src="firebase.js"></script>
     <script src="dex.js?v=4"></script>
     <script src="teamSelect.js"></script>
