@@ -45,7 +45,7 @@ function injectBattleAnimations() {
             padding: 0 !important;
         }
 
-        /* 🌊 WATER SPLASH PROJECTILE ARC */
+        /* ðŸŒŠ WATER SPLASH PROJECTILE ARC */
         @keyframes waterShotArcPlayer {
             0% { transform: translate(0px, 0px) scale(0.6); opacity: 0; }
             20% { opacity: 1; transform: translate(100px, -80px) scale(1.4); }
@@ -85,7 +85,7 @@ function injectBattleAnimations() {
             animation: impactSplashRipple 0.4s ease-out forwards; pointer-events: none; z-index: 999999;
         }
 
-        /* 🔮 PSYCHIC PULSE FX */
+        /* ðŸ”® PSYCHIC PULSE FX */
         .psychic-projectile-player {
             position: absolute; bottom: 25%; left: 25%; width: 36px; height: 36px;
             background: radial-gradient(circle, #ffffff 0%, #ff00ff 50%, #9900ff 100%);
@@ -99,7 +99,7 @@ function injectBattleAnimations() {
             animation: waterShotArcEnemy 0.55s ease-in-out forwards; pointer-events: none; z-index: 999999;
         }
 
-        /* 👁️ FOMO DOOM VOID STORM ULTIMATE FX */
+        /* ðŸ‘ï¸ FOMO DOOM VOID STORM ULTIMATE FX */
         @keyframes voidStorm {
             0%, 100% { filter: brightness(1); background: transparent; }
             20% { filter: brightness(4) drop-shadow(0 0 60px #9900ff); background: rgba(153, 0, 255, 0.4); }
@@ -118,7 +118,7 @@ function injectBattleAnimations() {
             position: absolute; font-size: 3rem; animation: doomEyeFlash 0.65s linear forwards; pointer-events: none; z-index: 9999999;
         }
         
-        /* ⚡ LIGHTNING ULTIMATE STORM FX */
+        /* âš¡ LIGHTNING ULTIMATE STORM FX */
         @keyframes arenaLightningStorm {
             0%, 100% { filter: brightness(1); background: transparent; }
             20% { filter: brightness(4) drop-shadow(0 0 50px #ffff00); background: rgba(255, 255, 0, 0.35); }
@@ -137,7 +137,7 @@ function injectBattleAnimations() {
             position: absolute; font-size: 3.5rem; animation: boltFlash 0.6s linear forwards; pointer-events: none; z-index: 9999999;
         }
 
-        /* 🔱 GOD CLOUD TRIDENT PROJECTILE & WRATH FX */
+        /* ðŸ”± GOD CLOUD TRIDENT PROJECTILE & WRATH FX */
         @keyframes tridentShotArcPlayer {
             0% { transform: translate(0px, 0px) scale(0.6) rotate(0deg); opacity: 0; }
             20% { opacity: 1; transform: translate(100px, -80px) scale(1.5) rotate(15deg); }
@@ -169,7 +169,7 @@ function injectBattleAnimations() {
         }
         .god-wrath-storm-effect { animation: godWrathStorm 0.8s ease-in-out; }
 
-        /* ♯ LITERAL HASHTAG PROJECTILE ARC (BASE HASHTAG) */
+        /* â™¯ LITERAL HASHTAG PROJECTILE ARC (BASE HASHTAG) */
         @keyframes hashtagShotArcPlayer {
             0% { transform: translate(0px, 0px) scale(0.6) rotate(0deg); opacity: 0; }
             20% { opacity: 1; transform: translate(100px, -80px) scale(1.5) rotate(45deg); }
@@ -203,7 +203,7 @@ function injectBattleAnimations() {
             animation: impactSplashRipple 0.4s ease-out forwards; pointer-events: none; z-index: 999999;
         }
 
-        /* 🌪️ #SHITPOST STORM ULTIMATE FX (BURIES TARGET) */
+        /* ðŸŒªï¸ #SHITPOST STORM ULTIMATE FX (BURIES TARGET) */
         @keyframes shitpostStorm {
             0%, 100% { filter: brightness(1); background: transparent; }
             20% { filter: brightness(4) drop-shadow(0 0 60px #76ff03); background: rgba(118, 255, 3, 0.4); }
@@ -224,7 +224,7 @@ function injectBattleAnimations() {
             animation: pileUpHashtags 0.75s ease-in-out forwards; pointer-events: none; z-index: 9999999;
         }
 
-        /* 🔥 GLITCH FIRE PROJECTILE ARC (HASHTAG HELL) */
+        /* ðŸ”¥ GLITCH FIRE PROJECTILE ARC (HASHTAG HELL) */
         @keyframes fireShotArcPlayer {
             0% { transform: translate(0px, 0px) scale(0.6); opacity: 0; }
             20% { opacity: 1; transform: translate(100px, -80px) scale(1.4) skewX(-10deg); }
@@ -264,7 +264,7 @@ function injectBattleAnimations() {
             animation: fireImpactRipple 0.4s ease-out forwards; pointer-events: none; z-index: 999999;
         }
 
-        /* 😈 HELLFIRE CORRUPTION ULTIMATE FX */
+        /* ðŸ˜ˆ HELLFIRE CORRUPTION ULTIMATE FX */
         @keyframes hellfireCorruptionStorm {
             0%, 100% { filter: brightness(1); background: transparent; }
             20% { filter: brightness(4) drop-shadow(0 0 50px #ff0055); background: rgba(255, 0, 85, 0.35); }
@@ -361,7 +361,7 @@ window.initBattle = function(creature) {
     const battleLog = document.getElementById('battleLog');
     if (battleLog) {
         if (activeFighter.fainted) {
-            battleLog.innerText = `⚠️ Your active fighter is FAINTED! Switch fighters or visit the Revive Station!`;
+            battleLog.innerText = `âš ï¸ Your active fighter is FAINTED! Switch fighters or visit the Revive Station!`;
         } else {
             battleLog.innerText = `A wild Level ${wildLvl} ${creature.name} appeared!`;
         }
@@ -396,7 +396,7 @@ function updatePlayerFighterDisplay(activeFighter, fighterLvl) {
 
     const fighterNameEl = document.getElementById('myFighterName');
     if (fighterNameEl) {
-        fighterNameEl.innerText = `${activeFighter.name || 'Fighter'} (Lvl ${fighterLvl}) ${activeFighter.fainted ? '💀 [FAINTED]' : ''}`;
+        fighterNameEl.innerText = `${activeFighter.name || 'Fighter'} (Lvl ${fighterLvl}) ${activeFighter.fainted ? 'ðŸ’€ [FAINTED]' : ''}`;
     }
 }
 
@@ -415,12 +415,12 @@ function updateHpBars() {
     if (myHpText) myHpText.innerText = `${Math.ceil(window.playerHp)}/${window.maxPlayerHp} HP`;
 }
 
-// 🔮 PLAYER FOMO PHANTOM ATTACK FX
+// ðŸ”® PLAYER FOMO PHANTOM ATTACK FX
 window.playPlayerFomoAttack = function(callback) {
     const arenaField = document.getElementById('arenaField');
     const battleLog = document.getElementById('battleLog');
     
-    if (battleLog) battleLog.innerText = `🔮 Fomo Phantom fired a Psychic Pulse!`;
+    if (battleLog) battleLog.innerText = `ðŸ”® Fomo Phantom fired a Psychic Pulse!`;
 
     if (arenaField) {
         const projectile = document.createElement('div');
@@ -438,12 +438,12 @@ window.playPlayerFomoAttack = function(callback) {
     setTimeout(() => { if (callback) callback(); }, 550);
 };
 
-// 🔮 WILD FOMO PHANTOM ATTACK FX
+// ðŸ”® WILD FOMO PHANTOM ATTACK FX
 window.playWildFomoAttack = function(callback) {
     const arenaField = document.getElementById('arenaField');
     const battleLog = document.getElementById('battleLog');
     
-    if (battleLog) battleLog.innerText = `🔮 Wild Fomo Phantom fired a Psychic Pulse at you!`;
+    if (battleLog) battleLog.innerText = `ðŸ”® Wild Fomo Phantom fired a Psychic Pulse at you!`;
 
     if (arenaField) {
         const projectile = document.createElement('div');
@@ -461,7 +461,7 @@ window.playWildFomoAttack = function(callback) {
     setTimeout(() => { if (callback) callback(); }, 550);
 };
 
-// 👁️ PLAYER FOMO DOOM ATTACK FX
+// ðŸ‘ï¸ PLAYER FOMO DOOM ATTACK FX
 window.playPlayerFomoDoomAttack = function(callback) {
     const arenaField = document.getElementById('arenaField');
     const wildModal = document.getElementById('battleModal');
@@ -474,13 +474,13 @@ window.playPlayerFomoDoomAttack = function(callback) {
 
         if (wildModal) wildModal.classList.add('void-storm-effect');
         const battleLog = document.getElementById('battleLog');
-        if (battleLog) battleLog.innerText = `👁️ ULTIMATE: Fomo Doom unleashed a Void Mind Storm!`;
+        if (battleLog) battleLog.innerText = `ðŸ‘ï¸ ULTIMATE: Fomo Doom unleashed a Void Mind Storm!`;
 
         if (arenaField) {
             for (let i = 0; i < 4; i++) {
                 const eye = document.createElement('div');
                 eye.className = 'doom-eye-particle';
-                eye.innerText = '👁️';
+                eye.innerText = 'ðŸ‘ï¸';
                 eye.style.top = (20 + (i * 15)) + '%';
                 eye.style.left = (25 + (i * 15)) + '%';
                 arenaField.appendChild(eye);
@@ -494,7 +494,7 @@ window.playPlayerFomoDoomAttack = function(callback) {
     } else {
         window.isPlayerFomoDoomBoost = false;
         const battleLog = document.getElementById('battleLog');
-        if (battleLog) battleLog.innerText = `👁️ Fomo Doom blasted a dark psychic beam!`;
+        if (battleLog) battleLog.innerText = `ðŸ‘ï¸ Fomo Doom blasted a dark psychic beam!`;
 
         if (arenaField) {
             const projectile = document.createElement('div');
@@ -514,7 +514,7 @@ window.playPlayerFomoDoomAttack = function(callback) {
     }
 };
 
-// 👁️ WILD FOMO DOOM ATTACK FX
+// ðŸ‘ï¸ WILD FOMO DOOM ATTACK FX
 window.playWildFomoDoomAttack = function(callback) {
     const arenaField = document.getElementById('arenaField');
     const wildModal = document.getElementById('battleModal');
@@ -527,13 +527,13 @@ window.playWildFomoDoomAttack = function(callback) {
 
         if (wildModal) wildModal.classList.add('void-storm-effect');
         const battleLog = document.getElementById('battleLog');
-        if (battleLog) battleLog.innerText = `👁️ ULTIMATE: Wild Fomo Doom unleashed a Void Mind Storm!`;
+        if (battleLog) battleLog.innerText = `ðŸ‘ï¸ ULTIMATE: Wild Fomo Doom unleashed a Void Mind Storm!`;
 
         if (arenaField) {
             for (let i = 0; i < 4; i++) {
                 const eye = document.createElement('div');
                 eye.className = 'doom-eye-particle';
-                eye.innerText = '👁️';
+                eye.innerText = 'ðŸ‘ï¸';
                 eye.style.top = (20 + (i * 15)) + '%';
                 eye.style.left = (25 + (i * 15)) + '%';
                 arenaField.appendChild(eye);
@@ -547,7 +547,7 @@ window.playWildFomoDoomAttack = function(callback) {
     } else {
         window.isWildFomoDoomBoost = false;
         const battleLog = document.getElementById('battleLog');
-        if (battleLog) battleLog.innerText = `👁️ Wild Fomo Doom blasted a dark psychic beam at you!`;
+        if (battleLog) battleLog.innerText = `ðŸ‘ï¸ Wild Fomo Doom blasted a dark psychic beam at you!`;
 
         if (arenaField) {
             const projectile = document.createElement('div');
@@ -567,7 +567,7 @@ window.playWildFomoDoomAttack = function(callback) {
     }
 };
 
-// 🌪️ PLAYER CLOUD / GOD CLOUD ATTACK FX
+// ðŸŒªï¸ PLAYER CLOUD / GOD CLOUD ATTACK FX
 window.playPlayerCloudAttack = function(callback, isGodCloud = false) {
     const arenaField = document.getElementById('arenaField');
     const wildModal = document.getElementById('battleModal');
@@ -589,15 +589,15 @@ window.playPlayerCloudAttack = function(callback, isGodCloud = false) {
         const battleLog = document.getElementById('battleLog');
         if (battleLog) {
             battleLog.innerText = isGodCloud 
-                ? `🔱 ULTIMATE: God Cloud unleashed God Cloud Wrath with his golden trident!` 
-                : `⚡ ULTIMATE: Your Chad Cloud unleashed a Lightning Strike!`;
+                ? `ðŸ”± ULTIMATE: God Cloud unleashed God Cloud Wrath with his golden trident!` 
+                : `âš¡ ULTIMATE: Your Chad Cloud unleashed a Lightning Strike!`;
         }
 
         if (arenaField) {
             for (let i = 0; i < 4; i++) {
                 const bolt = document.createElement('div');
                 bolt.className = 'lightning-bolt-particle';
-                bolt.innerText = isGodCloud ? '🔱' : '⚡';
+                bolt.innerText = isGodCloud ? 'ðŸ”±' : 'âš¡';
                 bolt.style.top = (20 + (i * 15)) + '%';
                 bolt.style.left = (25 + (i * 15)) + '%';
                 arenaField.appendChild(bolt);
@@ -617,14 +617,14 @@ window.playPlayerCloudAttack = function(callback, isGodCloud = false) {
         const battleLog = document.getElementById('battleLog');
         if (battleLog) {
             battleLog.innerText = isGodCloud 
-                ? `🔱 God Cloud executed a piercing Trident Strike!` 
-                : `🌊 Your Chad Cloud shot a water blast!`;
+                ? `ðŸ”± God Cloud executed a piercing Trident Strike!` 
+                : `ðŸŒŠ Your Chad Cloud shot a water blast!`;
         }
 
         if (arenaField) {
             const projectile = document.createElement('div');
             projectile.className = isGodCloud ? 'trident-projectile-player' : 'water-projectile-player';
-            if (isGodCloud) projectile.innerText = '🔱';
+            if (isGodCloud) projectile.innerText = 'ðŸ”±';
             arenaField.appendChild(projectile);
             setTimeout(() => {
                 projectile.remove();
@@ -638,7 +638,7 @@ window.playPlayerCloudAttack = function(callback, isGodCloud = false) {
     }
 };
 
-// 🌪️ WILD CLOUD / GOD CLOUD ATTACK FX
+// ðŸŒªï¸ WILD CLOUD / GOD CLOUD ATTACK FX
 window.playWildCloudAttack = function(callback, isGodCloud = false) {
     const arenaField = document.getElementById('arenaField');
     const wildModal = document.getElementById('battleModal');
@@ -660,15 +660,15 @@ window.playWildCloudAttack = function(callback, isGodCloud = false) {
         const battleLog = document.getElementById('battleLog');
         if (battleLog) {
             battleLog.innerText = isGodCloud 
-                ? `🔱 ULTIMATE: Wild God Cloud unleashed God Cloud Wrath!` 
-                : `⚡ ULTIMATE: Wild Cloud unleashed a Lightning Strike!`;
+                ? `ðŸ”± ULTIMATE: Wild God Cloud unleashed God Cloud Wrath!` 
+                : `âš¡ ULTIMATE: Wild Cloud unleashed a Lightning Strike!`;
         }
 
         if (arenaField) {
             for (let i = 0; i < 4; i++) {
                 const bolt = document.createElement('div');
                 bolt.className = 'lightning-bolt-particle';
-                bolt.innerText = isGodCloud ? '🔱' : '⚡';
+                bolt.innerText = isGodCloud ? 'ðŸ”±' : 'âš¡';
                 bolt.style.top = (20 + (i * 15)) + '%';
                 bolt.style.left = (25 + (i * 15)) + '%';
                 arenaField.appendChild(bolt);
@@ -688,14 +688,14 @@ window.playWildCloudAttack = function(callback, isGodCloud = false) {
         const battleLog = document.getElementById('battleLog');
         if (battleLog) {
             battleLog.innerText = isGodCloud 
-                ? `🔱 Wild God Cloud struck you with a golden Trident!` 
-                : `🌊 Wild Cloud shot a water blast at you!`;
+                ? `ðŸ”± Wild God Cloud struck you with a golden Trident!` 
+                : `ðŸŒŠ Wild Cloud shot a water blast at you!`;
         }
 
         if (arenaField) {
             const projectile = document.createElement('div');
             projectile.className = isGodCloud ? 'trident-projectile-enemy' : 'water-projectile-enemy';
-            if (isGodCloud) projectile.innerText = '🔱';
+            if (isGodCloud) projectile.innerText = 'ðŸ”±';
             arenaField.appendChild(projectile);
             setTimeout(() => {
                 projectile.remove();
@@ -709,7 +709,7 @@ window.playWildCloudAttack = function(callback, isGodCloud = false) {
     }
 };
 
-// ♯ PLAYER HASHTAG (BASE) ATTACK FX
+// â™¯ PLAYER HASHTAG (BASE) ATTACK FX
 window.playPlayerHashtagBaseAttack = function(callback) {
     const arenaField = document.getElementById('arenaField');
     const wildModal = document.getElementById('battleModal');
@@ -723,7 +723,7 @@ window.playPlayerHashtagBaseAttack = function(callback) {
 
         if (wildModal) wildModal.classList.add('shitpost-storm-effect');
         const battleLog = document.getElementById('battleLog');
-        if (battleLog) battleLog.innerText = `🌪️ ULTIMATE: #SHITPOST STORM! Enemy buried under internet noise!`;
+        if (battleLog) battleLog.innerText = `ðŸŒªï¸ ULTIMATE: #SHITPOST STORM! Enemy buried under internet noise!`;
 
         if (wildCombatant) wildCombatant.style.opacity = '0.1';
 
@@ -746,7 +746,7 @@ window.playPlayerHashtagBaseAttack = function(callback) {
     } else {
         window.isPlayerHashtagBoost = false;
         const battleLog = document.getElementById('battleLog');
-        if (battleLog) battleLog.innerText = `💥 Hashtag shot a glowing #hashtag at the enemy!`;
+        if (battleLog) battleLog.innerText = `ðŸ’¥ Hashtag shot a glowing #hashtag at the enemy!`;
 
         if (arenaField) {
             const hashtagProj = document.createElement('div');
@@ -765,7 +765,7 @@ window.playPlayerHashtagBaseAttack = function(callback) {
     }
 };
 
-// ♯ WILD HASHTAG (BASE) ATTACK FX
+// â™¯ WILD HASHTAG (BASE) ATTACK FX
 window.playWildHashtagBaseAttack = function(callback) {
     const arenaField = document.getElementById('arenaField');
     const wildModal = document.getElementById('battleModal');
@@ -779,7 +779,7 @@ window.playWildHashtagBaseAttack = function(callback) {
 
         if (wildModal) wildModal.classList.add('shitpost-storm-effect');
         const battleLog = document.getElementById('battleLog');
-        if (battleLog) battleLog.innerText = `🌪️ ULTIMATE: Wild #SHITPOST STORM! You are buried!`;
+        if (battleLog) battleLog.innerText = `ðŸŒªï¸ ULTIMATE: Wild #SHITPOST STORM! You are buried!`;
 
         if (playerCombatant) playerCombatant.style.opacity = '0.1'; 
 
@@ -802,7 +802,7 @@ window.playWildHashtagBaseAttack = function(callback) {
     } else {
         window.isWildHashtagBoost = false;
         const battleLog = document.getElementById('battleLog');
-        if (battleLog) battleLog.innerText = `💥 Wild Hashtag shot a glowing #hashtag at you!`;
+        if (battleLog) battleLog.innerText = `ðŸ’¥ Wild Hashtag shot a glowing #hashtag at you!`;
 
         if (arenaField) {
             const hashtagProj = document.createElement('div');
@@ -821,7 +821,7 @@ window.playWildHashtagBaseAttack = function(callback) {
     }
 };
 
-// 🔥 PLAYER HASHTAG HELL (EVOLVED) ATTACK FX
+// ðŸ”¥ PLAYER HASHTAG HELL (EVOLVED) ATTACK FX
 window.playPlayerHashtagHellAttack = function(callback) {
     const arenaField = document.getElementById('arenaField');
     const wildModal = document.getElementById('battleModal');
@@ -834,13 +834,13 @@ window.playPlayerHashtagHellAttack = function(callback) {
 
         if (wildModal) wildModal.classList.add('hellfire-storm-effect');
         const battleLog = document.getElementById('battleLog');
-        if (battleLog) battleLog.innerText = `😈 ULTIMATE: Hashtag Hell unleashed Hellfire Corruption!`;
+        if (battleLog) battleLog.innerText = `ðŸ˜ˆ ULTIMATE: Hashtag Hell unleashed Hellfire Corruption!`;
 
         if (arenaField) {
             for (let i = 0; i < 4; i++) {
                 const flame = document.createElement('div');
                 flame.className = 'hellfire-particle';
-                flame.innerText = '🔥';
+                flame.innerText = 'ðŸ”¥';
                 flame.style.top = (20 + (i * 15)) + '%';
                 flame.style.left = (25 + (i * 15)) + '%';
                 arenaField.appendChild(flame);
@@ -854,7 +854,7 @@ window.playPlayerHashtagHellAttack = function(callback) {
     } else {
         window.isPlayerHashtagHellBoost = false;
         const battleLog = document.getElementById('battleLog');
-        if (battleLog) battleLog.innerText = `🔥 Hashtag Hell fired a glitch fire blast!`;
+        if (battleLog) battleLog.innerText = `ðŸ”¥ Hashtag Hell fired a glitch fire blast!`;
 
         if (arenaField) {
             const projectile = document.createElement('div');
@@ -872,7 +872,7 @@ window.playPlayerHashtagHellAttack = function(callback) {
     }
 };
 
-// 🔥 WILD HASHTAG HELL (EVOLVED) ATTACK FX
+// ðŸ”¥ WILD HASHTAG HELL (EVOLVED) ATTACK FX
 window.playWildHashtagHellAttack = function(callback) {
     const arenaField = document.getElementById('arenaField');
     const wildModal = document.getElementById('battleModal');
@@ -885,13 +885,13 @@ window.playWildHashtagHellAttack = function(callback) {
 
         if (wildModal) wildModal.classList.add('hellfire-storm-effect');
         const battleLog = document.getElementById('battleLog');
-        if (battleLog) battleLog.innerText = `😈 ULTIMATE: Wild Hashtag Hell unleashed Hellfire Corruption!`;
+        if (battleLog) battleLog.innerText = `ðŸ˜ˆ ULTIMATE: Wild Hashtag Hell unleashed Hellfire Corruption!`;
 
         if (arenaField) {
             for (let i = 0; i < 4; i++) {
                 const flame = document.createElement('div');
                 flame.className = 'hellfire-particle';
-                flame.innerText = '🔥';
+                flame.innerText = 'ðŸ”¥';
                 flame.style.top = (20 + (i * 15)) + '%';
                 flame.style.left = (25 + (i * 15)) + '%';
                 arenaField.appendChild(flame);
@@ -905,7 +905,7 @@ window.playWildHashtagHellAttack = function(callback) {
     } else {
         window.isWildHashtagHellBoost = false;
         const battleLog = document.getElementById('battleLog');
-        if (battleLog) battleLog.innerText = `🔥 Wild Hashtag Hell fired a glitch fire blast at you!`;
+        if (battleLog) battleLog.innerText = `ðŸ”¥ Wild Hashtag Hell fired a glitch fire blast at you!`;
 
         if (arenaField) {
             const projectile = document.createElement('div');
@@ -932,7 +932,7 @@ window.battleAttack = function() {
     }
 
     if (activeFighter && activeFighter.fainted) {
-        alert("❌ Your current fighter has fainted! Switch to a healthy rot or revive them first.");
+        alert("âŒ Your current fighter has fainted! Switch to a healthy rot or revive them first.");
         return;
     }
 
@@ -953,7 +953,7 @@ window.battleAttack = function() {
     const isPlayerFomoDoom = fighterName === "fomodoom";
     const isPlayerFomo = fighterName === "fomophantom" && !isPlayerFomoDoom;
 
-    // ⚡ HANDLE PLAYER ATTACK ANIMATIONS
+    // âš¡ HANDLE PLAYER ATTACK ANIMATIONS
     if (isPlayerGodCloud) {
         window.playPlayerCloudAttack(executeDamageSequence, true);
     } else if (isPlayerCloud) {
@@ -1002,27 +1002,27 @@ window.battleAttack = function() {
         const battleLog = document.getElementById('battleLog');
         if (battleLog) {
             if (isPlayerGodCloud && window.isPlayerGodCloudBoost) {
-                battleLog.innerText = `🔱 God Cloud Wrath dealt massive critical damage of ${damage}!`;
+                battleLog.innerText = `ðŸ”± God Cloud Wrath dealt massive critical damage of ${damage}!`;
             } else if (isPlayerGodCloud) {
-                battleLog.innerText = `🔱 God Cloud struck with Trident Strike for ${damage} damage!`;
+                battleLog.innerText = `ðŸ”± God Cloud struck with Trident Strike for ${damage} damage!`;
             } else if (isPlayerCloud && window.isPlayerLightningBoost) {
-                battleLog.innerText = `⚡ Your Lightning Strike dealt massive critical damage of ${damage}!`;
+                battleLog.innerText = `âš¡ Your Lightning Strike dealt massive critical damage of ${damage}!`;
             } else if (isPlayerCloud) {
-                battleLog.innerText = `🌊 Your water blast hit for ${damage} damage!`;
+                battleLog.innerText = `ðŸŒŠ Your water blast hit for ${damage} damage!`;
             } else if (isPlayerHashtagHell && window.isPlayerHashtagHellBoost) {
-                battleLog.innerText = `😈 Hellfire Corruption dealt critical damage of ${damage}!`;
+                battleLog.innerText = `ðŸ˜ˆ Hellfire Corruption dealt critical damage of ${damage}!`;
             } else if (isPlayerHashtagHell) {
-                battleLog.innerText = `🔥 Glitch Fire hit for ${damage} damage!`;
+                battleLog.innerText = `ðŸ”¥ Glitch Fire hit for ${damage} damage!`;
             } else if (isPlayerHashtagBase && window.isPlayerHashtagBoost) {
-                battleLog.innerText = `🌪️ #SHITPOST STORM crushed them for critical damage of ${damage}!`;
+                battleLog.innerText = `ðŸŒªï¸ #SHITPOST STORM crushed them for critical damage of ${damage}!`;
             } else if (isPlayerHashtagBase) {
-                battleLog.innerText = `💥 You shot a #hashtag for ${damage} damage!`;
+                battleLog.innerText = `ðŸ’¥ You shot a #hashtag for ${damage} damage!`;
             } else if (isPlayerFomoDoom && window.isPlayerFomoDoomBoost) {
-                battleLog.innerText = `👁️ Void Mind Storm obliterated them for critical damage of ${damage}!`;
+                battleLog.innerText = `ðŸ‘ï¸ Void Mind Storm obliterated them for critical damage of ${damage}!`;
             } else if (isPlayerFomoDoom) {
-                battleLog.innerText = `👁️ Fomo Doom blasted a dark psychic beam for ${damage} damage!`;
+                battleLog.innerText = `ðŸ‘ï¸ Fomo Doom blasted a dark psychic beam for ${damage} damage!`;
             } else if (isPlayerFomo) {
-                battleLog.innerText = `🔮 Fomo Phantom's Psychic Pulse hit for ${damage} damage!`;
+                battleLog.innerText = `ðŸ”® Fomo Phantom's Psychic Pulse hit for ${damage} damage!`;
             } else {
                 battleLog.innerText = `You attacked and dealt ${damage} damage!`;
             }
@@ -1052,7 +1052,7 @@ window.battleAttack = function() {
             const isWildFomoDoom = wildNameRaw === "fomodoom";
             const isWildFomo = wildNameRaw === "fomophantom" && !isWildFomoDoom;
 
-            // ⚡ WILD ENEMY COUNTER-ATTACKS
+            // âš¡ WILD ENEMY COUNTER-ATTACKS
             if (isWildGodCloud) {
                 window.playWildCloudAttack(applyEnemyDamage, true);
             } else if (isWildCloud) {
@@ -1095,27 +1095,27 @@ window.battleAttack = function() {
                 const enemyDisplayName = window.currentWildCreature ? window.currentWildCreature.name : 'Target';
                 if (battleLog) {
                     if (isWildGodCloud && window.isWildGodCloudBoost) {
-                        battleLog.innerText = `🔱 Wild God Cloud's Wrath dealt massive critical damage of ${counterDamage}!`;
+                        battleLog.innerText = `ðŸ”± Wild God Cloud's Wrath dealt massive critical damage of ${counterDamage}!`;
                     } else if (isWildGodCloud) {
-                        battleLog.innerText = `🔱 Wild God Cloud hit you with Trident Strike for ${counterDamage} damage!`;
+                        battleLog.innerText = `ðŸ”± Wild God Cloud hit you with Trident Strike for ${counterDamage} damage!`;
                     } else if (isWildCloud && window.isWildLightningBoost) {
-                        battleLog.innerText = `⚡ Wild Cloud's Lightning Strike dealt massive critical damage of ${counterDamage}!`;
+                        battleLog.innerText = `âš¡ Wild Cloud's Lightning Strike dealt massive critical damage of ${counterDamage}!`;
                     } else if (isWildCloud) {
-                        battleLog.innerText = `🌊 Wild Cloud's water blast splashed you for ${counterDamage} damage!`;
+                        battleLog.innerText = `ðŸŒŠ Wild Cloud's water blast splashed you for ${counterDamage} damage!`;
                     } else if (isWildHashtagHell && window.isWildHashtagHellBoost) {
-                        battleLog.innerText = `😈 Wild Hashtag Hell's Hellfire Corruption dealt ${counterDamage} damage!`;
+                        battleLog.innerText = `ðŸ˜ˆ Wild Hashtag Hell's Hellfire Corruption dealt ${counterDamage} damage!`;
                     } else if (isWildHashtagHell) {
-                        battleLog.innerText = `🔥 Wild Hashtag Hell hit you with Glitch Fire for ${counterDamage} damage!`;
+                        battleLog.innerText = `ðŸ”¥ Wild Hashtag Hell hit you with Glitch Fire for ${counterDamage} damage!`;
                     } else if (isWildHashtagBase && window.isWildHashtagBoost) {
-                        battleLog.innerText = `🌪️ Wild #SHITPOST STORM crushed you for ${counterDamage} damage!`;
+                        battleLog.innerText = `ðŸŒªï¸ Wild #SHITPOST STORM crushed you for ${counterDamage} damage!`;
                     } else if (isWildHashtagBase) {
-                        battleLog.innerText = `💥 Wild Hashtag hit you with a glowing #hashtag for ${counterDamage} damage!`;
+                        battleLog.innerText = `ðŸ’¥ Wild Hashtag hit you with a glowing #hashtag for ${counterDamage} damage!`;
                     } else if (isWildFomoDoom && window.isWildFomoDoomBoost) {
-                        battleLog.innerText = `👁️ Wild Fomo Doom's Void Mind Storm dealt critical damage of ${counterDamage}!`;
+                        battleLog.innerText = `ðŸ‘ï¸ Wild Fomo Doom's Void Mind Storm dealt critical damage of ${counterDamage}!`;
                     } else if (isWildFomoDoom) {
-                        battleLog.innerText = `👁️ Wild Fomo Doom hit you with a dark psychic beam for ${counterDamage} damage!`;
+                        battleLog.innerText = `ðŸ‘ï¸ Wild Fomo Doom hit you with a dark psychic beam for ${counterDamage} damage!`;
                     } else if (isWildFomo) {
-                        battleLog.innerText = `🔮 Wild Fomo Phantom hit you with Psychic Pulse for ${counterDamage} damage!`;
+                        battleLog.innerText = `ðŸ”® Wild Fomo Phantom hit you with Psychic Pulse for ${counterDamage} damage!`;
                     } else {
                         battleLog.innerText = `${enemyDisplayName} counter-attacked for ${counterDamage} damage!`;
                     }
@@ -1130,9 +1130,38 @@ window.battleAttack = function() {
                     updateHpBars();
 
                     if (activeFighter) activeFighter.fainted = true;
-                    if (typeof window.saveGameData === 'function') window.saveGameData();
 
-                    if (battleLog) battleLog.innerText = `💀 Your fighter fainted! Fleeing battle...`;
+                    // Squad rotation check for 3v3 / squad play
+                    if (typeof window.playerBattleSquad !== 'undefined' && Array.isArray(window.playerBattleSquad)) {
+                        let nextHealthyIndex = -1;
+                        for (let i = 0; i < window.playerBattleSquad.length; i++) {
+                            if (!window.playerBattleSquad[i].fainted && window.playerBattleSquad[i].currentHp > 0) {
+                                nextHealthyIndex = i;
+                                break;
+                            }
+                        }
+
+                        if (nextHealthyIndex !== -1) {
+                            if (typeof playerData !== 'undefined' && playerData.inventory) {
+                                const invIndex = playerData.inventory.findIndex(r => r.name === window.playerBattleSquad[nextHealthyIndex].name);
+                                if (invIndex !== -1) playerData.activeFighterIndex = invIndex;
+                            }
+                            
+                            let nextRot = window.playerBattleSquad[nextHealthyIndex];
+                            window.maxPlayerHp = nextRot.maxHp || (50 + (nextRot.level || 1) * 15);
+                            window.playerHp = window.maxPlayerHp;
+                            
+                            updatePlayerFighterDisplay(nextRot, nextRot.level || 1);
+                            updateHpBars();
+                            
+                            if (battleLog) battleLog.innerText = `💀 ${activeFighter.name} fainted! Deployed squad member: ${nextRot.name}!`;
+                            if (typeof window.saveGameData === 'function') window.saveGameData();
+                            return;
+                        }
+                    }
+
+                    if (typeof window.saveGameData === 'function') window.saveGameData();
+                    if (battleLog) battleLog.innerText = `💀 Entire squad fainted! Fleeing battle...`;
                     setTimeout(window.closeBattle, 1500);
                 }
             }
@@ -1179,7 +1208,7 @@ window.openBattleSwitch = function() {
             <div onclick="selectNewFighter(${index})" style="background: ${isFainted ? '#2a1a1a' : (isCurrent ? '#1a3a1a' : '#222')}; border: 2px solid ${isFainted ? '#ff0055' : (isCurrent ? '#00ff00' : '#555')}; border-radius: 8px; padding: 8px; cursor: pointer; text-align: center; opacity: ${isFainted ? '0.6' : '1'};">
                 <img src="${rotImage}" style="width: 50px; height: 50px; object-fit: contain; ${isFainted ? 'filter: grayscale(100%);' : ''}" onerror="this.style.display='none';">
                 <div style="font-size: 0.75rem; font-weight: bold; margin-top: 4px; color: #fff;">${rot.name}</div>
-                <div style="font-size: 0.65rem; color: ${isFainted ? '#ff0055' : '#00ff00'};">${isFainted ? '💀 FAINTED' : 'Lvl ' + (rot.level || 1)}</div>
+                <div style="font-size: 0.65rem; color: ${isFainted ? '#ff0055' : '#00ff00'};">${isFainted ? 'ðŸ’€ FAINTED' : 'Lvl ' + (rot.level || 1)}</div>
                 ${isCurrent ? '<div style="font-size: 0.55rem; color: #00ff00; font-weight: bold; margin-top: 2px;">(ACTIVE)</div>' : ''}
             </div>
         `;
@@ -1200,7 +1229,7 @@ window.selectNewFighter = function(index) {
 
     const newRot = playerData.inventory[index];
     if (newRot.fainted) {
-        alert("❌ This rot has fainted! You must revive it at the Revive Station before using it in battle.");
+        alert("âŒ This rot has fainted! You must revive it at the Revive Station before using it in battle.");
         return;
     }
 
@@ -1275,7 +1304,7 @@ window.battleCatch = function() {
             }
         }
 
-        if (battleLog) battleLog.innerText = `Captured Lvl ${caughtLevel} ${caughtName}! (+3 Candy🍬)`;
+        if (battleLog) battleLog.innerText = `Captured Lvl ${caughtLevel} ${caughtName}! (+3 CandyðŸ¬)`;
         window.currentWildCreature = null;
         setTimeout(window.closeBattle, 1500);
     }
