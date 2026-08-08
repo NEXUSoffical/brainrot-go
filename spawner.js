@@ -71,7 +71,7 @@ injectShinyStyles();
 function shouldFloat(charName) {
   if (!charName) return false;
   const lower = charName.toLowerCase();
-  return lower.includes('cloud') || lower.includes('hashtag') || lower.includes('glitch') || lower.includes('spirit') || lower.includes('phantom');
+  return lower.includes('cloud') || lower.includes('hashtag') || lower.includes('glitch') || lower.includes('spirit') || lower.includes('phantom') || lower.includes('fomo');
 }
 
 function getRandomLevel() {
@@ -92,7 +92,7 @@ function getRandomLevel() {
 function getRandomBrainrot() {
   if (typeof brainrotCharacters === 'undefined' || !Array.isArray(brainrotCharacters)) {
     console.warn("⚠️ brainrotCharacters is missing or not an array!");
-    return { name: "Noobini Pizzanini", rarity: "common", reward: 1, image: "brainrots/noobini_pizzanini.png" };
+    return { name: "Chad Cloud", rarity: "common", reward: 3, image: "brainrots/chad_cloud.png" };
   }
 
   // ☘️ ULTRA RARE ROLL: 0.1% chance (0.001) to find God Cloud
@@ -112,19 +112,19 @@ function getRandomBrainrot() {
   );
   
   if (validCharacters.length === 0) {
-    return { name: "Noobini Pizzanini", rarity: "common", reward: 1, image: "brainrots/noobini_pizzanini.png" };
+    return { name: "Chad Cloud", rarity: "common", reward: 3, image: "brainrots/chad_cloud.png" };
   }
 
-  // Assign weighted spawn chances so commons appear much more often than rares
+  // Assign weighted spawn chances so commons appear much more often than rares/evolutions
   const weightedPool = [];
   validCharacters.forEach(char => {
     const rarity = (char.rarity || 'common').toLowerCase();
     let weight = 1;
 
     if (rarity === 'common') {
-      weight = 10; // Commons (Chad Cloud, Fomo Phantom) spawn 10x more frequently
+      weight = 10; // Commons spawn 10x more frequently
     } else if (rarity === 'rare') {
-      weight = 3;  // Rares (Hashtag) spawn much less frequently
+      weight = 3;  // Rares (like Hashtag & Fomo Doom) spawn much less frequently
     } else if (rarity === 'secret') {
       weight = 1;  // Secrets are very scarce
     }

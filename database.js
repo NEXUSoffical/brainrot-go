@@ -50,6 +50,19 @@ const brainrotCharacters = [
         baseHp: 50,
         baseAtk: 12,
         baseDef: 10,
-        reward: 3
+        reward: 3,
+        evolution: {
+            target: "Fomo Doom",
+            candyCost: 50
+        }
+    },
+    {
+        name: "Fomo Doom",
+        rarity: "rare",
+        image: "brainrots/fomo_doom.png",
+        baseHp: 120,
+        baseAtk: 28,
+        baseDef: 22,
+        reward: 15
     }
 ];
