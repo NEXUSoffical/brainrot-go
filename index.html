@@ -113,7 +113,7 @@
             align-items: center; justify-content: center; color: #fff; font-family: monospace; text-align: center; padding: 20px;
         }
 
-        /* FULL SCREEN INVENTORY MODAL */
+        /* FULL SCREEN INVENTORY MODAL & TRANSPARENCY FIXES */
         #inventoryModal {
             position: fixed;
             top: 0;
@@ -128,6 +128,16 @@
             padding: 20px;
             box-sizing: border-box;
             font-family: monospace;
+        }
+
+        /* Force transparent backgrounds for inventory cards and rot-dex item images */
+        .inventory-card img, 
+        .dex-item-card img,
+        .rot-card img,
+        #dexModal img,
+        #inventoryModal img {
+            background: transparent !important;
+            background-color: transparent !important;
         }
 
         /* Scrollable Grid Container */
@@ -376,7 +386,7 @@
         <p>📍 <b>LNG:</b> <span id="lngVal">Loading...</span></p>
         <hr style="margin: 6px 0; border-color: #333;">
         <p>📦 <b>INVENTORY:</b> <span id="inventoryCount">0</span> Rots</p>
-        <p>🪩 <b>ROT:</b> <span id="rotBalance">500</span></p>
+        <p>💩 <b>ROT:</b> <span id="rotBalance">500</span></p>
     </div>
 
     <!-- PLAYER PROFILE WIDGET (TOP RIGHT) -->
