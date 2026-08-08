@@ -130,7 +130,6 @@
             font-family: monospace;
         }
 
-        /* Force transparent backgrounds for inventory cards and rot-dex item images */
         .inventory-card img, 
         .dex-item-card img,
         .rot-card img,
@@ -140,7 +139,6 @@
             background-color: transparent !important;
         }
 
-        /* Scrollable Grid Container */
         .inventory-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
@@ -206,9 +204,7 @@
             text-align: center; color: #fff; box-shadow: 0 0 25px rgba(255, 0, 127, 0.6); width: 92%; max-width: 440px;
         }
         .modal-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-height: 280px; overflow-y: auto; margin-top: 12px; padding-right: 4px; }
-
         .close-x-btn { position: absolute; top: 15px; right: 20px; background: none; border: none; color: #ff007f; font-size: 1.6rem; cursor: pointer; font-weight: bold; }
-
         .leaflet-marker-pane .custom-brainrot-pin { pointer-events: auto !important; z-index: 9999 !important; }
     </style>
 </head>
@@ -221,130 +217,60 @@
         left: 0 !important;
         width: 100vw !important;
         height: 100vh !important;
-        background: #000 url('brainrots/image_2.png') no-repeat center center/cover !important;
+        background: url('brainrots/homescreen.png') no-repeat center center/cover !important;
         z-index: 99999999 !important;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: space-between;
         padding: 30px 20px;
-        font-family: 'Arial Black', Gadget, sans-serif;
+        font-family: monospace;
         color: #fff;
         box-sizing: border-box;
-        overflow: hidden;
+        overflow-y: auto;
     ">
-        <!-- Dark Tint Overlay for Readability -->
-        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.55); z-index: 1;"></div>
+        <!-- Dark Tint Overlay for Text Readability -->
+        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.45); z-index: 1;"></div>
 
         <!-- Top Active Players Badge -->
-        <div style="width: 100%; display: flex; justify-content: flex-start; z-index: 2;">
-            <div style="background: rgba(0, 0, 0, 0.85); border: 2px solid #76ff03; padding: 6px 16px; border-radius: 20px; display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: bold; box-shadow: 0 0 12px rgba(118,255,3,0.4);">
-                <div style="width: 9px; height: 9px; background-color: #76ff03; border-radius: 50%; box-shadow: 0 0 10px #76ff03;"></div>
-                <span id="landingPlayerCount" style="color: #76ff03;">1</span> <span style="color:#fff;">players</span>
+        <div style="width: 100%; display: flex; justify-content: flex-start; max-width: 450px; z-index: 2;">
+            <div style="background: rgba(0, 0, 0, 0.85); border: 1px solid rgba(52, 211, 110, 0.4); padding: 6px 14px; border-radius: 20px; display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: bold;">
+                <div style="width: 8px; height: 8px; background-color: #00ff66; border-radius: 50%; box-shadow: 0 0 8px #00ff66;"></div>
+                <span id="landingPlayerCount" style="color: #fff;">1</span> <span style="color:#aaa;">players live</span>
             </div>
         </div>
 
-        <!-- Center Logo-Inspired Branding -->
-        <div style="display: flex; flex-direction: column; align-items: center; text-align: center; width: 100%; z-index: 2; margin-top: -10px;">
-            
-            <div style="font-size: 0.85rem; font-style: italic; color: #76ff03; letter-spacing: 2px; margin-bottom: 15px; text-shadow: 0 0 8px rgba(118,255,3,0.8); transform: rotate(-3deg);">
-                CATCH. COLLECT. GO CRAZY.
-            </div>
-
-            <!-- Main Logo Stack -->
-            <div style="
-                background: rgba(0, 0, 0, 0.88);
-                border: 4px solid #76ff03;
-                border-radius: 20px;
-                padding: 22px 28px;
-                box-shadow: 0 0 40px rgba(118,255,3,0.5), inset 0 0 20px rgba(118,255,3,0.2);
-                max-width: 340px;
-                width: 100%;
-                margin-bottom: 25px;
-                position: relative;
-                backdrop-filter: blur(4px);
-            ">
-                <div style="
-                    font-size: 2.2rem;
-                    font-weight: 900;
-                    letter-spacing: 1px;
-                    color: #ffffff;
-                    text-transform: uppercase;
-                    text-shadow: 3px 3px 0px #000, 0 0 15px rgba(255,255,255,0.8);
-                    line-height: 1.1;
-                    margin-bottom: 8px;
-                ">BRAINROT</div>
-
-                <div style="
-                    font-size: 2.6rem;
-                    font-weight: 900;
-                    letter-spacing: 2px;
-                    color: #76ff03;
-                    text-transform: uppercase;
-                    text-shadow: 2px 2px 0px #000, 0 0 20px rgba(118,255,3,0.9);
-                    line-height: 1;
-                    margin-bottom: 12px;
-                ">ROT</div>
-
-                <div style="
-                    display: inline-flex;
-                    align-items: center;
-                    justify-content: center;
-                    background: #ffffff;
-                    color: #000;
-                    font-size: 1.8rem;
-                    font-weight: 900;
-                    padding: 4px 24px;
-                    border-radius: 30px;
-                    box-shadow: 0 4px 15px rgba(255,255,255,0.4);
-                    letter-spacing: 2px;
-                    gap: 8px;
-                ">
-                    <span>GO</span>
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="9"></circle>
-                        <line x1="12" y1="3" x2="12" y2="7"></line>
-                        <line x1="12" y1="17" x2="12" y2="21"></line>
-                        <line x1="3" y1="12" x2="7" y2="12"></line>
-                        <line x1="17" y1="12" x2="21" y2="12"></line>
-                    </svg>
-                </div>
-            </div>
-
+        <!-- Center Content & Play Button -->
+        <div style="display: flex; flex-direction: column; align-items: center; text-align: center; width: 100%; max-width: 450px; gap: 15px; z-index: 2; margin: auto 0;">
             <button onclick="dismissHomeScreen()" style="
-                background: linear-gradient(135deg, #76ff03 0%, #00e676 100%);
-                color: #000000;
+                background: linear-gradient(135deg, #7bff9e, #34d36e);
+                color: #0a2312;
                 font-size: 1.3rem;
                 font-weight: 900;
                 padding: 16px 0;
                 width: 100%;
                 max-width: 280px;
                 border: none;
-                border-radius: 35px;
+                border-radius: 30px;
                 cursor: pointer;
-                box-shadow: 0 8px 25px rgba(118, 255, 3, 0.6);
+                box-shadow: 0 6px 20px rgba(52, 211, 110, 0.6);
                 text-transform: uppercase;
-                letter-spacing: 2px;
-                margin-bottom: 12px;
-                transition: transform 0.1s ease;
-            ">PLAY NOW</button>
-            
-            <div style="font-size: 0.7rem; color: #a5d6a7; margin-bottom: 15px; font-family: monospace; text-shadow: 0 2px 4px rgba(0,0,0,0.9);">
-                Explore real-world geolocation, collect rots & battle gyms!
-            </div>
+                letter-spacing: 1px;
+            ">Play Now</button>
 
             <!-- Contract Address Pill -->
-            <div onclick="copyLandingCA()" style="background: rgba(0, 0, 0, 0.9); border: 1px solid #76ff03; padding: 8px 16px; border-radius: 25px; display: flex; align-items: center; gap: 10px; font-size: 0.75rem; cursor: pointer; font-family: monospace;">
-                <span style="color: #76ff03; font-weight: bold;">$ROT CA</span>
-                <span id="landingCAText" style="color: #ccc;">75yx...pump</span>
+            <div onclick="copyLandingCA()" style="background: rgba(0, 0, 0, 0.85); border: 1px solid rgba(255, 255, 255, 0.2); padding: 8px 16px; border-radius: 25px; display: inline-flex; align-items: center; gap: 10px; font-size: 0.8rem; cursor: pointer;">
+                <span style="color: #34d36e; font-weight: bold;">$ROT CA</span>
+                <span id="landingCAText" style="color: #ccc;">8Byg...Qpump</span>
                 <span>📋</span>
             </div>
         </div>
 
         <!-- Bottom Social Links & Docs Button -->
-        <div style="display: flex; gap: 15px; z-index: 2; align-items: center; flex-wrap: wrap; justify-content: center;">
-            <a href="docs.html" style="background: rgba(0,0,0,0.9); border: 2px solid #76ff03; color: #76ff03; padding: 10px 16px; border-radius: 25px; text-decoration: none; font-weight: bold; font-size: 0.8rem; box-shadow: 0 0 10px rgba(118,255,3,0.3); display: flex; align-items: center; gap: 6px;">📖 GAME DOCS</a>
-            <a href="https://x.com/brainr0tgo" target="_blank" style="width: 45px; height: 45px; background: rgba(0,0,0,0.9); border: 2px solid #76ff03; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: #76ff03; text-decoration: none; box-shadow: 0 0 10px rgba(118,255,3,0.3);">𝕏</a>
+        <div style="display: flex; gap: 12px; align-items: center; justify-content: center; width: 100%; max-width: 450px; z-index: 2;">
+            <a href="docs.html" style="background: rgba(0,0,0,0.85); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 8px 16px; border-radius: 20px; text-decoration: none; font-weight: bold; font-size: 0.8rem; display: flex; align-items: center; gap: 6px;">📄 Game Docs</a>
+            <a href="https://twitter.com" target="_blank" style="background: rgba(0,0,0,0.85); border: 1px solid rgba(255,255,255,0.2); color: #fff; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 0.9rem;">𝕏</a>
+            <a href="https://discord.gg/yourinvite" target="_blank" style="background: rgba(0,0,0,0.85); border: 1px solid rgba(255,255,255,0.2); color: #fff; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 0.9rem;">💬</a>
         </div>
     </div>
 
@@ -422,9 +348,7 @@
             <h2>🧠 GAME MENU</h2>
             <p style="font-size: 0.7rem; color: #aaa; margin-bottom: 5px;">Access all features & tools</p>
             
-            <!-- Movement Mode Toggle Button -->
             <button id="movementModeBtn" class="btn-hud" style="width: 100%; background: #ffcc00; color: #000;" onclick="closeGameMenu(); window.toggleMovementMode()">🕹️ MODE: D-PAD</button>
-            
             <button class="btn-hud" style="width: 100%; background: linear-gradient(135deg, #00ff55, #00ffee); color: #000;" onclick="closeGameMenu(); window.openBattlePassModal()">🏆 BATTLE PASS</button>
             <button class="btn-hud" style="width: 100%; background: #333; color: #aaa; border: 1px dashed #777; cursor: not-allowed;" onclick="alert('🌐 TRADE MARKET & CHAT: Coming soon in the next update!')">🔒 TRADE MARKET (SOON)</button>
             <button class="btn-hud" style="width: 100%;" onclick="closeGameMenu(); openInventory()">📦 INVENTORY</button>
@@ -523,11 +447,12 @@
         }
 
         function copyLandingCA() {
-            navigator.clipboard.writeText("75yxF9vQenbSd3VK1Nm8bnxscFU96LGRNz8xk1XXpump");
+            const fullCA = "8BygVz9qpumpFakeContractAddressExample12345";
+            navigator.clipboard.writeText(fullCA);
             const caText = document.getElementById('landingCAText');
             if (caText) {
                 caText.innerText = "Copied!";
-                setTimeout(() => { caText.innerText = "75yx...pump"; }, 2000);
+                setTimeout(() => { caText.innerText = "8Byg...Qpump"; }, 2000);
             }
         }
 
