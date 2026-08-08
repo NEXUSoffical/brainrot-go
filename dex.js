@@ -16,7 +16,7 @@ if (typeof window.currentInventorySort === 'undefined') {
     window.currentInventorySort = 'newest';
 }
 
-// 🛡️ SECURE STATE WRAPPER (ANTI-CHEAT GUARD DOG)
+// 🛡️ SECURE STATE WRAPPER (ANTI-CHEAT GUARD DOG & AUTO-SAVER)
 if (!window._internalPlayerData) {
     window._internalPlayerData = {
         username: "",
@@ -41,6 +41,11 @@ if (!window.playerData) {
                 return false;
             }
             target[property] = value;
+            
+            // ⚡ AUTOMATIC SAVE WHENEVER PLAYER DATA CHANGES ANYWHERE!
+            if (typeof window.saveGameData === 'function') {
+                window.saveGameData();
+            }
             return true;
         }
     });
@@ -561,13 +566,13 @@ function renderInventoryGrid() {
 
     modal.innerHTML = `
         <div style="width: 100%; max-width: 800px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <h2 style="margin: 0; color: #ffcc00; text-transform: uppercase; font-size: 1.4rem;">🎒 INVENTORY</h2>
+            <h2 style="margin: 0; color: #ffcc00; text-transform: uppercase; font-size: 1.4rem;">📦 INVENTORY</h2>
             <button onclick="closeInventory()" style="background: #ff0055; color: #fff; border: 2px solid #fff; border-radius: 50%; width: 35px; height: 35px; font-weight: bold; cursor: pointer; font-size: 1.1rem;">X</button>
         </div>
 
         <div id="inventoryTabSwitcher" style="width: 100%; max-width: 800px; display: flex; gap: 10px; margin-bottom: 10px;">
             <button onclick="switchInventoryTab('rots')" id="btnTabRots" style="flex: 1; background: ${window.currentInventoryTab === 'rots' ? '#ffcc00' : '#222'}; color: ${window.currentInventoryTab === 'rots' ? '#000' : '#fff'}; border: 2px solid #ffcc00; padding: 10px; font-weight: bold; border-radius: 8px; cursor: pointer; font-family: monospace;">🧠 ROTS</button>
-            <button onclick="switchInventoryTab('items')" id="btnTabItems" style="flex: 1; background: ${window.currentInventoryTab === 'items' ? '#ffcc00' : '#222'}; color: ${window.currentInventoryTab === 'items' ? '#000' : '#fff'}; border: 2px solid #ffcc00; padding: 10px; font-weight: bold; border-radius: 8px; cursor: pointer; font-family: monospace;">🎒 ITEMS</button>
+            <button onclick="switchInventoryTab('items')" id="btnTabItems" style="flex: 1; background: ${window.currentInventoryTab === 'items' ? '#ffcc00' : '#222'}; color: ${window.currentInventoryTab === 'items' ? '#000' : '#fff'}; border: 2px solid #ffcc00; padding: 10px; font-weight: bold; border-radius: 8px; cursor: pointer; font-family: monospace;">📦 ITEMS</button>
         </div>
 
         ${window.currentInventoryTab === 'rots' ? `
@@ -580,7 +585,7 @@ function renderInventoryGrid() {
                 💎 RARITY
             </button>
             <button onclick="setInventorySort('newest')" style="flex: 1; padding: 8px; background: ${window.currentInventorySort === 'newest' ? '#ff0055' : '#222'}; color: ${window.currentInventorySort === 'newest' ? '#000' : '#fff'}; border: 2px solid #ff0055; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: monospace; font-size: 0.8rem;">
-                🕒 NEWEST
+                ⏱️ NEWEST
             </button>
         </div>` : ''}
 
@@ -660,7 +665,7 @@ function renderInventoryGrid() {
                     ❤️ ${stats.maxHp} | ⚔️ ${stats.atk}
                 </div>
                 <div style="font-size: 0.6rem; color: ${isInGym ? '#00ccff' : (isFainted ? '#ff0055' : '#00ff00')}; margin-top: 2px;">
-                    ${isInGym ? '🏰 [IN GYM]' : (isFainted ? '💀 FAINTED' : 'READY')}
+                    ${isInGym ? '🏟️ [IN GYM]' : (isFainted ? '💀 FAINTED' : 'READY')}
                 </div>
                 <div style="display: flex; gap: 4px; margin-top: 6px;">
                     ${!isActive && !isInGym && !isFainted ? `<button onclick="event.stopPropagation(); setActiveFighter(${index})" style="background: #00ff00; color: #000; border: none; padding: 4px; font-size: 0.6rem; font-weight: bold; border-radius: 4px; cursor: pointer; flex: 1;">ACTIVE</button>` : ''}

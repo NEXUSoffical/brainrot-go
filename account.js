@@ -1,4 +1,3 @@
-
 // account.js - Core Account Management & Authentication Logic
 
 if (typeof window.isSignUpMode === 'undefined') {
@@ -182,7 +181,9 @@ window.logoutAccount = async function() {
     }
     
     window.location.href = window.location.pathname;
-};// ==========================================
+};
+
+// ==========================================
 // UNIVERSAL CLOUD SAVE SYSTEM
 // ==========================================
 
@@ -214,3 +215,17 @@ window.saveGameData = async function() {
         console.error("❌ Failed to save to cloud:", error);
     }
 };
+
+// Auto-load local backup data when the page loads so progress persists on refresh
+document.addEventListener('DOMContentLoaded', () => {
+    const localBackup = localStorage.getItem('brainrot_local_backup');
+    if (localBackup && typeof setPlayerData === 'function') {
+        try {
+            const parsedData = JSON.parse(localBackup);
+            setPlayerData(parsedData);
+            console.log("⚡ Loaded local game backup successfully!");
+        } catch (e) {
+            console.error("Failed to load local backup", e);
+        }
+    }
+});
