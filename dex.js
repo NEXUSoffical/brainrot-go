@@ -148,18 +148,28 @@ window.loadGameData = async function() {
                 const mergedDex = Array.from(new Set([...(localData?.dex || []), ...(cloudData.dex || [])]));
                 const mergedShinyDex = Array.from(new Set([...(localData?.shinyDex || []), ...(cloudData.shinyDex || [])]));
                 
+                // 🛠️ SAFE MERGE: Combine local and cloud inventories without dropping items
                 const inventoryMap = new Map();
-                const allItems = [...(cloudData.inventory || []), ...(localData?.inventory || [])];
-                allItems.forEach(item => {
-                    const key = item.name + (item.shiny ? '_shiny' : '_std');
-                    const existing = inventoryMap.get(key);
-                    if (!existing || 
-                        (item.level || 1) > (existing.level || 1) || 
-                        ((item.level || 1) === (existing.level || 1) && (item.xp || 0) > (existing.xp || 0))) {
-                        inventoryMap.set(key, item);
+                const allItems = [...(localData?.inventory || []), ...(cloudData.inventory || [])];
+                
+                allItems.forEach((item, index) => {
+                    const uniqueKey = item.id || (item.name + '_' + index + '_' + (item.shiny ? 'shiny' : 'std'));
+                    if (!inventoryMap.has(uniqueKey)) {
+                        inventoryMap.set(uniqueKey, item);
+                    } else {
+                        const existing = inventoryMap.get(uniqueKey);
+                        if ((item.level || 1) >= (existing.level || 1)) {
+                            inventoryMap.set(uniqueKey, item);
+                        }
                     }
                 });
-                const mergedInventory = Array.from(inventoryMap.values());
+                
+                let mergedInventory = Array.from(inventoryMap.values());
+                if (mergedInventory.length < Math.max((localData?.inventory?.length || 0), (cloudData.inventory?.length || 0))) {
+                    mergedInventory = (localData?.inventory?.length || 0) >= (cloudData.inventory?.length || 0) 
+                        ? localData.inventory 
+                        : cloudData.inventory;
+                }
 
                 const bestAccountLevel = Math.max(
                     cloudData.accountLevel || cloudData.accLvl || 1, 
@@ -194,7 +204,7 @@ window.loadGameData = async function() {
                     luckyEggs: bestEggs
                 });
 
-                console.log("Game data successfully synced and merged from cloud!");
+                console.log("Game data successfully synced and merged safely from cloud!");
             }
         } catch (err) {
             console.error("Error restoring session from cloud:", err);
