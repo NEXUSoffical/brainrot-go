@@ -298,3 +298,47 @@ function startMovementLoop() {
         }
     }, 50);
 }
+
+// ==========================================
+// INVENTORY CAPACITY & MODAL OVERRIDE FIX
+// ==========================================
+
+window.openInventory = window.openInventoryModal = function() {
+    let invModal = document.getElementById('inventoryModal');
+    
+    if (!invModal) {
+        invModal = document.createElement('div');
+        invModal.id = 'inventoryModal';
+        document.body.appendChild(invModal);
+    }
+
+    invModal.style.cssText = `
+        position: fixed !important; 
+        top: 0 !important; 
+        left: 0 !important; 
+        width: 100vw !important; 
+        height: 100vh !important;
+        background: rgba(0, 0, 0, 0.95) !important; 
+        z-index: 9999999 !important; 
+        display: flex !important;
+        flex-direction: column !important; 
+        align-items: center !important; 
+        padding: 20px !important;
+        box-sizing: border-box !important; 
+        font-family: monospace !important; 
+        color: #fff !important;
+    `;
+
+    if (typeof renderInventoryGrid === 'function') {
+        renderInventoryGrid();
+    } else if (typeof renderInventoryModal === 'function') {
+        renderInventoryModal();
+    } else {
+        invModal.style.display = 'flex';
+    }
+};
+
+window.closeInventory = function() {
+    const modal = document.getElementById('inventoryModal');
+    if (modal) modal.style.display = 'none';
+};

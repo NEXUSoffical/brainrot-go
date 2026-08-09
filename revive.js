@@ -1,8 +1,5 @@
 // revive.js - Revive Potions & Fainted Rots System
 
-// The panicky "Give 3 free potions" code has been DELETED! 
-// Now the game waits for your real cloud save to load.
-
 function openReviveModal() {
   let existing = document.getElementById('reviveModal');
   if (existing) existing.remove();
@@ -60,20 +57,22 @@ function openReviveModal() {
 
 window.reviveRot = function(index) {
   if (!playerData.revivePotions || playerData.revivePotions <= 0) {
-    alert("❌ You don't have any Revive Potions left! Level up to get more.");
+    if (typeof showGameToast === 'function') showGameToast("❌ You don't have any Revive Potions left!");
+    else alert("❌ You don't have any Revive Potions left!");
     return;
   }
 
   let rot = playerData.inventory[index];
   if (!rot || !rot.fainted) return;
 
-  // 🧪 THIS IS THE MATH THAT THROWS THE BOTTLE AWAY! 🧪
   playerData.revivePotions--;
   rot.fainted = false;
 
   if (typeof saveGameData === 'function') saveGameData();
   
-  alert(`🎉 Success! ${rot.name} has been revived and is ready for battle!`);
+  if (typeof showGameToast === 'function') {
+    showGameToast(`🎉 Success! ${rot.name} has been revived!`);
+  }
   
   updatePotionHud(); // Tell the main screen to update the button number!
   openReviveModal(); // Refresh the modal list

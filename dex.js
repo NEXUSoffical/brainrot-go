@@ -16,7 +16,6 @@ if (typeof window.currentInventorySort === 'undefined') {
     window.currentInventorySort = 'newest';
 }
 
-// 🛡️ SECURE STATE WRAPPER (ANTI-CHEAT GUARD DOG & AUTO-SAVER)
 if (!window._internalPlayerData) {
     window._internalPlayerData = {
         username: "",
@@ -28,7 +27,8 @@ if (!window._internalPlayerData) {
         inventory: [],   
         activeFighterIndex: 0,
         revivePotions: 3,
-        luckyEggs: 0
+        luckyEggs: 0,
+        maxInventorySlots: 100
     };
 }
 
@@ -36,13 +36,15 @@ if (!window.playerData) {
     window.playerData = new Proxy(window._internalPlayerData, {
         set(target, property, value) {
             if (property === 'rotBalance' && value > (target.rotBalance + 10000)) {
-                console.warn("🚨 ANTI-CHEAT: Unauthorized balance modification blocked!");
-                alert("Nice try! Anti-cheat blocked your hack. 😉");
+                console.warn("ANTI-CHEAT: Unauthorized balance modification blocked!");
+                if (typeof showGameToast === 'function') {
+                    showGameToast("Anti-cheat blocked your hack.");
+                } else {
+                    alert("Nice try! Anti-cheat blocked your hack.");
+                }
                 return false;
             }
             target[property] = value;
-            
-            // ⚡ AUTOMATIC SAVE WHENEVER PLAYER DATA CHANGES ANYWHERE!
             if (typeof window.saveGameData === 'function') {
                 window.saveGameData();
             }
@@ -77,9 +79,9 @@ function setPlayerData(newData) {
     window._internalPlayerData.activeFighterIndex = typeof newData.activeFighterIndex !== 'undefined' ? newData.activeFighterIndex : (window._internalPlayerData.activeFighterIndex || 0);
     window._internalPlayerData.revivePotions = typeof newData.revivePotions !== 'undefined' ? newData.revivePotions : (window._internalPlayerData.revivePotions || 3);
     window._internalPlayerData.luckyEggs = typeof newData.luckyEggs !== 'undefined' ? newData.luckyEggs : (window._internalPlayerData.luckyEggs || 0);
+    window._internalPlayerData.maxInventorySlots = typeof newData.maxInventorySlots !== 'undefined' ? newData.maxInventorySlots : (window._internalPlayerData.maxInventorySlots || 100);
 }
 
-// Balanced XP Curve
 window.addAccountXp = function(amount) {
     const hasLuckyEgg = window.activeLuckyEggTime && Date.now() < window.activeLuckyEggTime;
     const finalXp = hasLuckyEgg ? amount * 2 : amount;
@@ -94,7 +96,6 @@ window.addAccountXp = function(amount) {
         window._internalPlayerData.accountLevel = (window._internalPlayerData.accountLevel || 1) + 1;
         currentLevel = window._internalPlayerData.accountLevel;
         requiredXp = currentLevel * 250;
-        console.log(`🎉 Account leveled up to Level ${currentLevel}!`);
     }
 
     window.saveGameData();
@@ -120,7 +121,6 @@ window.saveGameData = async function() {
         const cleanDataObject = JSON.parse(cleanDataString);
         await firebase.firestore().collection('accounts').doc(window._internalPlayerData.username).set(cleanDataObject);
         localStorage.setItem('brainrot_logged_in_user', window._internalPlayerData.username);
-        console.log("⚡ Game data saved successfully to cloud and local!");
     } catch (err) {
         console.warn("Cloud save skipped/failed, saved locally instead:", err);
     }
@@ -148,7 +148,6 @@ window.loadGameData = async function() {
                 const mergedDex = Array.from(new Set([...(localData?.dex || []), ...(cloudData.dex || [])]));
                 const mergedShinyDex = Array.from(new Set([...(localData?.shinyDex || []), ...(cloudData.shinyDex || [])]));
                 
-                // 🛠️ FIX: Choose the correct inventory without stacking duplicates
                 let localInv = localData?.inventory || [];
                 let cloudInv = cloudData.inventory || [];
                 let finalInventory = localInv.length >= cloudInv.length ? localInv : cloudInv;
@@ -173,6 +172,8 @@ window.loadGameData = async function() {
                 const localEggs = typeof localData?.luckyEggs !== 'undefined' ? localData.luckyEggs : 0;
                 const bestEggs = Math.min(cloudEggs, localEggs);
 
+                const bestSlots = Math.max(cloudData.maxInventorySlots || 100, localData?.maxInventorySlots || 100);
+
                 setPlayerData({
                     username: cloudData.username || activeUser,
                     rotBalance: Math.max(cloudData.rotBalance || 0, localData?.rotBalance || 0),
@@ -183,10 +184,9 @@ window.loadGameData = async function() {
                     inventory: finalInventory,
                     activeFighterIndex: cloudData.activeFighterIndex || localData?.activeFighterIndex || 0,
                     revivePotions: bestRevives,
-                    luckyEggs: bestEggs
+                    luckyEggs: bestEggs,
+                    maxInventorySlots: bestSlots
                 });
-
-                console.log("Game data successfully loaded without duplication!");
             }
         } catch (err) {
             console.error("Error restoring session from cloud:", err);
@@ -265,7 +265,8 @@ window.handleAccountAction = async function() {
     const password = passwordInput ? passwordInput.value.trim() : "";
 
     if (!rawUsername || !password) {
-        alert("Please enter both username and password!");
+        if (typeof showGameToast === 'function') showGameToast("Please enter both username and password!");
+        else alert("Please enter both username and password!");
         return;
     }
 
@@ -298,11 +299,12 @@ window.handleAccountAction = async function() {
                 inventory: [starterInstance],
                 activeFighterIndex: 0,
                 revivePotions: 3,
-                luckyEggs: 0
+                luckyEggs: 0,
+                maxInventorySlots: 100
             });
 
             await window.saveGameData();
-            alert(`Account created successfully! Welcome, ${rawUsername}!`);
+            if (typeof showGameToast === 'function') showGameToast(`Account created successfully! Welcome, ${rawUsername}!`);
         } else {
             await firebase.auth().signInWithEmailAndPassword(email, password);
 
@@ -325,11 +327,14 @@ window.handleAccountAction = async function() {
     } catch (err) {
         console.error("Authentication error:", err);
         if (err.code === 'auth/email-already-in-use') {
-            alert("Username already exists! Please log in instead.");
+            if (typeof showGameToast === 'function') showGameToast("Username already exists! Please log in instead.");
+            else alert("Username already exists! Please log in instead.");
         } else if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-            alert("Invalid username or password!");
+            if (typeof showGameToast === 'function') showGameToast("Invalid username or password!");
+            else alert("Invalid username or password!");
         } else {
-            alert("Error: " + err.message);
+            if (typeof showGameToast === 'function') showGameToast("Error: " + err.message);
+            else alert("Error: " + err.message);
         }
     }
 };
@@ -369,7 +374,8 @@ window.signInWithGoogle = async function() {
                 inventory: [starterInstance],
                 activeFighterIndex: 0,
                 revivePotions: 3,
-                luckyEggs: 0
+                luckyEggs: 0,
+                maxInventorySlots: 100
             });
 
             const cleanDataString = JSON.stringify(window._internalPlayerData, (key, value) => {
@@ -392,7 +398,8 @@ window.signInWithGoogle = async function() {
 
     } catch (err) {
         console.error("Google Auth Error:", err);
-        alert("Error signing in with Google. Make sure popups aren't blocked!");
+        if (typeof showGameToast === 'function') showGameToast("Error signing in with Google. Make sure popups aren't blocked!");
+        else alert("Error signing in with Google. Make sure popups aren't blocked!");
     }
 };
 
@@ -414,6 +421,14 @@ window.logoutAccount = async function() {
 
 window.addToDex = function(creature) {
     if (!window.playerData.inventory) window.playerData.inventory = [];
+    
+    const maxSlots = window.playerData.maxInventorySlots || 100;
+    if (window.playerData.inventory.length >= maxSlots) {
+        if (typeof showGameToast === 'function') showGameToast(`Inventory is full! (${window.playerData.inventory.length}/${maxSlots}).`);
+        else alert(`Inventory is full! (${window.playerData.inventory.length}/${maxSlots}).`);
+        return;
+    }
+
     if (!window.playerData.dex) window.playerData.dex = [];
     if (!window.playerData.shinyDex) window.playerData.shinyDex = [];
 
@@ -442,7 +457,6 @@ window.addToDex = function(creature) {
     }
 
     window.addAccountXp(20);
-
     window.saveGameData();
     updateHUD();
 };
@@ -533,7 +547,6 @@ function renderInventoryGrid() {
         document.body.appendChild(modal);
     }
 
-    // Force true full-screen styling overriding any conflicting CSS classes
     modal.className = '';
     modal.style.cssText = `
         position: fixed !important;
@@ -556,11 +569,22 @@ function renderInventoryGrid() {
         color: #fff !important;
     `;
 
+    const currentSlots = (window.playerData.inventory || []).length;
+    const maxSlots = window.playerData.maxInventorySlots || 100;
+
     modal.innerHTML = `
-        <div style="width: 100%; max-width: 800px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <h2 style="margin: 0; color: #ffcc00; text-transform: uppercase; font-size: 1.4rem;">📦 INVENTORY</h2>
+        <div style="width: 100%; max-width: 800px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <div>
+                <h2 style="margin: 0; color: #ffcc00; text-transform: uppercase; font-size: 1.4rem;">📦 INVENTORY (${currentSlots}/${maxSlots})</h2>
+            </div>
             <button onclick="closeInventory()" style="background: #ff0055; color: #fff; border: 2px solid #fff; border-radius: 50%; width: 35px; height: 35px; font-weight: bold; cursor: pointer; font-size: 1.1rem;">X</button>
         </div>
+
+        ${maxSlots < 200 ? `
+        <div style="width: 100%; max-width: 800px; background: #1a1a1a; border: 2px dashed #ffcc00; border-radius: 8px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; box-sizing: border-box;">
+            <div style="font-size: 0.75rem; color: #ffcc00;">💡 Expand storage limit to 200 slots!</div>
+            <button onclick="upgradeInventorySlots()" style="background: #ffcc00; color: #000; border: none; padding: 6px 12px; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 0.75rem;">UPGRADE (250 Coins)</button>
+        </div>` : ''}
 
         <div id="inventoryTabSwitcher" style="width: 100%; max-width: 800px; display: flex; gap: 10px; margin-bottom: 10px;">
             <button onclick="switchInventoryTab('rots')" id="btnTabRots" style="flex: 1; background: ${window.currentInventoryTab === 'rots' ? '#ffcc00' : '#222'}; color: ${window.currentInventoryTab === 'rots' ? '#000' : '#fff'}; border: 2px solid #ffcc00; padding: 10px; font-weight: bold; border-radius: 8px; cursor: pointer; font-family: monospace;">🧠 ROTS</button>
@@ -568,7 +592,6 @@ function renderInventoryGrid() {
         </div>
 
         ${window.currentInventoryTab === 'rots' ? `
-        <!-- SORT BUTTONS BAR -->
         <div style="width: 100%; max-width: 800px; display: flex; gap: 8px; margin-bottom: 15px;">
             <button onclick="setInventorySort('power')" style="flex: 1; padding: 8px; background: ${window.currentInventorySort === 'power' ? '#00ff55' : '#222'}; color: ${window.currentInventorySort === 'power' ? '#000' : '#fff'}; border: 2px solid #00ff55; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: monospace; font-size: 0.8rem;">
                 ⚔️ POWER
@@ -581,7 +604,7 @@ function renderInventoryGrid() {
             </button>
         </div>` : ''}
 
-        <div id="inventoryGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; width: 100%; max-width: 800px; max-height: calc(100vh - 180px); overflow-y: auto; padding: 5px;"></div>
+        <div id="inventoryGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; width: 100%; max-width: 800px; max-height: calc(100vh - 220px); overflow-y: auto; padding: 5px;"></div>
     `;
 
     inventoryGrid = document.getElementById('inventoryGrid');
@@ -697,6 +720,31 @@ function renderInventoryGrid() {
     }
 };
 
+window.upgradeInventorySlots = function() {
+    const currentMax = window.playerData.maxInventorySlots || 100;
+    if (currentMax >= 200) {
+        if (typeof showGameToast === 'function') showGameToast("🎉 You already have the maximum inventory capacity of 200 slots!");
+        else alert("🎉 You already have the maximum inventory capacity of 200 slots!");
+        return;
+    }
+
+    const upgradeCost = 250;
+    if ((window.playerData.rotBalance || 0) < upgradeCost) {
+        if (typeof showGameToast === 'function') showGameToast(`❌ You need ${upgradeCost} coins to upgrade your inventory space!`);
+        else alert(`❌ You need ${upgradeCost} coins to upgrade your inventory space!`);
+        return;
+    }
+
+    if (confirm(`Upgrade inventory capacity from ${currentMax} to 200 slots for ${upgradeCost} coins?`)) {
+        window.playerData.rotBalance -= upgradeCost;
+        window.playerData.maxInventorySlots = 200;
+        window.saveGameData();
+        updateHUD();
+        if (typeof showGameToast === 'function') showGameToast("🎉 Inventory upgraded successfully to 200 slots!");
+        else alert("🎉 Inventory upgraded successfully to 200 slots!");
+    }
+};
+
 window.switchInventoryTab = function(tabName) {
     window.currentInventoryTab = tabName;
     renderInventoryGrid();
@@ -704,26 +752,30 @@ window.switchInventoryTab = function(tabName) {
 
 window.useLuckyEgg = function() {
     if ((window.playerData.luckyEggs || 0) <= 0) {
-        alert("❌ You don't have any Lucky Eggs! Visit the shop to buy some.");
+        if (typeof showGameToast === 'function') showGameToast("❌ You don't have any Lucky Eggs! Visit the shop to buy some.");
+        else alert("❌ You don't have any Lucky Eggs! Visit the shop to buy some.");
         return;
     }
     window.playerData.luckyEggs--;
-    window.activeLuckyEggTime = Date.now() + 3600000; // 1 hour
+    window.activeLuckyEggTime = Date.now() + 3600000;
     window.saveGameData();
-    alert("🥚 Lucky Egg activated! Double Account XP is now active for 1 hour!");
+    if (typeof showGameToast === 'function') showGameToast("🥚 Lucky Egg activated! Double Account XP is now active for 1 hour!");
+    else alert("🥚 Lucky Egg activated! Double Account XP is now active for 1 hour!");
     renderInventoryGrid();
     updatePotionHud();
 };
 
 window.useRevivePotionMenu = function() {
     if ((window.playerData.revivePotions || 0) <= 0) {
-        alert("❌ You don't have any Revive Potions! Visit the shop to buy some.");
+        if (typeof showGameToast === 'function') showGameToast("❌ You don't have any Revive Potions! Visit the shop to buy some.");
+        else alert("❌ You don't have any Revive Potions! Visit the shop to buy some.");
         return;
     }
 
     const faintedRots = (window.playerData.inventory || []).filter(r => r.fainted);
     if (faintedRots.length === 0) {
-        alert("👍 None of your rots need reviving right now!");
+        if (typeof showGameToast === 'function') showGameToast("👍 None of your rots need reviving right now!");
+        else alert("👍 None of your rots need reviving right now!");
         return;
     }
 
@@ -793,7 +845,8 @@ window.executeRevive = function(index) {
     if (!targetRot || !targetRot.fainted) return;
 
     if ((window.playerData.revivePotions || 0) <= 0) {
-        alert("❌ No revive potions left!");
+        if (typeof showGameToast === 'function') showGameToast("❌ No revive potions left!");
+        else alert("❌ No revive potions left!");
         return;
     }
 
@@ -804,7 +857,11 @@ window.executeRevive = function(index) {
     window.saveGameData();
     updatePotionHud();
 
-    alert(`🧪 Successfully revived ${targetRot.name}!`);
+    if (typeof showGameToast === 'function') {
+        showGameToast(`🧪 Successfully revived ${targetRot.name}!`);
+    } else {
+        alert(`🧪 Successfully revived ${targetRot.name}!`);
+    }
     
     const rModal = document.getElementById('reviveSelectModal');
     if (rModal) rModal.remove();
@@ -814,11 +871,13 @@ window.executeRevive = function(index) {
 window.transferRot = function(index) {
     const inventory = window.playerData.inventory || [];
     if (inventory.length <= 1) {
-        alert("You cannot transfer your last rot!");
+        if (typeof showGameToast === 'function') showGameToast("You cannot transfer your last rot!");
+        else alert("You cannot transfer your last rot!");
         return;
     }
     if (index === window.playerData.activeFighterIndex) {
-        alert("You cannot transfer your active fighter! Select a different fighter first.");
+        if (typeof showGameToast === 'function') showGameToast("You cannot transfer your active fighter! Select a different fighter first.");
+        else alert("You cannot transfer your active fighter! Select a different fighter first.");
         return;
     }
 
@@ -931,7 +990,6 @@ window.openDex = function() {
         document.body.appendChild(modal);
     }
 
-    // Force true full-screen styling overriding any conflicting CSS classes
     modal.className = '';
     modal.style.cssText = `
         position: fixed !important;
@@ -1001,7 +1059,8 @@ window.openReviveModal = function() {
 window.openAdminPanel = function() {
     const passwordInput = prompt("Enter Admin Secret Key:");
     if (passwordInput !== "Kitkat10") {
-        alert("Access Denied.");
+        if (typeof showGameToast === 'function') showGameToast("Access Denied.");
+        else alert("Access Denied.");
         return;
     }
 
@@ -1108,11 +1167,13 @@ window.clearAllAccounts = async function() {
             });
             await batch.commit();
             localStorage.removeItem('brainrot_logged_in_user');
-            alert("All cloud accounts wiped.");
+            if (typeof showGameToast === 'function') showGameToast("All cloud accounts wiped.");
+            else alert("All cloud accounts wiped.");
             location.reload();
         } catch (err) {
             console.error("Error wiping cloud accounts:", err);
-            alert("Failed to wipe database.");
+            if (typeof showGameToast === 'function') showGameToast("Failed to wipe database.");
+            else alert("Failed to wipe database.");
         }
     }
 };
@@ -1120,7 +1181,6 @@ window.clearAllAccounts = async function() {
 setInterval(() => {
     if (window.playerData && window.playerData.username) {
         window.saveGameData();
-        console.log("⚡ Auto-saved game state to cloud/local.");
     }
 }, 60000);
 

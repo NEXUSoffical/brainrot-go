@@ -14,10 +14,38 @@ function injectAnimationStyles() {
         .animated-map-sprite {
             animation: floatSprite 2.5s ease-in-out infinite;
         }
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translate(-50%, -10px); }
+            15% { opacity: 1; transform: translate(-50%, 0); }
+            85% { opacity: 1; transform: translate(-50%, 0); }
+            100% { opacity: 0; transform: translate(-50%, -10px); }
+        }
     `;
     document.head.appendChild(style);
 }
 injectAnimationStyles();
+
+// 🍞 NON-BLOCKING TOAST NOTIFICATION SYSTEM (Replaces annoying alerts!) 🍞
+window.showGameToast = function(message) {
+    const existing = document.getElementById('gameToast');
+    if (existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.id = 'gameToast';
+    toast.style.cssText = `
+        position: fixed !important; top: 20px !important; left: 50% !important;
+        transform: translateX(-50%) !important; background: rgba(10, 10, 10, 0.95) !important;
+        border: 2px solid #76ff03 !important; color: #fff !important; padding: 10px 20px !important;
+        border-radius: 25px !important; z-index: 999999999 !important; font-family: monospace !important;
+        font-size: 0.85rem !important; box-shadow: 0 0 20px rgba(118,255,3,0.5) !important;
+        text-align: center !important; pointer-events: none !important;
+        animation: fadeInOut 2.5s forwards !important;
+    `;
+    toast.innerText = message;
+    document.body.appendChild(toast);
+
+    setTimeout(() => { toast.remove(); }, 2500);
+};
 
 function startStrictLocation() {
     // 1. Check if the player's phone has GPS at all
@@ -155,14 +183,13 @@ window.openCardDetails = function(inventoryIndex) {
     
     const levelUpCost = rot.level * 2; 
 
-    // Check if this rot has an evolution path in database.js
     const charData = typeof brainrotCharacters !== 'undefined' 
         ? brainrotCharacters.find(c => c.name.toLowerCase().trim() === rot.name.toLowerCase().trim())
         : null;
 
     let evolveButtonHtml = '';
     if (charData && charData.evolution) {
-        const requiredCandies = charData.evolution.candyCost || 50; // Restored official candy cost lookup
+        const requiredCandies = charData.evolution.candyCost || 50;
         const canEvolve = candyCount >= requiredCandies;
 
         evolveButtonHtml = `
@@ -278,13 +305,14 @@ window.levelUpRot = function(index) {
         
         const newStats = calculateRotStats(rot);
         rot.maxHp = newStats.maxHp;
-        rot.hp = rot.maxHp;
+        rot.hp = newStats.maxHp;
         
         if (typeof window.saveGameData === 'function') window.saveGameData();
         
         openCardDetails(index);
+        showGameToast(`🎉 Successfully leveled up ${rot.name} to Lvl ${rot.level}!`);
     } else {
-        alert(`❌ Not enough candy! You need ${cost} Candies to reach Level ${rot.level + 1}.`);
+        showGameToast(`❌ Not enough candy! Need ${cost} candies.`);
     }
 };
 
@@ -292,7 +320,7 @@ window.transferRot = function(index) {
     if (typeof playerData === 'undefined' || !playerData.inventory || !playerData.inventory[index]) return;
     
     if (playerData.inventory.length <= 1) {
-        alert("🛑 You cannot transfer your very last Rot! You need at least one to fight.");
+        showGameToast("🚨 You cannot transfer your very last Rot!");
         return;
     }
 
@@ -317,6 +345,7 @@ window.transferRot = function(index) {
         
         document.getElementById('cardDetailModal').style.display = 'none';
         if (typeof window.renderInventory === 'function') window.renderInventory();
+        showGameToast(`🍬 Transferred ${rot.name} for 1 Candy!`);
     }
 };
 
@@ -416,7 +445,7 @@ window.renderInventoryModal = function() {
                 💎 RARITY
             </button>
             <button onclick="setInventorySort('newest')" style="flex: 1; padding: 10px; background: ${window.currentInventorySort === 'newest' ? '#ff0055' : '#222'}; color: ${window.currentInventorySort === 'newest' ? '#000' : '#fff'}; border: 2px solid #ff0055; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: monospace;">
-                🕒 NEWEST
+                ⏱️ NEWEST
             </button>
         </div>
 

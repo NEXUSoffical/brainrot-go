@@ -31,7 +31,8 @@ window.handleAccountAction = async function() {
     const password = passwordInput ? passwordInput.value.trim() : "";
 
     if (!rawUsername || !password) {
-        alert("Please enter both username and password!");
+        if (typeof showGameToast === 'function') showGameToast("Please enter both username and password!");
+        else alert("Please enter both username and password!");
         return;
     }
 
@@ -70,7 +71,11 @@ window.handleAccountAction = async function() {
             if (typeof window.saveGameData === 'function') {
                 await window.saveGameData();
             }
-            alert(`Account created successfully! Welcome, ${rawUsername}!`);
+            if (typeof showGameToast === 'function') {
+                showGameToast(`Account created successfully! Welcome, ${rawUsername}!`);
+            } else {
+                alert(`Account created successfully! Welcome, ${rawUsername}!`);
+            }
         } else {
             await firebase.auth().signInWithEmailAndPassword(email, password);
 
@@ -92,11 +97,14 @@ window.handleAccountAction = async function() {
     } catch (err) {
         console.error("Authentication error:", err);
         if (err.code === 'auth/email-already-in-use') {
-            alert("Username already exists! Please log in instead.");
+            if (typeof showGameToast === 'function') showGameToast("Username already exists! Please log in instead.");
+            else alert("Username already exists! Please log in instead.");
         } else if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-            alert("Invalid username or password!");
+            if (typeof showGameToast === 'function') showGameToast("Invalid username or password!");
+            else alert("Invalid username or password!");
         } else {
-            alert("Error: " + err.message);
+            if (typeof showGameToast === 'function') showGameToast("Error: " + err.message);
+            else alert("Error: " + err.message);
         }
     }
 };
@@ -159,7 +167,8 @@ window.signInWithGoogle = async function() {
 
     } catch (err) {
         console.error("Google Auth Error:", err);
-        alert("Error signing in with Google. Make sure popups aren't blocked!");
+        if (typeof showGameToast === 'function') showGameToast("Error signing in with Google. Make sure popups aren't blocked!");
+        else alert("Error signing in with Google. Make sure popups aren't blocked!");
     }
 };
 

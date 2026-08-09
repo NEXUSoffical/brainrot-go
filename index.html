@@ -277,7 +277,7 @@
     <!-- ACCOUNT LOGIN / REGISTER MODAL -->
     <div id="loginModal">
         <div class="login-box">
-            <h2 style="color: #76ff03; font-size: 1.4rem; text-shadow: 0 0 10px #76ff03;">🔐 BRAINROT GO ACCOUNT</h2>
+            <h2 style="color: #76ff03; font-size: 1.4rem; text-shadow: 0 0 10px #76ff03;">🔑 BRAINROT GO ACCOUNT</h2>
             <p style="font-size: 0.75rem; color: #aaa; margin-top: 4px;">Log in or sign up to play!</p>
             
             <input type="text" id="usernameInput" class="login-input" placeholder="Username..." maxlength="15">
@@ -354,7 +354,7 @@
             <button class="btn-hud" style="width: 100%;" onclick="closeGameMenu(); openInventory()">📦 INVENTORY</button>
             <button class="btn-hud" style="width: 100%; background: #00ccff; color: #000;" onclick="closeGameMenu(); openDex()">📖 ROT-DEX (<span id="dexCountModal">0</span>/<span id="totalBrainrotsModal">0</span>)</button>
             <button class="btn-hud" style="width: 100%; background: #00ff55; color: #000;" onclick="closeGameMenu(); openReviveModal()">🧪 REVIVE (<span id="potionHudCountModal">3</span>)</button>
-            <button class="btn-hud" style="width: 100%; background: #ffcc00; color: #000;" onclick="closeGameMenu(); openShopModal()">🛒 SHOP</button>
+            <button class="btn-hud" style="width: 100%; background: #ffcc00; color: #000;" onclick="closeGameMenu(); openShopModal()">🛍️ SHOP</button>
             <button class="btn-hud" style="width: 100%; background: #9900ff; color: #fff;" onclick="closeGameMenu(); openTeamSelect('ai')">⚔️ 3v3 AI BATTLE</button>
             <button class="btn-hud" style="width: 100%; background: #ff007f; color: #fff;" onclick="closeGameMenu(); openTeamSelect('pvp')">🌐 ONLINE PVP</button>
             
@@ -413,7 +413,7 @@
 
         <div class="battle-controls">
             <button id="attackBtn" class="btn-action" style="background: #ff0055; color: #fff;" onclick="battleAttack()">⚔️ ATTACK WILD BRAINROT</button>
-            <button id="vaultCatchBtn" class="btn-action" style="background: #76ff03; color: #000;" onclick="battleCatch()">🔐 DEFEAT TO UNLOCK VAULT</button>
+            <button id="vaultCatchBtn" class="btn-action" style="background: #76ff03; color: #000;" onclick="battleCatch()">🔒 DEFEAT TO UNLOCK VAULT</button>
             <button class="btn-action" style="background: #00ccff; color: #000;" onclick="openBattleSwitch()">🔄 SWITCH ROT</button>
             <button class="btn-action" style="background: #333; color: #fff;" onclick="closeBattle()">🏃 FLEE BATTLE</button>
         </div>
@@ -437,6 +437,17 @@
             <button onclick="clearAllAccounts()" style="background:#ff0055; color:#fff; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:0.75rem; font-family:monospace;">WIPE ALL ACCOUNTS</button>
             <button onclick="renderAdminPanel()" style="background:#00ccff; color:#000; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:0.75rem; font-family:monospace;">REFRESH LIST</button>
         </div>
+    </div>
+
+    <!-- INVENTORY MODAL STRUCTURE -->
+    <div id="inventoryModal">
+        <div style="width: 100%; max-width: 800px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <div>
+                <h2 style="margin: 0; color: #ffcc00; text-transform: uppercase; font-size: 1.4rem;">📦 INVENTORY (<span id="invCountDisplay">23/100</span>)</h2>
+            </div>
+            <button onclick="closeInventory()" style="background: #ff0055; color: #fff; border: 2px solid #fff; border-radius: 50%; width: 35px; height: 35px; font-weight: bold; cursor: pointer; font-size: 1.1rem;">X</button>
+        </div>
+        <div id="inventoryContainer"></div>
     </div>
 
     <!-- Script Helpers -->
@@ -500,27 +511,27 @@
         }
     </script>
 
-    <!-- Game Scripts -->
-    <script src="database.js?v=2"></script>
-    <script src="collision.js"></script>
-    <script src="player.js"></script>
-    <script src="evolution.js"></script>
-    <script src="firebase.js"></script>
-    <script src="dex.js?v=4"></script>
-    <script src="teamSelect.js"></script>
-    <script src="battle.js?v=2"></script>
-    <script src="battle3v3.js"></script>
-    <script src="matchmaking.js"></script>
-    <script src="battlePvP.js"></script>
-    <script src="spawner.js"></script>
-    <script src="gyms.js"></script>
-    <script src="revive.js"></script>
-    <script src="shop.js"></script>
-    <script src="account.js"></script>
-    <script src="weather.js"></script>
-    <script src="audio.js"></script>
-    <script src="battlePass.js"></script>
-    <script src="trade.js"></script>
-    <script src="main.js"></script>
+    <!-- Game Scripts with Cache-Busting Version Query Parameters -->
+    <script src="database.js?v=3.0"></script>
+    <script src="collision.js?v=3.0"></script>
+    <script src="player.js?v=3.0"></script>
+    <script src="evolution.js?v=3.0"></script>
+    <script src="firebase.js?v=3.0"></script>
+    <script src="dex.js?v=3.0"></script>
+    <script src="teamSelect.js?v=3.0"></script>
+    <script src="battle.js?v=3.0"></script>
+    <script src="battle3v3.js?v=3.0"></script>
+    <script src="matchmaking.js?v=3.0"></script>
+    <script src="battlePvP.js?v=3.0"></script>
+    <script src="spawner.js?v=3.0"></script>
+    <script src="gyms.js?v=3.0"></script>
+    <script src="revive.js?v=3.0"></script>
+    <script src="shop.js?v=3.0"></script>
+    <script src="account.js?v=3.0"></script>
+    <script src="weather.js?v=3.0"></script>
+    <script src="audio.js?v=3.0"></script>
+    <script src="battlePass.js?v=3.0"></script>
+    <script src="trade.js?v=3.0"></script>
+    <script src="main.js?v=3.0"></script>
 </body>
 </html>
