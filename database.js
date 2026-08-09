@@ -72,7 +72,11 @@ const brainrotCharacters = [
         baseHp: 50,
         baseAtk: 11,
         baseDef: 9,
-        reward: 3
+        reward: 3,
+        evolution: {
+            target: "Blimpy",
+            candyCost: 50
+        }
     },
     {
         name: "Blimpy",
@@ -81,6 +85,28 @@ const brainrotCharacters = [
         baseHp: 220,
         baseAtk: 18,
         baseDef: 40,
+        reward: 3
+    },
+    {
+        name: "Wafflet",
+        rarity: "common",
+        image: "brainrots/wafflet.png",
+        baseHp: 60,
+        baseAtk: 14,
+        baseDef: 12,
+        reward: 3,
+        evolution: {
+            target: "WaffleWrecker",
+            candyCost: 250
+        }
+    },
+    {
+        name: "WaffleWrecker",
+        rarity: "og",
+        image: "brainrots/waffle_wrecker.png",
+        baseHp: 165,
+        baseAtk: 40,
+        baseDef: 32,
         reward: 3
     }
 ];

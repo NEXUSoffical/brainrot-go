@@ -1,4 +1,4 @@
-// battle.js - Universal Battle Engine with God Cloud, Hashtag Hell, Fomo Phantom, Fomo Doom, Blimpy, & Pufflet support
+// battle.js - Universal Battle Engine with God Cloud, Hashtag Hell, Fomo Phantom, Fomo Doom, Blimpy, Pufflet, Wafflet, & WaffleWrecker support
 
 if (typeof window.currentWildCreature === 'undefined') {
     window.currentWildCreature = null;
@@ -27,6 +27,12 @@ if (typeof window.currentWildCreature === 'undefined') {
 
     window.playerPuffletInflationUsed = false;
     window.wildPuffletInflationUsed = false;
+
+    window.playerWaffletUltUsed = false;
+    window.wildWaffletUltUsed = false;
+
+    window.playerWaffleWreckerUltUsed = false;
+    window.wildWaffleWreckerUltUsed = false;
 }
 
 // Inject Floating & Guaranteed Visible CSS Combat FX Styles
@@ -203,6 +209,62 @@ function injectBattleAnimations() {
             animation: waterShotArcPlayer 0.5s linear forwards;
         }
 
+        /* 🥞 WAFFLET STICKY SYRUP FX */
+        @keyframes syrupShotArcPlayer {
+            0% { transform: translate(0px, 0px) scale(0.5); opacity: 0; }
+            20% { opacity: 1; transform: translate(100px, -60px) scale(1.2) rotate(45deg); }
+            80% { transform: translate(200px, -120px) scale(1.6) rotate(180deg); opacity: 1; }
+            100% { transform: translate(250px, -180px) scale(2.2); opacity: 0; }
+        }
+        .syrup-projectile-player {
+            position: absolute; bottom: 25%; left: 25%; width: 30px; height: 30px;
+            background: radial-gradient(circle, #ffcc00 0%, #cc7700 70%, #884400 100%);
+            box-shadow: 0 0 15px #ffaa00, inset 0 0 10px #ffcc00; 
+            border-radius: 40% 60% 60% 40% / 50% 50% 50% 50%;
+            animation: syrupShotArcPlayer 0.6s ease-in-out forwards; pointer-events: none; z-index: 999999;
+        }
+        @keyframes syrupShotArcEnemy {
+            0% { transform: translate(0px, 0px) scale(0.5); opacity: 0; }
+            20% { opacity: 1; transform: translate(-100px, 60px) scale(1.2) rotate(45deg); }
+            80% { transform: translate(-200px, 120px) scale(1.6) rotate(180deg); opacity: 1; }
+            100% { transform: translate(-250px, 180px) scale(2.2); opacity: 0; }
+        }
+        .syrup-projectile-enemy {
+            position: absolute; top: 25%; right: 25%; width: 30px; height: 30px;
+            background: radial-gradient(circle, #ffcc00 0%, #cc7700 70%, #884400 100%);
+            box-shadow: 0 0 15px #ffaa00, inset 0 0 10px #ffcc00; 
+            border-radius: 40% 60% 60% 40% / 50% 50% 50% 50%;
+            animation: syrupShotArcEnemy 0.6s ease-in-out forwards; pointer-events: none; z-index: 999999;
+        }
+        @keyframes syrupSplatRing {
+            0% { transform: scale(0.5); opacity: 1; border-width: 8px; }
+            100% { transform: scale(2.5); opacity: 0; border-width: 2px; }
+        }
+        .syrup-impact-ring {
+            position: absolute; width: 70px; height: 50px;
+            border: 6px solid #cc7700; border-radius: 50%; 
+            background: rgba(255, 170, 0, 0.3);
+            box-shadow: 0 0 20px #ffaa00, inset 0 0 15px #ffcc00;
+            animation: syrupSplatRing 0.5s ease-out forwards; pointer-events: none; z-index: 999999;
+        }
+        @keyframes mapleFloodStorm {
+            0%, 100% { filter: brightness(1); background: transparent; }
+            20% { filter: brightness(1.2) drop-shadow(0 0 40px #ffaa00); background: rgba(255, 170, 0, 0.4); }
+            40% { filter: brightness(0.8); background: rgba(204, 119, 0, 0.6); }
+            60% { filter: brightness(1.5) drop-shadow(0 0 60px #ffcc00); background: rgba(255, 204, 0, 0.5); }
+        }
+        .maple-flood-effect { animation: mapleFloodStorm 0.8s ease-in-out; }
+
+        /* 🛡️ WAFFLE WRECKER ULTIMATE FX */
+        @keyframes waffleWreckerShockwave {
+            0%, 100% { filter: brightness(1); background: transparent; }
+            20% { filter: brightness(5) drop-shadow(0 0 90px #ffaa00); background: rgba(255, 170, 0, 0.5); }
+            40% { filter: brightness(0.2); background: rgba(102, 51, 0, 0.7); }
+            60% { filter: brightness(6) drop-shadow(0 0 120px #ffffff); background: rgba(255, 255, 255, 0.8); }
+            80% { filter: brightness(2); }
+        }
+        .waffle-wrecker-storm-effect { animation: waffleWreckerShockwave 0.8s ease-in-out; }
+
         /* ♯ LITERAL HASHTAG PROJECTILE ARC (BASE HASHTAG) */
         @keyframes hashtagShotArcPlayer {
             0% { transform: translate(0px, 0px) scale(0.6) rotate(0deg); opacity: 0; }
@@ -323,7 +385,7 @@ injectBattleAnimations();
 function shouldFloat(charName) {
     if (!charName) return false;
     const lower = charName.toLowerCase();
-    return lower.includes('cloud') || lower.includes('god') || lower.includes('hashtag') || lower.includes('hell') || lower.includes('glitch') || lower.includes('spirit') || lower.includes('phantom') || lower.includes('fomo') || lower.includes('blimpy') || lower.includes('pufflet');
+    return lower.includes('cloud') || lower.includes('god') || lower.includes('hashtag') || lower.includes('hell') || lower.includes('glitch') || lower.includes('spirit') || lower.includes('phantom') || lower.includes('fomo') || lower.includes('blimpy') || lower.includes('pufflet') || lower.includes('wafflet') || lower.includes('wafflewrecker');
 }
 
 window.initBattle = function(creature) {
@@ -342,6 +404,10 @@ window.initBattle = function(creature) {
     window.wildBlimpySnoozeUsed = false;
     window.playerPuffletInflationUsed = false;
     window.wildPuffletInflationUsed = false;
+    window.playerWaffletUltUsed = false;
+    window.wildWaffletUltUsed = false;
+    window.playerWaffleWreckerUltUsed = false;
+    window.wildWaffleWreckerUltUsed = false;
     
     const wildLvl = creature.level || 1;
     const wildStats = typeof window.calculateRotStats === 'function' 
@@ -452,6 +518,168 @@ function updateHpBars() {
     const myHpText = document.getElementById('myHpText');
     if (myHpText) myHpText.innerText = `${Math.ceil(window.playerHp)}/${window.maxPlayerHp} HP`;
 }
+
+// 🥞 WAFFLET STICKY SYRUP FX
+window.playPlayerWaffletAttack = function(callback) {
+    const arenaField = document.getElementById('arenaField');
+    const wildModal = document.getElementById('battleModal');
+    const battleLog = document.getElementById('battleLog');
+
+    const useUltimate = !window.playerWaffletUltUsed && Math.random() < 0.6;
+
+    if (useUltimate) {
+        window.playerWaffletUltUsed = true;
+        window.isPlayerWaffletBoost = true;
+
+        if (wildModal) wildModal.classList.add('maple-flood-effect');
+        if (battleLog) battleLog.innerText = `🥞 ULTIMATE: Wafflet unleashed a Sticky Maple Flood!`;
+
+        setTimeout(() => {
+            if (wildModal) wildModal.classList.remove('maple-flood-effect');
+            if (callback) callback();
+        }, 700);
+    } else {
+        window.isPlayerWaffletBoost = false;
+        if (battleLog) battleLog.innerText = `🥞 Wafflet lobbed a Sticky Syrup Splat!`;
+
+        if (arenaField) {
+            const projectile = document.createElement('div');
+            projectile.className = 'syrup-projectile-player';
+            arenaField.appendChild(projectile);
+            setTimeout(() => {
+                projectile.remove();
+                const impactRing = document.createElement('div');
+                impactRing.className = 'syrup-impact-ring';
+                impactRing.style.top = '25px';
+                impactRing.style.right = '25px';
+                arenaField.appendChild(impactRing);
+                setTimeout(() => impactRing.remove(), 400);
+            }, 500);
+        }
+        setTimeout(() => { if (callback) callback(); }, 550);
+    }
+};
+
+window.playWildWaffletAttack = function(callback) {
+    const arenaField = document.getElementById('arenaField');
+    const wildModal = document.getElementById('battleModal');
+    const battleLog = document.getElementById('battleLog');
+
+    const useUltimate = !window.wildWaffletUltUsed && Math.random() < 0.6;
+
+    if (useUltimate) {
+        window.wildWaffletUltUsed = true;
+        window.isWildWaffletBoost = true;
+
+        if (wildModal) wildModal.classList.add('maple-flood-effect');
+        if (battleLog) battleLog.innerText = `🥞 ULTIMATE: Wild Wafflet unleashed a Sticky Maple Flood!`;
+
+        setTimeout(() => {
+            if (wildModal) wildModal.classList.remove('maple-flood-effect');
+            if (callback) callback();
+        }, 700);
+    } else {
+        window.isWildWaffletBoost = false;
+        if (battleLog) battleLog.innerText = `🥞 Wild Wafflet lobbed a Sticky Syrup Splat at you!`;
+
+        if (arenaField) {
+            const projectile = document.createElement('div');
+            projectile.className = 'syrup-projectile-enemy';
+            arenaField.appendChild(projectile);
+            setTimeout(() => {
+                projectile.remove();
+                const impactRing = document.createElement('div');
+                impactRing.className = 'syrup-impact-ring';
+                impactRing.style.bottom = '25px';
+                impactRing.style.left = '25px';
+                arenaField.appendChild(impactRing);
+                setTimeout(() => impactRing.remove(), 400);
+            }, 500);
+        }
+        setTimeout(() => { if (callback) callback(); }, 550);
+    }
+};
+
+// 🛡️ WAFFLE WRECKER ATTACK & ULTIMATE FX
+window.playPlayerWaffleWreckerAttack = function(callback) {
+    const arenaField = document.getElementById('arenaField');
+    const wildModal = document.getElementById('battleModal');
+    const battleLog = document.getElementById('battleLog');
+
+    const useUltimate = !window.playerWaffleWreckerUltUsed && Math.random() < 0.6;
+
+    if (useUltimate) {
+        window.playerWaffleWreckerUltUsed = true;
+        window.isPlayerWaffleWreckerBoost = true;
+
+        if (wildModal) wildModal.classList.add('waffle-wrecker-storm-effect');
+        if (battleLog) battleLog.innerText = `🛡️ ULTIMATE: WaffleWrecker triggered Golden Crunch Obliteration!`;
+
+        setTimeout(() => {
+            if (wildModal) wildModal.classList.remove('waffle-wrecker-storm-effect');
+            if (callback) callback();
+        }, 700);
+    } else {
+        window.isPlayerWaffleWreckerBoost = false;
+        if (battleLog) battleLog.innerText = `🪓 WaffleWrecker swung his Syrup-Smasher Axe!`;
+
+        if (arenaField) {
+            const projectile = document.createElement('div');
+            projectile.className = 'syrup-projectile-player';
+            arenaField.appendChild(projectile);
+            setTimeout(() => {
+                projectile.remove();
+                const impactRing = document.createElement('div');
+                impactRing.className = 'syrup-impact-ring';
+                impactRing.style.top = '25px';
+                impactRing.style.right = '25px';
+                arenaField.appendChild(impactRing);
+                setTimeout(() => impactRing.remove(), 400);
+            }, 500);
+        }
+        setTimeout(() => { if (callback) callback(); }, 550);
+    }
+};
+
+window.playWildWaffleWreckerAttack = function(callback) {
+    const arenaField = document.getElementById('arenaField');
+    const wildModal = document.getElementById('battleModal');
+    const battleLog = document.getElementById('battleLog');
+
+    const useUltimate = !window.wildWaffleWreckerUltUsed && Math.random() < 0.6;
+
+    if (useUltimate) {
+        window.wildWaffleWreckerUltUsed = true;
+        window.isWildWaffleWreckerBoost = true;
+
+        if (wildModal) wildModal.classList.add('waffle-wrecker-storm-effect');
+        if (battleLog) battleLog.innerText = `🛡️ ULTIMATE: Wild WaffleWrecker triggered Golden Crunch Obliteration!`;
+
+        setTimeout(() => {
+            if (wildModal) wildModal.classList.remove('waffle-wrecker-storm-effect');
+            if (callback) callback();
+        }, 700);
+    } else {
+        window.isWildWaffleWreckerBoost = false;
+        if (battleLog) battleLog.innerText = `🪓 Wild WaffleWrecker swung his Syrup-Smasher Axe at you!`;
+
+        if (arenaField) {
+            const projectile = document.createElement('div');
+            projectile.className = 'syrup-projectile-enemy';
+            arenaField.appendChild(projectile);
+            setTimeout(() => {
+                projectile.remove();
+                const impactRing = document.createElement('div');
+                impactRing.className = 'syrup-impact-ring';
+                impactRing.style.bottom = '25px';
+                impactRing.style.left = '25px';
+                arenaField.appendChild(impactRing);
+                setTimeout(() => impactRing.remove(), 400);
+            }, 500);
+        }
+        setTimeout(() => { if (callback) callback(); }, 550);
+    }
+};
 
 // 🎈 BLIMPY CUSTOM ABILITY FX (SNOOZE & AIRBAG BOUNCE)
 window.playPlayerBlimpyAttack = function(callback) {
@@ -1148,6 +1376,8 @@ window.battleAttack = function() {
     const isPlayerFomo = fighterName === "fomophantom" && !isPlayerFomoDoom;
     const isPlayerBlimpy = fighterName === "blimpy";
     const isPlayerPufflet = fighterName === "pufflet";
+    const isPlayerWafflet = fighterName === "wafflet";
+    const isPlayerWaffleWrecker = fighterName === "wafflewrecker";
 
     // ⚡ HANDLE PLAYER ATTACK ANIMATIONS
     if (isPlayerGodCloud) {
@@ -1166,6 +1396,10 @@ window.battleAttack = function() {
         window.playPlayerBlimpyAttack(executeDamageSequence);
     } else if (isPlayerPufflet) {
         window.playPlayerPuffletAttack(executeDamageSequence);
+    } else if (isPlayerWafflet) {
+        window.playPlayerWaffletAttack(executeDamageSequence);
+    } else if (isPlayerWaffleWrecker) {
+        window.playPlayerWaffleWreckerAttack(executeDamageSequence);
     } else {
         const playerCombatant = document.getElementById('playerCombatant');
         if (playerCombatant) playerCombatant.classList.add('charge-attack');
@@ -1190,7 +1424,7 @@ window.battleAttack = function() {
         }
 
         let attackRoll = pStats.atk * (0.8 + (Math.random() * 0.4));
-        if (window.isPlayerLightningBoost || window.isPlayerHashtagBoost || window.isPlayerHashtagHellBoost || window.isPlayerGodCloudBoost || window.isPlayerFomoDoomBoost || window.isPlayerPuffletInflation) {
+        if (window.isPlayerLightningBoost || window.isPlayerHashtagBoost || window.isPlayerHashtagHellBoost || window.isPlayerGodCloudBoost || window.isPlayerFomoDoomBoost || window.isPlayerPuffletInflation || window.isPlayerWaffletBoost || window.isPlayerWaffleWreckerBoost) {
             attackRoll *= 1.8;
         }
 
@@ -1216,6 +1450,14 @@ window.battleAttack = function() {
                 battleLog.innerText = `🎈 Emergency Inflation pinball chaos crushed them for ${damage} critical damage!`;
             } else if (isPlayerPufflet) {
                 battleLog.innerText = `💨 Accidental Gust blew dust in their face for ${damage} damage!`;
+            } else if (isPlayerWafflet && window.isPlayerWaffletBoost) {
+                battleLog.innerText = `🥞 Sticky Maple Flood drowned them for ${damage} critical damage!`;
+            } else if (isPlayerWafflet) {
+                battleLog.innerText = `🥞 Sticky Syrup splattered the enemy for ${damage} damage!`;
+            } else if (isPlayerWaffleWrecker && window.isPlayerWaffleWreckerBoost) {
+                battleLog.innerText = `🛡️ Golden Crunch Obliteration dealt massive critical damage of ${damage}!`;
+            } else if (isPlayerWaffleWrecker) {
+                battleLog.innerText = `🪓 Syrup-Smasher Axe struck for ${damage} damage!`;
             } else if (isPlayerGodCloud && window.isPlayerGodCloudBoost) {
                 battleLog.innerText = `🔱 God Cloud Wrath dealt massive critical damage of ${damage}!`;
             } else if (isPlayerGodCloud) {
@@ -1268,6 +1510,8 @@ window.battleAttack = function() {
             const isWildFomo = wildNameRaw === "fomophantom" && !isWildFomoDoom;
             const isWildBlimpy = wildNameRaw === "blimpy";
             const isWildPufflet = wildNameRaw === "pufflet";
+            const isWildWafflet = wildNameRaw === "wafflet";
+            const isWildWaffleWrecker = wildNameRaw === "wafflewrecker";
 
             // ⚡ WILD ENEMY COUNTER-ATTACKS
             if (isWildGodCloud) {
@@ -1286,6 +1530,10 @@ window.battleAttack = function() {
                 window.playWildBlimpyAttack(applyEnemyDamage);
             } else if (isWildPufflet) {
                 window.playWildPuffletAttack(applyEnemyDamage);
+            } else if (isWildWafflet) {
+                window.playWildWaffletAttack(applyEnemyDamage);
+            } else if (isWildWaffleWrecker) {
+                window.playWildWaffleWreckerAttack(applyEnemyDamage);
             } else {
                 if (wildCombatant) wildCombatant.classList.add('charge-attack');
                 setTimeout(applyEnemyDamage, 300);
@@ -1304,7 +1552,7 @@ window.battleAttack = function() {
                 }
 
                 let enemyAttackRoll = wStats.atk * (0.8 + (Math.random() * 0.4));
-                if (window.isWildLightningBoost || window.isWildHashtagBoost || window.isWildHashtagHellBoost || window.isWildGodCloudBoost || window.isWildFomoDoomBoost || window.isWildPuffletInflation) {
+                if (window.isWildLightningBoost || window.isWildHashtagBoost || window.isWildHashtagHellBoost || window.isWildGodCloudBoost || window.isWildFomoDoomBoost || window.isWildPuffletInflation || window.isWildWaffletBoost || window.isWildWaffleWreckerBoost) {
                     enemyAttackRoll *= 1.8;
                 }
 
@@ -1330,6 +1578,14 @@ window.battleAttack = function() {
                         battleLog.innerText = `🎈 Wild Pufflet's Emergency Inflation hit you for ${counterDamage} critical damage!`;
                     } else if (isWildPufflet) {
                         battleLog.innerText = `💨 Wild Pufflet's Accidental Gust hit you for ${counterDamage} damage!`;
+                    } else if (isWildWafflet && window.isWildWaffletBoost) {
+                        battleLog.innerText = `🥞 Wild Sticky Maple Flood hit you for ${counterDamage} critical damage!`;
+                    } else if (isWildWafflet) {
+                        battleLog.innerText = `🥞 Wild Sticky Syrup splattered you for ${counterDamage} damage!`;
+                    } else if (isWildWaffleWrecker && window.isWildWaffleWreckerBoost) {
+                        battleLog.innerText = `🛡️ Wild WaffleWrecker hit you with Golden Crunch Obliteration for ${counterDamage} critical damage!`;
+                    } else if (isWildWaffleWrecker) {
+                        battleLog.innerText = `🪓 Wild WaffleWrecker struck you with his Syrup-Smasher Axe for ${counterDamage} damage!`;
                     } else if (isWildGodCloud && window.isWildGodCloudBoost) {
                         battleLog.innerText = `🔱 Wild God Cloud's Wrath dealt massive critical damage of ${counterDamage}!`;
                     } else if (isWildGodCloud) {
@@ -1492,6 +1748,15 @@ window.battleCatch = function() {
     const battleLog = document.getElementById('battleLog');
     if (window.wildHp > 0) {
         if (battleLog) battleLog.innerText = `You must defeat it first!`;
+        return;
+    }
+
+    // 🚨 INVENTORY CAPACITY CAP CHECK (MAX 100 SLOTS) 🚨
+    const maxSlots = 100;
+    const currentSlots = (typeof playerData !== 'undefined' && playerData.inventory) ? playerData.inventory.length : 0;
+    if (currentSlots >= maxSlots) {
+        if (battleLog) battleLog.innerText = `🚨 Inventory is full (100 / 100)! Transfer some rots before catching.`;
+        alert("🚨 Inventory is full (100 / 100)! Transfer some rots from your inventory before catching more.");
         return;
     }
 

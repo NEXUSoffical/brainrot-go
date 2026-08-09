@@ -113,43 +113,6 @@
             align-items: center; justify-content: center; color: #fff; font-family: monospace; text-align: center; padding: 20px;
         }
 
-        /* FULL SCREEN INVENTORY MODAL & TRANSPARENCY FIXES */
-        #inventoryModal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.95);
-            z-index: 99999;
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
-            box-sizing: border-box;
-            font-family: monospace;
-        }
-
-        .inventory-card img, 
-        .dex-item-card img,
-        .rot-card img,
-        #dexModal img,
-        #inventoryModal img {
-            background: transparent !important;
-            background-color: transparent !important;
-        }
-
-        .inventory-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-            gap: 12px;
-            width: 100%;
-            max-width: 800px;
-            max-height: calc(100vh - 160px);
-            overflow-y: auto;
-            padding: 10px;
-        }
-
         /* 3D BATTLE ARENA OVERLAY */
         #battleModal {
             display: none;
@@ -441,13 +404,7 @@
 
     <!-- INVENTORY MODAL STRUCTURE -->
     <div id="inventoryModal">
-        <div style="width: 100%; max-width: 800px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <div>
-                <h2 style="margin: 0; color: #ffcc00; text-transform: uppercase; font-size: 1.4rem;">📦 INVENTORY (<span id="invCountDisplay">23/100</span>)</h2>
-            </div>
-            <button onclick="closeInventory()" style="background: #ff0055; color: #fff; border: 2px solid #fff; border-radius: 50%; width: 35px; height: 35px; font-weight: bold; cursor: pointer; font-size: 1.1rem;">X</button>
-        </div>
-        <div id="inventoryContainer"></div>
+        <!-- HEADER IS RENDERED DYNAMICALLY BY INVENTORY.JS -->
     </div>
 
     <!-- Script Helpers -->
@@ -512,26 +469,27 @@
     </script>
 
     <!-- Game Scripts with Cache-Busting Version Query Parameters -->
-    <script src="database.js?v=3.0"></script>
-    <script src="collision.js?v=3.0"></script>
-    <script src="player.js?v=3.0"></script>
-    <script src="evolution.js?v=3.0"></script>
-    <script src="firebase.js?v=3.0"></script>
-    <script src="dex.js?v=3.0"></script>
-    <script src="teamSelect.js?v=3.0"></script>
-    <script src="battle.js?v=3.0"></script>
-    <script src="battle3v3.js?v=3.0"></script>
-    <script src="matchmaking.js?v=3.0"></script>
-    <script src="battlePvP.js?v=3.0"></script>
-    <script src="spawner.js?v=3.0"></script>
-    <script src="gyms.js?v=3.0"></script>
-    <script src="revive.js?v=3.0"></script>
-    <script src="shop.js?v=3.0"></script>
-    <script src="account.js?v=3.0"></script>
-    <script src="weather.js?v=3.0"></script>
-    <script src="audio.js?v=3.0"></script>
-    <script src="battlePass.js?v=3.0"></script>
-    <script src="trade.js?v=3.0"></script>
-    <script src="main.js?v=3.0"></script>
+    <script src="database.js?v=3.2"></script>
+    <script src="collision.js?v=3.2"></script>
+    <script src="player.js?v=3.2"></script>
+    <script src="evolution.js?v=3.2"></script>
+    <script src="firebase.js?v=3.2"></script>
+    <script src="dex.js?v=3.2"></script>
+    <script src="inventory.js?v=3.2"></script>
+    <script src="teamSelect.js?v=3.2"></script>
+    <script src="battle.js?v=3.2"></script>
+    <script src="battle3v3.js?v=3.2"></script>
+    <script src="matchmaking.js?v=3.2"></script>
+    <script src="battlePvP.js?v=3.2"></script>
+    <script src="spawner.js?v=3.2"></script>
+    <script src="gyms.js?v=3.2"></script>
+    <script src="revive.js?v=3.2"></script>
+    <script src="shop.js?v=3.2"></script>
+    <script src="account.js?v=3.2"></script>
+    <script src="weather.js?v=3.2"></script>
+    <script src="audio.js?v=3.2"></script>
+    <script src="battlePass.js?v=3.2"></script>
+    <script src="trade.js?v=3.2"></script>
+    <script src="main.js?v=3.2"></script>
 </body>
 </html>

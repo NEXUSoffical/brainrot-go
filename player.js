@@ -130,7 +130,7 @@ function startRealWorldGPS() {
 }
 
 function initPlayer() {
-    if (typeof map === 'undefined' || !map) return; 
+    if (typeof map === 'undefined' || !map || typeof map.getCenter !== 'function') return; 
     if (playerMarker !== null) return; 
 
     let mapCenter = map.getCenter();

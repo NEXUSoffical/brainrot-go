@@ -1,4 +1,4 @@
-// dex.js - Cloud-Connected Account Management, Full-Screen Sticker Dex, Inventory & Admin System
+// dex.js - Cloud-Connected Account Management, Full-Screen Sticker Dex & Admin System
 
 if (typeof window.isSignUpMode === 'undefined') {
     window.isSignUpMode = false;
@@ -6,14 +6,8 @@ if (typeof window.isSignUpMode === 'undefined') {
 if (typeof window.selectedStarter === 'undefined') {
     window.selectedStarter = null;
 }
-if (typeof window.currentInventoryTab === 'undefined') {
-    window.currentInventoryTab = 'rots';
-}
 if (typeof window.currentDexTab === 'undefined') {
     window.currentDexTab = 'standard';
-}
-if (typeof window.currentInventorySort === 'undefined') {
-    window.currentInventorySort = 'newest';
 }
 
 if (!window._internalPlayerData) {
@@ -37,11 +31,7 @@ if (!window.playerData) {
         set(target, property, value) {
             if (property === 'rotBalance' && value > (target.rotBalance + 10000)) {
                 console.warn("ANTI-CHEAT: Unauthorized balance modification blocked!");
-                if (typeof showGameToast === 'function') {
-                    showGameToast("Anti-cheat blocked your hack.");
-                } else {
-                    alert("Nice try! Anti-cheat blocked your hack.");
-                }
+                alert("Nice try! Anti-cheat blocked your hack.");
                 return false;
             }
             target[property] = value;
@@ -265,8 +255,7 @@ window.handleAccountAction = async function() {
     const password = passwordInput ? passwordInput.value.trim() : "";
 
     if (!rawUsername || !password) {
-        if (typeof showGameToast === 'function') showGameToast("Please enter both username and password!");
-        else alert("Please enter both username and password!");
+        alert("Please enter both username and password!");
         return;
     }
 
@@ -304,7 +293,7 @@ window.handleAccountAction = async function() {
             });
 
             await window.saveGameData();
-            if (typeof showGameToast === 'function') showGameToast(`Account created successfully! Welcome, ${rawUsername}!`);
+            alert(`Account created successfully! Welcome, ${rawUsername}!`);
         } else {
             await firebase.auth().signInWithEmailAndPassword(email, password);
 
@@ -327,14 +316,11 @@ window.handleAccountAction = async function() {
     } catch (err) {
         console.error("Authentication error:", err);
         if (err.code === 'auth/email-already-in-use') {
-            if (typeof showGameToast === 'function') showGameToast("Username already exists! Please log in instead.");
-            else alert("Username already exists! Please log in instead.");
+            alert("Username already exists! Please log in instead.");
         } else if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-            if (typeof showGameToast === 'function') showGameToast("Invalid username or password!");
-            else alert("Invalid username or password!");
+            alert("Invalid username or password!");
         } else {
-            if (typeof showGameToast === 'function') showGameToast("Error: " + err.message);
-            else alert("Error: " + err.message);
+            alert("Error: " + err.message);
         }
     }
 };
@@ -398,8 +384,7 @@ window.signInWithGoogle = async function() {
 
     } catch (err) {
         console.error("Google Auth Error:", err);
-        if (typeof showGameToast === 'function') showGameToast("Error signing in with Google. Make sure popups aren't blocked!");
-        else alert("Error signing in with Google. Make sure popups aren't blocked!");
+        alert("Error signing in with Google. Make sure popups aren't blocked!");
     }
 };
 
@@ -424,8 +409,7 @@ window.addToDex = function(creature) {
     
     const maxSlots = window.playerData.maxInventorySlots || 100;
     if (window.playerData.inventory.length >= maxSlots) {
-        if (typeof showGameToast === 'function') showGameToast(`Inventory is full! (${window.playerData.inventory.length}/${maxSlots}).`);
-        else alert(`Inventory is full! (${window.playerData.inventory.length}/${maxSlots}).`);
+        alert(`Inventory is full! (${window.playerData.inventory.length}/${maxSlots}). Transfer rots or upgrade your storage.`);
         return;
     }
 
@@ -520,7 +504,7 @@ function updateHUD() {
         widgetUsername.innerText = window.playerData.username;
     }
 
-    renderInventoryGrid();
+    if (typeof renderInventoryGrid === 'function') renderInventoryGrid();
     renderDexGrid();
     updatePotionHud();
 }
@@ -529,371 +513,6 @@ window.updatePotionHud = function() {
     const potionHudCount = document.getElementById('potionHudCount');
     if (potionHudCount && window.playerData) {
         potionHudCount.innerText = window.playerData.revivePotions || 0;
-    }
-};
-
-window.setInventorySort = function(sortType) {
-    window.currentInventorySort = sortType;
-    renderInventoryGrid();
-};
-
-function renderInventoryGrid() {
-    let inventoryGrid = document.getElementById('inventoryGrid');
-    let modal = document.getElementById('inventoryModal');
-
-    if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'inventoryModal';
-        document.body.appendChild(modal);
-    }
-
-    modal.className = '';
-    modal.style.cssText = `
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        transform: none !important;
-        width: 100vw !important;
-        height: 100vh !important;
-        max-width: none !important;
-        max-height: none !important;
-        border-radius: 0 !important;
-        background: rgba(0,0,0,0.95) !important;
-        z-index: 9999999 !important;
-        display: none;
-        flex-direction: column !important;
-        align-items: center !important;
-        padding: 20px !important;
-        box-sizing: border-box !important;
-        font-family: monospace !important;
-        color: #fff !important;
-    `;
-
-    const currentSlots = (window.playerData.inventory || []).length;
-    const maxSlots = window.playerData.maxInventorySlots || 100;
-
-    modal.innerHTML = `
-        <div style="width: 100%; max-width: 800px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <div>
-                <h2 style="margin: 0; color: #ffcc00; text-transform: uppercase; font-size: 1.4rem;">📦 INVENTORY (${currentSlots}/${maxSlots})</h2>
-            </div>
-            <button onclick="closeInventory()" style="background: #ff0055; color: #fff; border: 2px solid #fff; border-radius: 50%; width: 35px; height: 35px; font-weight: bold; cursor: pointer; font-size: 1.1rem;">X</button>
-        </div>
-
-        ${maxSlots < 200 ? `
-        <div style="width: 100%; max-width: 800px; background: #1a1a1a; border: 2px dashed #ffcc00; border-radius: 8px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; box-sizing: border-box;">
-            <div style="font-size: 0.75rem; color: #ffcc00;">💡 Expand storage limit to 200 slots!</div>
-            <button onclick="upgradeInventorySlots()" style="background: #ffcc00; color: #000; border: none; padding: 6px 12px; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 0.75rem;">UPGRADE (250 Coins)</button>
-        </div>` : ''}
-
-        <div id="inventoryTabSwitcher" style="width: 100%; max-width: 800px; display: flex; gap: 10px; margin-bottom: 10px;">
-            <button onclick="switchInventoryTab('rots')" id="btnTabRots" style="flex: 1; background: ${window.currentInventoryTab === 'rots' ? '#ffcc00' : '#222'}; color: ${window.currentInventoryTab === 'rots' ? '#000' : '#fff'}; border: 2px solid #ffcc00; padding: 10px; font-weight: bold; border-radius: 8px; cursor: pointer; font-family: monospace;">🧠 ROTS</button>
-            <button onclick="switchInventoryTab('items')" id="btnTabItems" style="flex: 1; background: ${window.currentInventoryTab === 'items' ? '#ffcc00' : '#222'}; color: ${window.currentInventoryTab === 'items' ? '#000' : '#fff'}; border: 2px solid #ffcc00; padding: 10px; font-weight: bold; border-radius: 8px; cursor: pointer; font-family: monospace;">📦 ITEMS</button>
-        </div>
-
-        ${window.currentInventoryTab === 'rots' ? `
-        <div style="width: 100%; max-width: 800px; display: flex; gap: 8px; margin-bottom: 15px;">
-            <button onclick="setInventorySort('power')" style="flex: 1; padding: 8px; background: ${window.currentInventorySort === 'power' ? '#00ff55' : '#222'}; color: ${window.currentInventorySort === 'power' ? '#000' : '#fff'}; border: 2px solid #00ff55; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: monospace; font-size: 0.8rem;">
-                ⚔️ POWER
-            </button>
-            <button onclick="setInventorySort('rarity')" style="flex: 1; padding: 8px; background: ${window.currentInventorySort === 'rarity' ? '#00ccff' : '#222'}; color: ${window.currentInventorySort === 'rarity' ? '#000' : '#fff'}; border: 2px solid #00ccff; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: monospace; font-size: 0.8rem;">
-                💎 RARITY
-            </button>
-            <button onclick="setInventorySort('newest')" style="flex: 1; padding: 8px; background: ${window.currentInventorySort === 'newest' ? '#ff0055' : '#222'}; color: ${window.currentInventorySort === 'newest' ? '#000' : '#fff'}; border: 2px solid #ff0055; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: monospace; font-size: 0.8rem;">
-                ⏱️ NEWEST
-            </button>
-        </div>` : ''}
-
-        <div id="inventoryGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; width: 100%; max-width: 800px; max-height: calc(100vh - 220px); overflow-y: auto; padding: 5px;"></div>
-    `;
-
-    inventoryGrid = document.getElementById('inventoryGrid');
-    if (!inventoryGrid) return;
-    inventoryGrid.innerHTML = '';
-
-    if (window.currentInventoryTab === 'rots') {
-        let inventory = window.playerData.inventory || [];
-        if (inventory.length === 0) {
-            inventoryGrid.innerHTML = `<p style="grid-column: 1 / -1; color: #777; font-size: 0.9rem; padding: 40px; text-align: center;">Your inventory is empty! Catch rots on the map.</p>`;
-            return;
-        }
-
-        let indexedInventory = inventory.map((rot, originalIndex) => ({
-            rot: rot,
-            originalIndex: originalIndex
-        }));
-
-        const rarityRank = { 'og': 6, 'secret': 5, 'mythic': 5, 'legendary': 4, 'epic': 3, 'rare': 2, 'uncommon': 1, 'common': 0 };
-
-        if (window.currentInventorySort === 'power') {
-            indexedInventory.sort((a, b) => {
-                const statsA = typeof calculateRotStats === 'function' ? calculateRotStats(a.rot) : {maxHp:50, atk:10, def:10};
-                const statsB = typeof calculateRotStats === 'function' ? calculateRotStats(b.rot) : {maxHp:50, atk:10, def:10};
-                const powerA = statsA.maxHp + statsA.atk + statsA.def;
-                const powerB = statsB.maxHp + statsB.atk + statsB.def;
-                return powerB - powerA;
-            });
-        } else if (window.currentInventorySort === 'rarity') {
-            indexedInventory.sort((a, b) => {
-                const rankA = rarityRank[(a.rot.rarity || 'common').toLowerCase()] || 0;
-                const rankB = rarityRank[(b.rot.rarity || 'common').toLowerCase()] || 0;
-                return rankB - rankA;
-            });
-        } else if (window.currentInventorySort === 'newest') {
-            indexedInventory.reverse();
-        }
-
-        indexedInventory.forEach(item => {
-            const rot = item.rot;
-            const index = item.originalIndex;
-            const isActive = window.playerData.activeFighterIndex === index;
-            const isFainted = rot.fainted === true;
-            const isInGym = rot.inGym === true;
-            const isShiny = rot.shiny === true;
-            const rarityColor = window.getRarityColor(rot.rarity);
-            const rotLevel = rot.level || 1;
-            const stats = typeof calculateRotStats === 'function' ? calculateRotStats(rot) : { maxHp: 50, atk: 10, def: 10 };
-
-            const card = document.createElement('div');
-            card.style.cssText = `
-                background: ${isInGym ? '#1a222a' : (isFainted ? '#2a1a1a' : (isShiny ? 'linear-gradient(180deg, #111, #00ffff33)' : (isActive ? '#1a3a1a' : `linear-gradient(180deg, #111, ${rarityColor}33)`)))};
-                border: 2px solid ${isInGym ? '#00ccff' : (isFainted ? '#ff0055' : (isShiny ? '#00ffff' : (isActive ? '#00ff00' : rarityColor)))};
-                border-radius: 12px;
-                padding: 8px;
-                text-align: center;
-                box-shadow: ${isShiny ? '0 0 10px rgba(0,255,255,0.4)' : `0 0 10px ${rarityColor}44`};
-                cursor: pointer;
-                position: relative;
-                opacity: ${isFainted ? '0.6' : '1'};
-            `;
-            
-            card.setAttribute('onclick', `openCardDetails(${index})`);
-
-            card.innerHTML = `
-                ${isShiny ? '<div style="font-size:0.6rem; color:#00ffff; font-family:monospace; font-weight:bold; margin-bottom:2px;">💎 SHINY</div>' : ''}
-                <div style="font-size: 0.75rem; font-weight: bold; color: ${rarityColor}; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${rot.name}</div>
-                <div style="font-size: 0.65rem; color: #aaa; margin-bottom: 4px;">Lvl ${rotLevel} | ${(rot.rarity || 'common').toUpperCase()}</div>
-                <div style="width: 100%; height: 90px; background: #fff; border-radius: 6px; overflow: hidden; border: 1px solid #333; margin-bottom: 6px;">
-                    <img src="${rot.image || ''}" style="width: 100%; height: 100%; object-fit: cover; ${isFainted || isInGym ? 'filter: grayscale(100%);' : (isShiny ? 'filter: brightness(1.2) contrast(2);' : '')}" onerror="this.style.display='none';">
-                </div>
-                <div style="font-size: 0.65rem; color: #00ff55; font-weight: bold;">
-                    ❤️ ${stats.maxHp} | ⚔️ ${stats.atk}
-                </div>
-                <div style="font-size: 0.6rem; color: ${isInGym ? '#00ccff' : (isFainted ? '#ff0055' : '#00ff00')}; margin-top: 2px;">
-                    ${isInGym ? '🏟️ [IN GYM]' : (isFainted ? '💀 FAINTED' : 'READY')}
-                </div>
-                <div style="display: flex; gap: 4px; margin-top: 6px;">
-                    ${!isActive && !isInGym && !isFainted ? `<button onclick="event.stopPropagation(); setActiveFighter(${index})" style="background: #00ff00; color: #000; border: none; padding: 4px; font-size: 0.6rem; font-weight: bold; border-radius: 4px; cursor: pointer; flex: 1;">ACTIVE</button>` : ''}
-                    <button onclick="event.stopPropagation(); transferRot(${index})" style="background: #ff0055; color: #fff; border: none; padding: 4px; font-size: 0.6rem; font-weight: bold; border-radius: 4px; cursor: pointer; flex: 1;">TRANSFER</button>
-                </div>
-            `;
-            inventoryGrid.appendChild(card);
-        });
-    } else {
-        const revives = window.playerData.revivePotions || 0;
-        const luckyEggs = window.playerData.luckyEggs || 0;
-
-        inventoryGrid.innerHTML = `
-            <div style="grid-column: 1 / -1; display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 500px; margin: 0 auto;">
-                <div style="background: #222; border: 2px solid #00ffcc; border-radius: 10px; padding: 15px; display: flex; align-items: center; justify-content: space-between;">
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <div style="font-size: 2.2rem;">🧪</div>
-                        <div style="text-align: left;">
-                            <div style="font-weight: bold; font-size: 1rem; color: #fff;">Revive Potion (x${revives})</div>
-                            <div style="font-size: 0.75rem; color: #00ffcc;">Wakes up a fainted rot!</div>
-                        </div>
-                    </div>
-                    <button onclick="useRevivePotionMenu()" style="background: #00ffcc; color: #000; border: none; padding: 10px 16px; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 0.85rem;">USE</button>
-                </div>
-                <div style="background: #222; border: 2px solid #ff00ff; border-radius: 10px; padding: 15px; display: flex; align-items: center; justify-content: space-between;">
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <div style="font-size: 2.2rem;">🥚</div>
-                        <div style="text-align: left;">
-                            <div style="font-weight: bold; font-size: 1rem; color: #fff;">Lucky Egg (x${luckyEggs})</div>
-                            <div style="font-size: 0.75rem; color: #ff00ff;">Double Account XP for 1hr!</div>
-                        </div>
-                    </div>
-                    <button onclick="useLuckyEgg()" style="background: #ff00ff; color: #000; border: none; padding: 10px 16px; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 0.85rem;">USE</button>
-                </div>
-            </div>
-        `;
-    }
-};
-
-window.upgradeInventorySlots = function() {
-    const currentMax = window.playerData.maxInventorySlots || 100;
-    if (currentMax >= 200) {
-        if (typeof showGameToast === 'function') showGameToast("🎉 You already have the maximum inventory capacity of 200 slots!");
-        else alert("🎉 You already have the maximum inventory capacity of 200 slots!");
-        return;
-    }
-
-    const upgradeCost = 250;
-    if ((window.playerData.rotBalance || 0) < upgradeCost) {
-        if (typeof showGameToast === 'function') showGameToast(`❌ You need ${upgradeCost} coins to upgrade your inventory space!`);
-        else alert(`❌ You need ${upgradeCost} coins to upgrade your inventory space!`);
-        return;
-    }
-
-    if (confirm(`Upgrade inventory capacity from ${currentMax} to 200 slots for ${upgradeCost} coins?`)) {
-        window.playerData.rotBalance -= upgradeCost;
-        window.playerData.maxInventorySlots = 200;
-        window.saveGameData();
-        updateHUD();
-        if (typeof showGameToast === 'function') showGameToast("🎉 Inventory upgraded successfully to 200 slots!");
-        else alert("🎉 Inventory upgraded successfully to 200 slots!");
-    }
-};
-
-window.switchInventoryTab = function(tabName) {
-    window.currentInventoryTab = tabName;
-    renderInventoryGrid();
-};
-
-window.useLuckyEgg = function() {
-    if ((window.playerData.luckyEggs || 0) <= 0) {
-        if (typeof showGameToast === 'function') showGameToast("❌ You don't have any Lucky Eggs! Visit the shop to buy some.");
-        else alert("❌ You don't have any Lucky Eggs! Visit the shop to buy some.");
-        return;
-    }
-    window.playerData.luckyEggs--;
-    window.activeLuckyEggTime = Date.now() + 3600000;
-    window.saveGameData();
-    if (typeof showGameToast === 'function') showGameToast("🥚 Lucky Egg activated! Double Account XP is now active for 1 hour!");
-    else alert("🥚 Lucky Egg activated! Double Account XP is now active for 1 hour!");
-    renderInventoryGrid();
-    updatePotionHud();
-};
-
-window.useRevivePotionMenu = function() {
-    if ((window.playerData.revivePotions || 0) <= 0) {
-        if (typeof showGameToast === 'function') showGameToast("❌ You don't have any Revive Potions! Visit the shop to buy some.");
-        else alert("❌ You don't have any Revive Potions! Visit the shop to buy some.");
-        return;
-    }
-
-    const faintedRots = (window.playerData.inventory || []).filter(r => r.fainted);
-    if (faintedRots.length === 0) {
-        if (typeof showGameToast === 'function') showGameToast("👍 None of your rots need reviving right now!");
-        else alert("👍 None of your rots need reviving right now!");
-        return;
-    }
-
-    let reviveModal = document.getElementById('reviveSelectModal');
-    if (reviveModal) reviveModal.remove();
-
-    reviveModal = document.createElement('div');
-    reviveModal.id = 'reviveSelectModal';
-    reviveModal.style.cssText = `
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        width: 100vw !important;
-        height: 100vh !important;
-        background: rgba(0,0,0,0.9) !important;
-        z-index: 99999999 !important;
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        justify-content: center !important;
-        font-family: monospace !important;
-        color: #fff !important;
-    `;
-
-    let listHtml = '';
-    window.playerData.inventory.forEach((rot, index) => {
-        if (rot.fainted) {
-            listHtml += `
-                <div onclick="executeRevive(${index})" style="background: #222; border: 2px solid #00ffcc; border-radius: 8px; padding: 10px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <img src="${rot.image || ''}" style="width: 40px; height: 40px; object-fit: cover; filter: grayscale(100%);">
-                        <div style="text-align: left;">
-                            <div style="font-weight: bold; color: #fff;">${rot.name}</div>
-                            <div style="font-size: 0.7rem; color: #ff0055;">💀 FAINTED (Lvl ${rot.level || 1})</div>
-                        </div>
-                    </div>
-                    <button style="background: #00ffcc; color: #000; border: none; padding: 6px 10px; font-weight: bold; border-radius: 4px; cursor: pointer;">REVIVE</button>
-                </div>
-            `;
-        }
-    });
-
-    reviveModal.innerHTML = `
-        <div style="
-            background: #111 !important;
-            border: 3px solid #00ffcc !important;
-            border-radius: 15px !important;
-            padding: 20px !important;
-            width: 90% !important;
-            max-width: 380px !important;
-            text-align: center !important;
-            box-sizing: border-box !important;
-        ">
-            <h3 style="color: #00ffcc; margin-bottom: 8px;">🧪 SELECT ROT TO REVIVE</h3>
-            <p style="font-size: 0.75rem; color: #aaa; margin-bottom: 12px;">Choose a fainted fighter to bring back to battle:</p>
-            <div style="max-height: 220px; overflow-y: auto; margin-bottom: 15px;">
-                ${listHtml}
-            </div>
-            <button onclick="document.getElementById('reviveSelectModal').remove()" style="background: #333; color: #fff; border: none; padding: 8px; border-radius: 6px; cursor: pointer; width: 100%;">CANCEL</button>
-        </div>
-    `;
-    document.body.appendChild(reviveModal);
-};
-
-window.executeRevive = function(index) {
-    let targetRot = window.playerData.inventory[index];
-    if (!targetRot || !targetRot.fainted) return;
-
-    if ((window.playerData.revivePotions || 0) <= 0) {
-        if (typeof showGameToast === 'function') showGameToast("❌ No revive potions left!");
-        else alert("❌ No revive potions left!");
-        return;
-    }
-
-    window.playerData.revivePotions--;
-    targetRot.fainted = false;
-    targetRot.hp = targetRot.maxHp || 50;
-
-    window.saveGameData();
-    updatePotionHud();
-
-    if (typeof showGameToast === 'function') {
-        showGameToast(`🧪 Successfully revived ${targetRot.name}!`);
-    } else {
-        alert(`🧪 Successfully revived ${targetRot.name}!`);
-    }
-    
-    const rModal = document.getElementById('reviveSelectModal');
-    if (rModal) rModal.remove();
-    renderInventoryGrid();
-};
-
-window.transferRot = function(index) {
-    const inventory = window.playerData.inventory || [];
-    if (inventory.length <= 1) {
-        if (typeof showGameToast === 'function') showGameToast("You cannot transfer your last rot!");
-        else alert("You cannot transfer your last rot!");
-        return;
-    }
-    if (index === window.playerData.activeFighterIndex) {
-        if (typeof showGameToast === 'function') showGameToast("You cannot transfer your active fighter! Select a different fighter first.");
-        else alert("You cannot transfer your active fighter! Select a different fighter first.");
-        return;
-    }
-
-    const rot = inventory[index];
-    const coinGain = 1;
-
-    if (confirm(`Transfer ${rot.name} (Lvl ${rot.level || 1}) in exchange for 1 coin?`)) {
-        inventory.splice(index, 1);
-        window.playerData.rotBalance = (window.playerData.rotBalance || 500) + coinGain;
-
-        if (index < window.playerData.activeFighterIndex) {
-            window.playerData.activeFighterIndex--;
-        }
-
-        window.saveGameData();
-        updateHUD();
     }
 };
 
@@ -958,29 +577,6 @@ function renderDexGrid() {
         dexGrid.appendChild(card);
     });
 }
-
-window.setActiveFighter = function(index) {
-    window.playerData.activeFighterIndex = index;
-    window.saveGameData();
-    renderInventoryGrid();
-};
-
-window.openInventory = function() {
-    window.openInventoryModal();
-};
-
-window.openInventoryModal = function() {
-    renderInventoryGrid();
-    const modal = document.getElementById('inventoryModal');
-    if (modal) {
-        modal.style.display = 'flex';
-    }
-};
-
-window.closeInventory = function() {
-    const modal = document.getElementById('inventoryModal');
-    if (modal) modal.style.display = 'none';
-};
 
 window.openDex = function() {
     let modal = document.getElementById('dexModal');
@@ -1053,14 +649,15 @@ window.closeDex = function() {
 };
 
 window.openReviveModal = function() {
-    window.useRevivePotionMenu();
+    if (typeof window.useRevivePotionMenu === 'function') {
+        window.useRevivePotionMenu();
+    }
 };
 
 window.openAdminPanel = function() {
     const passwordInput = prompt("Enter Admin Secret Key:");
     if (passwordInput !== "Kitkat10") {
-        if (typeof showGameToast === 'function') showGameToast("Access Denied.");
-        else alert("Access Denied.");
+        alert("Access Denied.");
         return;
     }
 
@@ -1094,7 +691,7 @@ window.openAdminPanel = function() {
                 font-family: monospace !important;
                 color: #fff !important;
             ">
-                <h2 style="color: #ff0055; font-size: 1.3rem; margin-bottom: 10px;">🛡️ ADMIN PANEL</h2>
+                <h2 style="color: #ff0055; font-size: 1.3rem; margin-bottom: 10px;">🛠️ ADMIN PANEL</h2>
                 <div id="adminAccountsList" style="display: flex; flex-direction: column; gap: 8px; max-height: 250px; overflow-y: auto; margin-bottom: 15px; text-align: left;"></div>
                 <button onclick="clearAllAccounts()" style="background: #ff0055; color: #fff; border: none; padding: 8px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-bottom: 8px;">WIPE ALL CLOUD ACCOUNTS</button>
                 <button onclick="closeAdminPanel()" style="background: #333; color: #fff; border: none; padding: 8px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%;">CLOSE</button>
@@ -1167,13 +764,11 @@ window.clearAllAccounts = async function() {
             });
             await batch.commit();
             localStorage.removeItem('brainrot_logged_in_user');
-            if (typeof showGameToast === 'function') showGameToast("All cloud accounts wiped.");
-            else alert("All cloud accounts wiped.");
+            alert("All cloud accounts wiped.");
             location.reload();
         } catch (err) {
             console.error("Error wiping cloud accounts:", err);
-            if (typeof showGameToast === 'function') showGameToast("Failed to wipe database.");
-            else alert("Failed to wipe database.");
+            alert("Failed to wipe database.");
         }
     }
 };

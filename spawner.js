@@ -71,6 +71,7 @@ injectShinyStyles();
 function shouldFloat(charName) {
   if (!charName) return false;
   const lower = charName.toLowerCase();
+  // Wafflet and WaffleWrecker have legs, so they are excluded from floating
   return lower.includes('cloud') || lower.includes('hashtag') || lower.includes('glitch') || lower.includes('spirit') || lower.includes('phantom') || lower.includes('fomo') || lower.includes('blimpy') || lower.includes('pufflet');
 }
 
@@ -98,7 +99,8 @@ function getRandomBrainrot() {
   const validCharacters = brainrotCharacters.filter(char => 
     char && char.image && char.image.trim() !== "" && 
     char.name.toLowerCase().trim() !== "hashtag hell" &&
-    char.name.toLowerCase().trim() !== "god cloud"
+    char.name.toLowerCase().trim() !== "god cloud" &&
+    char.name.toLowerCase().trim() !== "wafflewrecker"
   );
   
   if (validCharacters.length === 0) {
@@ -114,7 +116,7 @@ function getRandomBrainrot() {
       weight = 10; 
     } else if (rarity === 'rare') {
       weight = 3;  
-    } else if (rarity === 'secret') {
+    } else if (rarity === 'secret' || rarity === 'og') {
       weight = 1;  
     }
 
@@ -167,6 +169,17 @@ function playUltraRareSpawnSound() {
 }
 
 window.startEncounter = function(name, rarity, reward, imageUrl, level, maxHp, isShiny) {
+  const maxSlots = 100;
+  const currentSlots = (window.playerData && window.playerData.inventory) ? window.playerData.inventory.length : 0;
+  if (currentSlots >= maxSlots) {
+    if (typeof showGameToast === 'function') {
+      showGameToast("🚨 Inventory is full (100 / 100)! Transfer some rots first.");
+    } else {
+      alert("🚨 Inventory is full (100 / 100)! Transfer some rots first.");
+    }
+    return;
+  }
+
   const matchedEntry = spawnedCreatures.find(c => c.data.name === name && c.data.level === Number(level) && (c.data.shiny ? '1' : '0') === String(isShiny) && !c.captured);
   
   if (matchedEntry) {
