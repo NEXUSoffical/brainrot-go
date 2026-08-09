@@ -410,9 +410,16 @@ window.initBattle = function(creature) {
     window.wildWaffleWreckerUltUsed = false;
     
     const wildLvl = creature.level || 1;
-    const wildStats = typeof window.calculateRotStats === 'function' 
+    let wildStats = typeof window.calculateRotStats === 'function' 
         ? window.calculateRotStats(creature) 
         : { maxHp: 50 + (wildLvl - 1) * 12, atk: 10, def: 10 };
+        
+    // 💎 SHINY STAT BOOST (Wild Enemy)
+    if (creature && creature.shiny) {
+        wildStats.atk *= 1.3;
+        wildStats.def *= 1.3;
+        wildStats.maxHp = Math.floor(wildStats.maxHp * 1.3);
+    }
         
     window.maxWildHp = wildStats.maxHp;
     window.wildHp = window.maxWildHp;
@@ -435,16 +442,23 @@ window.initBattle = function(creature) {
     }
 
     const fighterLvl = activeFighter.level || 1;
-    const pStats = typeof window.calculateRotStats === 'function' 
+    let pStats = typeof window.calculateRotStats === 'function' 
         ? window.calculateRotStats(activeFighter) 
         : { maxHp: 50 + (fighterLvl * 15), atk: 15, def: 10 };
+
+    // 💎 SHINY STAT BOOST (Player Active Fighter)
+    if (activeFighter && activeFighter.shiny) {
+        pStats.atk *= 1.3;
+        pStats.def *= 1.3;
+        pStats.maxHp = Math.floor(pStats.maxHp * 1.3);
+    }
 
     window.maxPlayerHp = pStats.maxHp;
     window.playerHp = activeFighter.fainted ? 0 : window.maxPlayerHp;
 
-    document.getElementById('wildName').innerText = `${(creature.name || "Unknown").toUpperCase()} (Lvl ${wildLvl})`;
-    document.getElementById('wildBadgeName').innerText = `${creature.name || "Unknown"} (Lvl ${wildLvl})`;
-    document.getElementById('wildRarity').innerText = `RARITY: ${(creature.rarity || 'common').toUpperCase()}`;
+    document.getElementById('wildName').innerText = `${creature.shiny ? '💎 SHINY ' : ''}${(creature.name || "Unknown").toUpperCase()} (Lvl ${wildLvl})`;
+    document.getElementById('wildBadgeName').innerText = `${creature.shiny ? '💎 ' : ''}${creature.name || "Unknown"} (Lvl ${wildLvl})`;
+    document.getElementById('wildRarity').innerText = `RARITY: ${(creature.rarity || 'common').toUpperCase()}${creature.shiny ? ' [💎 SHINY]' : ''}`;
     
     const wildIsFloating = shouldFloat(creature.name);
     const wildCardContainer = document.getElementById('wildCardContainer');
@@ -454,8 +468,8 @@ window.initBattle = function(creature) {
         wildCardContainer.style.boxShadow = 'none';
         wildCardContainer.style.padding = '0';
         wildCardContainer.innerHTML = `
-            <div id="wildFighterInner" class="${wildIsFloating ? 'battle-float' : ''}" style="width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; background: transparent !important;">
-                <img src="${creature.image || ''}" style="max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0px 5px 8px rgba(0,0,0,0.8));" onerror="this.style.display='none';">
+            <div id="wildFighterInner" class="${wildIsFloating ? 'battle-float' : ''}" style="width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; background: transparent !important; ${creature.shiny ? 'animation: diamondPulse 1.5s infinite;' : ''}">
+                <img src="${creature.image || ''}" style="max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0px 5px 8px rgba(0,0,0,0.8)) ${creature.shiny ? 'drop-shadow(0 0 10px #00ffff)' : ''};" onerror="this.style.display='none';">
             </div>
         `;
     }
@@ -467,7 +481,7 @@ window.initBattle = function(creature) {
         if (activeFighter.fainted) {
             battleLog.innerText = `⚠️ Your active fighter is FAINTED! Switch fighters or visit the Revive Station!`;
         } else {
-            battleLog.innerText = `A wild Level ${wildLvl} ${creature.name} appeared!`;
+            battleLog.innerText = `A wild ${creature.shiny ? '💎 DIAMOND SHINY ' : ''}Level ${wildLvl} ${creature.name} appeared!`;
         }
     }
 };
@@ -492,15 +506,15 @@ function updatePlayerFighterDisplay(activeFighter, fighterLvl) {
         playerCardContainer.style.boxShadow = 'none';
         playerCardContainer.style.padding = '0';
         playerCardContainer.innerHTML = `
-            <div class="${playerIsFloating ? 'battle-float' : ''}" style="width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; background: transparent !important;">
-                <img src="${imagePath}" style="max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0px 5px 8px rgba(0,0,0,0.8)); ${activeFighter.fainted ? 'filter: grayscale(100%);' : ''}" onerror="this.style.display='none';">
+            <div class="${playerIsFloating ? 'battle-float' : ''}" style="width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; background: transparent !important; ${activeFighter.shiny ? 'animation: diamondPulse 1.5s infinite;' : ''}">
+                <img src="${imagePath}" style="max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0px 5px 8px rgba(0,0,0,0.8)) ${activeFighter.shiny ? 'drop-shadow(0 0 10px #00ffff)' : ''}; ${activeFighter.fainted ? 'filter: grayscale(100%);' : ''}" onerror="this.style.display='none';">
             </div>
         `;
     }
 
     const fighterNameEl = document.getElementById('myFighterName');
     if (fighterNameEl) {
-        fighterNameEl.innerText = `${activeFighter.name || 'Fighter'} (Lvl ${fighterLvl}) ${activeFighter.fainted ? '💀 [FAINTED]' : ''}`;
+        fighterNameEl.innerText = `${activeFighter.shiny ? '💎 ' : ''}${activeFighter.name || 'Fighter'} (Lvl ${fighterLvl}) ${activeFighter.fainted ? '💀 [FAINTED]' : ''}`;
     }
 }
 
@@ -1364,8 +1378,17 @@ window.battleAttack = function() {
     const fighterLvl = activeFighter ? (activeFighter.level || 1) : 1;
     const wildLvl = window.currentWildCreature ? (window.currentWildCreature.level || 1) : 1;
 
-    const pStats = typeof window.calculateRotStats === 'function' ? window.calculateRotStats(activeFighter) : {atk: 15, def: 10};
-    const wStats = typeof window.calculateRotStats === 'function' ? window.calculateRotStats(window.currentWildCreature) : {atk: 10, def: 10};
+    let pStats = typeof window.calculateRotStats === 'function' ? window.calculateRotStats(activeFighter) : {atk: 15, def: 10};
+    if (activeFighter && activeFighter.shiny) {
+        pStats.atk *= 1.3;
+        pStats.def *= 1.3;
+    }
+
+    let wStats = typeof window.calculateRotStats === 'function' ? window.calculateRotStats(window.currentWildCreature) : {atk: 10, def: 10};
+    if (window.currentWildCreature && window.currentWildCreature.shiny) {
+        wStats.atk *= 1.3;
+        wStats.def *= 1.3;
+    }
 
     const fighterName = (activeFighter && activeFighter.name) ? activeFighter.name.toLowerCase().trim().replace(/[\s-]/g, '') : "";
     
@@ -1700,7 +1723,7 @@ window.openBattleSwitch = function() {
         gridHtml += `
             <div onclick="selectNewFighter(${index})" style="background: ${isFainted ? '#2a1a1a' : (isCurrent ? '#1a3a1a' : '#222')}; border: 2px solid ${isFainted ? '#ff0055' : (isCurrent ? '#00ff00' : '#555')}; border-radius: 8px; padding: 8px; cursor: pointer; text-align: center; opacity: ${isFainted ? '0.6' : '1'};">
                 <img src="${rotImage}" style="width: 50px; height: 50px; object-fit: contain; ${isFainted ? 'filter: grayscale(100%);' : ''}" onerror="this.style.display='none';">
-                <div style="font-size: 0.75rem; font-weight: bold; margin-top: 4px; color: #fff;">${rot.name}</div>
+                <div style="font-size: 0.75rem; font-weight: bold; margin-top: 4px; color: #fff;">${rot.shiny ? '💎 ' : ''}${rot.name}</div>
                 <div style="font-size: 0.65rem; color: ${isFainted ? '#ff0055' : '#00ff00'};">${isFainted ? '💀 FAINTED' : 'Lvl ' + (rot.level || 1)}</div>
                 ${isCurrent ? '<div style="font-size: 0.55rem; color: #00ff00; font-weight: bold; margin-top: 2px;">(ACTIVE)</div>' : ''}
             </div>
@@ -1731,8 +1754,12 @@ window.selectNewFighter = function(index) {
 
     playerData.activeFighterIndex = index;
     const fighterLvl = newRot.level || 1;
-    const newStats = typeof window.calculateRotStats === 'function' ? window.calculateRotStats(newRot) : {maxHp: 50 + (fighterLvl * 15)};
+    let newStats = typeof window.calculateRotStats === 'function' ? window.calculateRotStats(newRot) : {maxHp: 50 + (fighterLvl * 15)};
     
+    if (newRot.shiny) {
+        newStats.maxHp = Math.floor(newStats.maxHp * 1.3);
+    }
+
     window.maxPlayerHp = newStats.maxHp;
     window.playerHp = window.maxPlayerHp; 
 
@@ -1745,7 +1772,7 @@ window.selectNewFighter = function(index) {
     if (switchModal) switchModal.style.display = 'none';
 
     const battleLog = document.getElementById('battleLog');
-    if (battleLog) battleLog.innerText = `Switched to ${newRot.name}!`;
+    if (battleLog) battleLog.innerText = `Switched to ${newRot.shiny ? '💎 SHINY ' : ''}${newRot.name}!`;
 };
 
 window.battleCatch = function() {
@@ -1809,7 +1836,7 @@ window.battleCatch = function() {
             }
         }
 
-        if (battleLog) battleLog.innerText = `Captured Lvl ${caughtLevel} ${caughtName}! (+3 Candy🍬)`;
+        if (battleLog) battleLog.innerText = `Captured Lvl ${caughtLevel} ${window.currentWildCreature.shiny ? '💎 SHINY ' : ''}${caughtName}! (+3 Candy🍬)`;
         window.currentWildCreature = null;
         setTimeout(window.closeBattle, 1500);
     }

@@ -262,11 +262,13 @@ function spawnSingleCreature(lat, lng) {
   const characterTemplate = getRandomBrainrot();
   const level = getRandomLevel();
   
-  const isShiny = false;
+  // 💎 1.5% Ultra-Rare Diamond Shiny Chance
+  const isShiny = Math.random() < 0.015;
   const baseReward = Number(characterTemplate.reward) || 3;
   
   const baseHpVal = characterTemplate.baseHp || 50;
-  const maxHp = Math.floor((baseHpVal + (level - 1) * 12));
+  // Shinies get a stat boost!
+  const maxHp = Math.floor((baseHpVal + (level - 1) * 12) * (isShiny ? 1.3 : 1.0));
 
   const creatureInstance = {
     ...characterTemplate,
@@ -307,25 +309,25 @@ function spawnSingleCreature(lat, lng) {
   const cardHtml = `
     <div class="${isFloating ? 'battle-float' : ''}" style="transform: scale(1.3); transform-origin: bottom center; position: relative; display: flex; flex-direction: column; align-items: center; pointer-events: auto;">
       <div style="background: transparent; border: none; padding: 0; display: flex; flex-direction: column; align-items: center;">
-        <div style="width: 55px; height: 80px; background: transparent; display: flex; align-items: center; justify-content: center; overflow: visible; position: relative;">
-            <img src="${imageUrl}" style="max-width: 55px; max-height: 80px; width: 100%; height: auto; object-fit: contain; filter: drop-shadow(0px 3px 5px rgba(0,0,0,0.9)); z-index: 10;" onerror="this.style.display='none';">
+        <div style="width: 55px; height: 80px; background: transparent; display: flex; align-items: center; justify-content: center; overflow: visible; position: relative; ${isShiny ? 'animation: diamondPulse 1.5s infinite;' : ''}">
+            <img src="${imageUrl}" style="max-width: 55px; max-height: 80px; width: 100%; height: auto; object-fit: contain; filter: drop-shadow(0px 3px 5px rgba(0,0,0,0.9)) ${isShiny ? 'drop-shadow(0 0 8px #00ffff)' : ''}; z-index: 10;" onerror="this.style.display='none';">
             ${characterEffect}
         </div>
       </div>
       <div style="
         background: rgba(0,0,0,0.85); 
-        border: 1px solid ${rarityColor}; 
-        color: ${rarityColor}; 
+        border: 1px solid ${isShiny ? '#00ffff' : rarityColor}; 
+        color: ${isShiny ? '#00ffff' : rarityColor}; 
         font-size: 7px; 
         font-family: monospace; 
         padding: 1px 4px; 
         border-radius: 3px; 
         white-space: nowrap; 
         font-weight: bold;
-        box-shadow: 0 0 4px rgba(0,0,0,0.8);
+        box-shadow: 0 0 ${isShiny ? '8px #00ffff' : '4px rgba(0,0,0,0.8)'};
         margin-top: 1px;
       ">
-        ${creatureInstance.name} (Lvl ${level})
+        ${isShiny ? '💎 ' : ''}${creatureInstance.name} (Lvl ${level})
       </div>
     </div>
   `;
@@ -342,8 +344,8 @@ function spawnSingleCreature(lat, lng) {
 
   marker.bindPopup(`
     <div style="text-align: center; font-family: sans-serif; min-width: 140px;">
-      <b style="font-size: 15px; color: #222;">${creatureInstance.name}</b><br>
-      <span style="font-size: 11px; color: ${rarityColor}; font-weight: bold; display: block; margin-top: 2px;">${creatureInstance.rarity.toUpperCase()}</span>
+      <b style="font-size: 15px; color: #222;">${isShiny ? '💎 DIAMOND SHINY ' : ''}${creatureInstance.name}</b><br>
+      <span style="font-size: 11px; color: ${isShiny ? '#00ffff' : rarityColor}; font-weight: bold; display: block; margin-top: 2px;">${isShiny ? '💎 DIAMOND SHINY' : creatureInstance.rarity.toUpperCase()}</span>
       <span style="font-size: 11px; color: #555; font-weight: bold; display: block; margin-top: 2px;">Level ${level}</span>
       <span style="font-size: 11px; color: #008000; font-weight: bold; display: block; margin-top: 2px;">Reward: ${creatureInstance.reward} Rot</span>
       <button onclick="startEncounter('${safeName}', '${creatureInstance.rarity}', '${creatureInstance.reward}', '${imageUrl}', ${level}, ${maxHp}, ${isShiny})" style="
