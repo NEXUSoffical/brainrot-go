@@ -127,7 +127,19 @@ function updateGymPopup(marker, gymData) {
   `);
 }
 
+// 🚶 REAL GPS WALKING VALIDATION CHECK 🚶
+window.checkRealWorldAccess = function(featureName) {
+    if (typeof isRealWorldMode === 'undefined' || !isRealWorldMode) {
+        alert(`❌ Couch Potato Alert! You must switch to "REAL GPS" mode in the menu and walk outside to access ${featureName}.`);
+        return false;
+    }
+    return true;
+};
+
 window.openGymBattle = async function(gymId) {
+  // 🚶 REQUIRE REAL GPS WALKING MODE TO ACCESS GYMS 🚶
+  if (!window.checkRealWorldAccess("Gyms")) return;
+
   // 🔒 REQUIRE ACCOUNT LEVEL 10 TO CHALLENGE GYMS 🔒
   const accountLevel = (playerData && playerData.accountLevel) || 1;
   if (accountLevel < 10) {
