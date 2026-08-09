@@ -7,6 +7,14 @@ if (typeof window.selectedStarter === 'undefined') {
     window.selectedStarter = null;
 }
 
+// Helper function to safely fallback to a Common starter rot only
+function ensureCommonStarter() {
+    if (!window.selectedStarter && typeof brainrotCharacters !== 'undefined') {
+        const commonStarters = brainrotCharacters.filter(char => char.rarity && char.rarity.toLowerCase() === 'common');
+        window.selectedStarter = commonStarters.length > 0 ? commonStarters[0] : brainrotCharacters[0];
+    }
+}
+
 // Toggle between Login and Sign Up modes on the UI modal
 window.toggleAuthMode = function() {
     window.isSignUpMode = !window.isSignUpMode;
@@ -42,9 +50,7 @@ window.handleAccountAction = async function() {
         if (window.isSignUpMode) {
             await firebase.auth().createUserWithEmailAndPassword(email, password);
 
-            if (!window.selectedStarter && typeof brainrotCharacters !== 'undefined') {
-                window.selectedStarter = brainrotCharacters[0];
-            }
+            ensureCommonStarter();
 
             const starterInstance = {
                 ...window.selectedStarter,
@@ -122,9 +128,7 @@ window.signInWithGoogle = async function() {
         const doc = await docRef.get();
 
         if (!doc.exists) {
-            if (!window.selectedStarter && typeof brainrotCharacters !== 'undefined') {
-                window.selectedStarter = brainrotCharacters[0];
-            }
+            ensureCommonStarter();
 
             const starterInstance = {
                 ...window.selectedStarter,

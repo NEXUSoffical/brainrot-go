@@ -317,7 +317,7 @@
             <button class="btn-hud" style="width: 100%;" onclick="closeGameMenu(); openInventory()">📦 INVENTORY</button>
             <button class="btn-hud" style="width: 100%; background: #00ccff; color: #000;" onclick="closeGameMenu(); openDex()">📖 ROT-DEX (<span id="dexCountModal">0</span>/<span id="totalBrainrotsModal">0</span>)</button>
             <button class="btn-hud" style="width: 100%; background: #00ff55; color: #000;" onclick="closeGameMenu(); openReviveModal()">🧪 REVIVE (<span id="potionHudCountModal">3</span>)</button>
-            <button class="btn-hud" style="width: 100%; background: #ffcc00; color: #000;" onclick="closeGameMenu(); openShopModal()">🛍️ SHOP</button>
+            <button class="btn-hud" style="width: 100%; background: #ffcc00; color: #000;" onclick="closeGameMenu(); openShopModal()">🛒 SHOP</button>
             <button class="btn-hud" style="width: 100%; background: #9900ff; color: #fff;" onclick="closeGameMenu(); openTeamSelect('ai')">⚔️ 3v3 AI BATTLE</button>
             <button class="btn-hud" style="width: 100%; background: #ff007f; color: #fff;" onclick="closeGameMenu(); openTeamSelect('pvp')">🌐 ONLINE PVP</button>
             
@@ -440,6 +440,39 @@
         }
 
         window.addEventListener('DOMContentLoaded', updateRealPlayerCount);
+
+        // Override or inject starter grid rendering helper to only allow Commons
+        window.addEventListener('DOMContentLoaded', () => {
+            window.populateStarterGrid = function() {
+                const grid = document.getElementById('starterSelectionGrid');
+                if (!grid || typeof brainrotCharacters === 'undefined') return;
+                
+                grid.innerHTML = '';
+                // STRICT FILTER: Only show common starters
+                const commonStarters = brainrotCharacters.filter(c => c.rarity && c.rarity.toLowerCase() === 'common');
+                
+                commonStarters.forEach((char, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'starter-option' + (index === 0 ? ' selected' : '');
+                    if (index === 0) window.selectedStarter = char;
+                    
+                    div.innerHTML = `
+                        <img src="${char.image}" style="width: 40px; height: 40px; object-fit: contain;" onerror="this.style.display='none'">
+                        <span style="font-size: 0.6rem; margin-top: 2px; color: #fff;">${char.name}</span>
+                    `;
+                    div.onclick = () => {
+                        document.querySelectorAll('.starter-option').forEach(el => el.classList.remove('selected'));
+                        div.classList.add('selected');
+                        window.selectedStarter = char;
+                    };
+                    grid.appendChild(div);
+                });
+            };
+            
+            if (typeof window.populateStarterGrid === 'function') {
+                window.populateStarterGrid();
+            }
+        });
 
         function simulateKey(key, isDown) {
             const eventType = isDown ? 'keydown' : 'keyup';
