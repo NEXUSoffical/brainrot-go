@@ -9,6 +9,9 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
+    <!-- Stripe Checkout SDK -->
+    <script src="https://js.stripe.com/v3/"></script>
+
     <!-- Firebase App, Firestore & Auth SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
@@ -40,6 +43,32 @@
             box-shadow: 0 0 15px #76ff03; font-family: monospace; transition: transform 0.1s;
         }
         .btn-hud:active { transform: scale(0.95); }
+
+        /* --- ⚡ MASSIVE SPINNING & GLOWING GYM ANIMATIONS ⚡ --- */
+        @keyframes massiveGymBounceAndSpin {
+          0%, 100% {
+            transform: translateY(0px) rotate(0deg) scale(1.4);
+            filter: drop-shadow(0 0 20px #00ff55);
+          }
+          50% {
+            transform: translateY(-15px) rotate(180deg) scale(1.6);
+            filter: drop-shadow(0 0 40px #00ffff) drop-shadow(0 0 20px #00ff55);
+          }
+        }
+        @keyframes groundRadarPulse {
+          0% { transform: scale(0.8); opacity: 0.9; }
+          50% { transform: scale(1.8); opacity: 0.2; }
+          100% { transform: scale(0.8); opacity: 0.9; }
+        }
+
+        .massive-animated-gym {
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 90px;
+          height: 110px;
+        }
 
         /* MAIN MENU DRAWER OVERLAY */
         #menuModal {

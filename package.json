@@ -1,0 +1,25 @@
+{
+  "name": "brainrot-game",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NEXUSoffical/brainrot-go.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/NEXUSoffical/brainrot-go/issues"
+  },
+  "homepage": "https://github.com/NEXUSoffical/brainrot-go#readme",
+  "dependencies": {
+    "express": "^5.2.1",
+    "stripe": "^22.4.0"
+  }
+}
