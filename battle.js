@@ -1354,7 +1354,8 @@ window.battleAttack = function() {
     }
 
     if (activeFighter && activeFighter.fainted) {
-        alert("❌ Your current fighter has fainted! Switch to a healthy rot or revive them first.");
+        const battleLog = document.getElementById('battleLog');
+        if (battleLog) battleLog.innerText = `⚠️ Your active fighter is fainted! Switch fighters or revive them.`;
         return;
     }
 
@@ -1721,7 +1722,10 @@ window.selectNewFighter = function(index) {
 
     const newRot = playerData.inventory[index];
     if (newRot.fainted) {
-        alert("❌ This rot has fainted! You must revive it at the Revive Station before using it in battle.");
+        const battleLog = document.getElementById('battleLog');
+        if (battleLog) battleLog.innerText = `❌ ${newRot.name} has fainted! Revive them first.`;
+        const switchModal = document.getElementById('battleSwitchModal');
+        if (switchModal) switchModal.style.display = 'none';
         return;
     }
 
