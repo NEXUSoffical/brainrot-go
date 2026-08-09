@@ -17,8 +17,8 @@ window.evolveRot = function(inventoryIndex) {
         return;
     }
 
-    const targetName = charData.evolution.target;
-    const candyCost = charData.evolution.candyCost || 50; // Restored official candy cost
+    const evo = charData.evolution;
+    const candyCost = evo.candyCost || 50; 
 
     if (!playerData.candies) playerData.candies = {};
     const candyKey = rot.name.toUpperCase().trim();
@@ -27,6 +27,15 @@ window.evolveRot = function(inventoryIndex) {
     if (currentCandies < candyCost) {
         alert(`❌ Not enough candy! You need ${candyCost} ${rot.name} Candies (You have ${currentCandies}).`);
         return;
+    }
+
+    // Determine the target evolution name (supports random pool for Meow Meow or fixed target for others)
+    let targetName = "";
+    if (evo.isRandomPool && Array.isArray(evo.possibleOutcomes) && evo.possibleOutcomes.length > 0) {
+        const randomIndex = Math.floor(Math.random() * evo.possibleOutcomes.length);
+        targetName = evo.possibleOutcomes[randomIndex];
+    } else {
+        targetName = evo.target;
     }
 
     const targetData = brainrotCharacters.find(c => c.name.toLowerCase().trim() === targetName.toLowerCase().trim());

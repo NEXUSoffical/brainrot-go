@@ -70,9 +70,9 @@ injectShinyStyles();
 
 function shouldFloat(charName) {
   if (!charName) return false;
-  const lower = charName.toLowerCase();
-  // Wafflet and WaffleWrecker have legs, so they are excluded from floating
-  return lower.includes('cloud') || lower.includes('hashtag') || lower.includes('glitch') || lower.includes('spirit') || lower.includes('phantom') || lower.includes('fomo') || lower.includes('blimpy') || lower.includes('pufflet');
+  const lower = charName.toLowerCase().replace(/[\s-]/g, '');
+  // Wafflet and WaffleWrecker have legs, so they are excluded from floating (Giga Byte added to float)
+  return lower.includes('cloud') || lower.includes('hashtag') || lower.includes('glitch') || lower.includes('spirit') || lower.includes('phantom') || lower.includes('fomo') || lower.includes('blimpy') || lower.includes('pufflet') || lower.includes('gigabyte');
 }
 
 function getRandomLevel() {
@@ -96,12 +96,27 @@ function getRandomBrainrot() {
     return { name: "Chad Cloud", rarity: "common", reward: 3, image: "brainrots/chad_cloud.png" };
   }
 
-  const validCharacters = brainrotCharacters.filter(char => 
-    char && char.image && char.image.trim() !== "" && 
-    char.name.toLowerCase().trim() !== "hashtag hell" &&
-    char.name.toLowerCase().trim() !== "god cloud" &&
-    char.name.toLowerCase().trim() !== "wafflewrecker"
-  );
+  // Filter out final/evolved forms so they only appear via evolution
+  const validCharacters = brainrotCharacters.filter(char => {
+    if (!char || !char.image || char.image.trim() === "") return false;
+    
+    const name = char.name.toLowerCase().trim();
+    const excludedForms = [
+      "hashtag hell",
+      "god cloud",
+      "fomo doom",
+      "blimpy",
+      "wafflewrecker",
+      "titan mech",
+      "glitchnyan",
+      "voidprowler",
+      "celestial purr",
+      "blazemew",
+      "verdantstalker"
+    ];
+    
+    return !excludedForms.includes(name);
+  });
   
   if (validCharacters.length === 0) {
     return { name: "Chad Cloud", rarity: "common", reward: 3, image: "brainrots/chad_cloud.png" };
@@ -115,7 +130,7 @@ function getRandomBrainrot() {
     if (rarity === 'common') {
       weight = 10; 
     } else if (rarity === 'rare') {
-      weight = 3;  
+      weight = 4;  // Weighted chance for Rare characters like Giga Byte and Meow Meow
     } else if (rarity === 'secret' || rarity === 'og') {
       weight = 1;  
     }
