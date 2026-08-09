@@ -1,4 +1,4 @@
-// battlePass.js - 100-Level Progression & Reward System (100,000 $ROT Token Gate)
+// battlePass.js - 100-Level Progression & Reward System (Stripe Paid Pass)
 
 if (typeof window.playerBattlePass === 'undefined') {
     window.playerBattlePass = {
@@ -6,15 +6,9 @@ if (typeof window.playerBattlePass === 'undefined') {
         xp: 0,
         xpToNextLevel: 1000,
         claimedLevels: [],
-        walletAddress: null,
-        tokenBalance: 0,
-        forcedAccess: false
+        hasPaidPass: false // Unlocked via Stripe
     };
 }
-
-// 🪙 YOUR $ROT TOKEN MINT ADDRESS
-const ROT_TOKEN_MINT = "75yxF9vQenbSd3VK1Nm8bnxscFU96LGRNz8xk1XXpump"; 
-const REQUIRED_ROT_HOLDING = 100000; // 100,000 $ROT required to unlock
 
 window.battlePassRewards = {};
 
@@ -57,80 +51,37 @@ function getXpRequirement(level) {
     return Math.floor(1000 * Math.pow(1.045, level - 1));
 }
 
-// 🔌 Connect Solana Wallet & Scan Token Accounts
-window.connectWalletForBattlePass = async function() {
+// 💳 Purchase Battle Pass via Stripe
+window.buyBattlePassStripe = async function() {
     try {
-        if (!window.solana || !window.solana.isPhantom) {
-            alert("❌ No Solana wallet found! Please install Phantom or Solflare extension.");
-            window.open("https://phantom.app/", "_blank");
+        alert("Opening secure Stripe checkout for Battle Pass...");
+
+        const response = await fetch('https://brainrot-go.onrender.com/create-checkout-session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                packageId: 'battle_pass',
+                amount: 999, // $9.99
+                username: (typeof playerData !== 'undefined' && playerData.username) ? playerData.username : "Guest"
+            })
+        });
+
+        const session = await response.json();
+        if (session.error) {
+            alert("❌ Payment error: " + session.error);
             return;
         }
 
-        const response = await window.solana.connect();
-        const walletPublicKey = response.publicKey.toString();
-        window.playerBattlePass.walletAddress = walletPublicKey;
-
-        await checkRotTokenBalance(walletPublicKey);
-        
-        // Failsafe for local testing: if balance can't be fetched via public RPC over local network, grant access for testing
-        if (window.playerBattlePass.tokenBalance === 0) {
-            window.playerBattlePass.tokenBalance = 100000; // Auto-fulfill requirement for testing if RPC blocks
-            window.playerBattlePass.forcedAccess = true;
+        if (session.url) {
+            window.location.href = session.url;
+        } else {
+            alert("❌ Failed to retrieve checkout session URL.");
         }
-        
-        window.openBattlePassModal();
     } catch (err) {
-        console.error("Wallet connection error:", err);
-        window.playerBattlePass.tokenBalance = 100000;
-        window.playerBattlePass.forcedAccess = true;
-        window.openBattlePassModal();
+        console.error("Stripe Error:", err);
+        alert("❌ Failed to connect to payment server.");
     }
 };
-
-async function checkRotTokenBalance(walletAddress) {
-    let totalBalance = 0;
-    const rpcUrl = "https://api.mainnet-beta.solana.com";
-    const programIds = [
-        "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA", // Standard SPL Token
-        "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"  // Token-2022 (Pump.fun)
-    ];
-
-    for (const progId of programIds) {
-        try {
-            const payload = {
-                jsonrpc: "2.0",
-                id: 1,
-                method: "getTokenAccountsByOwner",
-                params: [
-                    walletAddress,
-                    { programId: progId },
-                    { encoding: "jsonParsed" }
-                ]
-            };
-
-            const res = await fetch(rpcUrl, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            });
-
-            const data = await res.json();
-
-            if (data.result && data.result.value) {
-                data.result.value.forEach(item => {
-                    const info = item.account.data.parsed.info;
-                    if (info.mint === ROT_TOKEN_MINT) {
-                        totalBalance += parseFloat(info.tokenAmount.uiAmount || 0);
-                    }
-                });
-            }
-        } catch (e) {
-            console.warn("RPC query bypassed locally:", e);
-        }
-    }
-
-    window.playerBattlePass.tokenBalance = totalBalance;
-}
 
 window.openBattlePassModal = function() {
     let modal = document.getElementById('battlePassModal');
@@ -157,29 +108,21 @@ window.openBattlePassModal = function() {
     `;
 
     let bp = window.playerBattlePass;
-    let hasAccess = bp.walletAddress && (bp.tokenBalance >= REQUIRED_ROT_HOLDING || bp.forcedAccess);
 
-    if (!hasAccess) {
+    // Check if player unlocked it via Stripe purchase
+    if (!bp.hasPaidPass) {
         modal.innerHTML = `
             <div style="display: flex; justify-content: flex-end; width: 100%; margin-bottom: 20px;">
                 <button onclick="document.getElementById('battlePassModal').remove()" style="background: #ff0055; color: #fff; border: none; padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: monospace;">CLOSE</button>
             </div>
             <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; max-width: 400px; margin: 0 auto;">
-                <div style="font-size: 4rem; margin-bottom: 15px;">🔒</div>
-                <h1 style="color: #ff0055; font-size: 1.8rem; margin-bottom: 10px;">TOKEN-GATED BATTLE PASS</h1>
+                <div style="font-size: 4rem; margin-bottom: 15px;">🏆</div>
+                <h1 style="color: #ff0055; font-size: 1.8rem; margin-bottom: 10px;">SEASON 1 BATTLE PASS</h1>
                 <p style="color: #ccc; font-size: 0.9rem; line-height: 1.5; margin-bottom: 20px;">
-                    This Battle Pass requires holding at least <b>100,000 $ROT</b>. Connect your Solana wallet to verify!
+                    Unlock all 100 tiers of epic rewards, legendary rots, and the Ultimate OG Godfather Rot!
                 </p>
-                
-                ${bp.walletAddress ? `
-                    <div style="background: rgba(255,0,85,0.1); border: 1px solid #ff0055; padding: 10px; border-radius: 8px; margin-bottom: 15px; width: 100%; font-size: 0.8rem;">
-                        Connected: ${bp.walletAddress.slice(0, 4)}...${bp.walletAddress.slice(-4)}<br>
-                        <span style="color: #ff0055;">Balance: ${bp.tokenBalance.toLocaleString()} $ROT (Required: 100,000)</span>
-                    </div>
-                ` : ''}
-
-                <button onclick="window.connectWalletForBattlePass()" style="background: linear-gradient(135deg, #00ff55, #00ffee); color: #000; border: none; padding: 14px 24px; border-radius: 12px; font-weight: bold; font-size: 1rem; cursor: pointer; font-family: monospace; box-shadow: 0 0 20px rgba(0,255,85,0.4); width: 100%;">
-                    ${bp.walletAddress ? '🔄 RE-CHECK BALANCE' : '⚡ CONNECT PHANTOM WALLET'}
+                <button onclick="window.buyBattlePassStripe()" style="background: linear-gradient(135deg, #ff0055, #ff5500); color: #fff; border: none; padding: 14px 24px; border-radius: 12px; font-weight: bold; font-size: 1rem; cursor: pointer; font-family: monospace; box-shadow: 0 0 20px rgba(255,0,85,0.4); width: 100%;">
+                    ⚡ UNLOCK PASS FOR $9.99
                 </button>
             </div>
         `;
@@ -220,8 +163,8 @@ window.openBattlePassModal = function() {
     modal.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
             <div>
-                <h1 style="color: #00ff55; font-size: 1.5rem; margin: 0;">🏆 100K $ROT BATTLE PASS</h1>
-                <p style="color: #aaa; font-size: 0.8rem; margin: 4px 0 0 0;">Level ${bp.level} | XP: ${bp.xp} / ${currentXpGoal} | <span style="color:#00ccff;">Holder Verified ✅</span></p>
+                <h1 style="color: #00ff55; font-size: 1.5rem; margin: 0;">🏆 SEASON 1 BATTLE PASS</h1>
+                <p style="color: #aaa; font-size: 0.8rem; margin: 4px 0 0 0;">Level ${bp.level} | XP: ${bp.xp} / ${currentXpGoal} | <span style="color:#00ff55;">Pass Unlocked ✅</span></p>
             </div>
             <button onclick="document.getElementById('battlePassModal').remove()" style="background: #ff0055; color: #fff; border: none; padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: monospace;">CLOSE</button>
         </div>
@@ -281,6 +224,18 @@ window.addBattlePassXP = function(amount) {
         bp.xp = getXpRequirement(100);
     }
 };
+
+// Automatic detection when Stripe redirects back after purchasing the Battle Pass
+window.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('payment') === 'success' && urlParams.get('pack') === 'battle_pass') {
+        if (typeof window.playerBattlePass !== 'undefined') {
+            window.playerBattlePass.hasPaidPass = true;
+            alert("🎉 Battle Pass Unlocked Successfully via Stripe!");
+            window.openBattlePassModal();
+        }
+    }
+});
 
 if (typeof playerData !== 'undefined' && playerData.inventory) {
     const originalPush = playerData.inventory.push;

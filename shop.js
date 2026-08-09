@@ -160,9 +160,23 @@ function openShopModal() {
         </div>
       </div>
 
-      <div style="font-size: 0.85rem; color: #ff0055; font-weight: bold; letter-spacing: 1.5px; margin-top: 10px;">GET MORE ROT (STRIPE CARD)</div>
+      <div style="font-size: 0.85rem; color: #ff0055; font-weight: bold; letter-spacing: 1.5px; margin-top: 10px;">SEASON PASS & CURRENCY (STRIPE CARD)</div>
 
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 15px;">
+        <!-- Season 1 Battle Pass -->
+        <div style="background: #16161a; border: 2px solid #ff0055; border-radius: 12px; padding: 18px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
+          <div style="display: flex; align-items: center; gap: 15px;">
+            <div style="font-size: 2.5rem;">🏆</div>
+            <div>
+              <div style="font-weight: bold; font-size: 1.05rem; color: #fff;">Season 1 Battle Pass</div>
+              <div style="font-size: 0.75rem; color: #ff0055; margin-top: 2px;">Unlock all 100 reward tiers</div>
+            </div>
+          </div>
+          <button onclick="buyRotCurrency('battle_pass', 999)" style="background: #ff0055; color: #fff; border: none; padding: 10px 18px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 0.9rem; box-shadow: 0 0 12px rgba(255,0,85,0.4); white-space: nowrap;">
+            $9.99
+          </button>
+        </div>
+
         <!-- 5,000 Rot Pack -->
         <div style="background: #16161a; border: 2px solid #ff0055; border-radius: 12px; padding: 18px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
           <div style="display: flex; align-items: center; gap: 15px;">
