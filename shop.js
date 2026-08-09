@@ -342,19 +342,12 @@ function updateShopBalances() {
   }
 }
 
-// 💳 STRIPE CHECKOUT CONNECTOR
-const stripe = typeof Stripe !== 'undefined' ? Stripe('pk_test_51U2bHZKpUjLzVxeCp5bFtUCD2JXSWy2pbb53F7LxDuOe4R6FUmRACXeZE7lGhB6Ky7T1PZo76DVj1bswGQYtmHYJ00HXnOcmNV') : null;
-
+// 💳 STRIPE CHECKOUT CONNECTOR (Live Render URL)
 window.buyRotCurrency = async function(packageId, priceInCents) {
-    if (!stripe) {
-        alert("❌ Stripe SDK not loaded.");
-        return;
-    }
-
     try {
         alert("Opening secure Stripe checkout...");
 
-        const response = await fetch('/create-checkout-session', {
+        const response = await fetch('https://brainrot-go.onrender.com/create-checkout-session', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -370,9 +363,10 @@ window.buyRotCurrency = async function(packageId, priceInCents) {
             return;
         }
 
-        const result = await stripe.redirectToCheckout({ sessionId: session.id });
-        if (result.error) {
-            alert(result.error.message);
+        if (session.url) {
+            window.location.href = session.url; // Direct redirection to live Stripe session
+        } else {
+            alert("❌ Failed to retrieve checkout session URL.");
         }
     } catch (err) {
         console.error("Stripe Error:", err);
