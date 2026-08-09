@@ -55,53 +55,73 @@ async function checkOrCreateNearbyGym(lat, lng) {
   }
 }
 
-// 🟢 SUPER-SIZED GLOWING GYM PINS 🟢
+// 🟢 ORIGINAL PIN DESIGN: MASSIVE, SPINNING, GLOWING, & BOUNCING 🟢
 function renderGymMarker(gymData) {
   if (gymMarkers.some(g => g.id === gymData.id)) return;
 
   const gymIcon = L.divIcon({
     className: '',
     html: `
-      <div style="position: relative; width: 60px; height: 75px; display: flex; flex-direction: column; align-items: center; cursor: pointer;">
-        <!-- The massive bouncing glowing pin -->
+      <style>
+        @keyframes massiveGymBounceAndSpin {
+          0%, 100% {
+            transform: translateY(0px) rotate(0deg) scale(1.4);
+            filter: drop-shadow(0 0 20px #00ff55);
+          }
+          50% {
+            transform: translateY(-15px) rotate(180deg) scale(1.6);
+            filter: drop-shadow(0 0 40px #00ffff) drop-shadow(0 0 20px #00ff55);
+          }
+        }
+        @keyframes groundRadarPulse {
+          0% { transform: scale(0.8); opacity: 0.9; }
+          50% { transform: scale(1.8); opacity: 0.2; }
+          100% { transform: scale(0.8); opacity: 0.9; }
+        }
+      </style>
+      <div style="position: relative; width: 90px; height: 110px; display: flex; flex-direction: column; align-items: center; cursor: pointer;">
+        
+        <!-- The Massive Animated & Spinning Original Pin -->
         <div style="
-          width: 45px;
-          height: 45px;
+          width: 65px;
+          height: 65px;
           background: linear-gradient(135deg, #00ff55, #00aa33);
           border-radius: 50% 50% 50% 0;
           transform: rotate(-45deg);
-          box-shadow: 0 0 20px #00ff55;
+          box-shadow: 0 0 30px #00ff55;
           display: flex;
           align-items: center;
           justify-content: center;
-          border: 3px solid #fff;
+          border: 4px solid #fff;
           z-index: 2;
+          animation: massiveGymBounceAndSpin 3s ease-in-out infinite;
         ">
           <!-- The white dot in the middle -->
           <div style="
-            width: 16px;
-            height: 16px;
+            width: 22px;
+            height: 22px;
             background: #fff;
             border-radius: 50%;
-            box-shadow: 0 0 10px #fff;
+            box-shadow: 0 0 15px #fff;
             transform: rotate(45deg);
           "></div>
         </div>
         
-        <!-- The huge glowing target ring on the ground -->
+        <!-- The Huge Glowing Target Ring on the Ground -->
         <div style="
           position: absolute;
           bottom: 2px;
-          width: 32px;
-          height: 10px;
-          border: 3px solid #00ff55;
+          width: 55px;
+          height: 18px;
+          border: 4px solid #00ff55;
           border-radius: 50%;
-          box-shadow: 0 0 15px #00ff55, inset 0 0 8px #00ff55;
+          box-shadow: 0 0 25px #00ff55, inset 0 0 12px #00ff55;
+          animation: groundRadarPulse 2s infinite ease-in-out;
         "></div>
       </div>
     `,
-    iconSize: [60, 75],
-    iconAnchor: [30, 72] // Tells the map to stick the very bottom ring perfectly to the street!
+    iconSize: [90, 110],
+    iconAnchor: [45, 105] // Perfectly anchors the base of the radar ring to the map location
   });
 
   const marker = L.marker([gymData.lat, gymData.lng], { icon: gymIcon }).addTo(map);
