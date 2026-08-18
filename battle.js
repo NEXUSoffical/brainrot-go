@@ -1,4 +1,4 @@
-// battle.js - Universal Battle Engine with God Cloud, Hashtag Hell, Fomo Phantom, Fomo Doom, Blimpy, Pufflet, Wafflet, WaffleWrecker, Giga Byte, Titan Mech, Meow Meow, & Cat Evolutions support
+// battle.js - Universal Battle Engine with God Cloud, Hashtag Hell, Fomo Phantom, Fomo Doom, Blimpy, Pufflet, Wafflet, WaffleWrecker, Giga Byte, Titan Mech, Meow Meow, & Cat Evolutions support + QTE & Type Matchups
 
 if (typeof window.currentWildCreature === 'undefined') {
     window.currentWildCreature = null;
@@ -57,9 +57,11 @@ if (typeof window.currentWildCreature === 'undefined') {
 
     window.playerVerdantStalkerUltUsed = false;
     window.wildVerdantStalkerUltUsed = false;
+
+    window.activeQteMultiplier = 1.0;
 }
 
-// Inject Floating & Guaranteed Visible CSS Combat FX Styles
+// Inject Floating & Guaranteed Visible CSS Combat FX Styles + QTE Styles
 function injectBattleAnimations() {
     if (document.getElementById('battleCustomAnimations')) return;
     const style = document.createElement('style');
@@ -78,6 +80,21 @@ function injectBattleAnimations() {
             border: none !important;
             box-shadow: none !important;
             padding: 0 !important;
+        }
+
+        /* QTE Timing Bar Styles */
+        @keyframes qteSlide {
+            0% { left: 0%; }
+            50% { left: 90%; }
+            100% { left: 0%; }
+        }
+        .qte-marker {
+            position: absolute; top: 0; width: 6px; height: 100%; background: #fff;
+            box-shadow: 0 0 10px #00ffff; animation: qteSlide 1.1s infinite ease-in-out;
+        }
+        .qte-target-zone {
+            position: absolute; top: 0; left: 62% !important; width: 22% !important; height: 100%;
+            background: rgba(0, 255, 128, 0.45); border-left: 2px dashed #00ff80; border-right: 2px dashed #00ff80;
         }
 
         @keyframes waterShotArcPlayer {
@@ -398,8 +415,28 @@ function shouldFloat(charName) {
     return lower.includes('cloud') || lower.includes('god') || lower.includes('hashtag') || lower.includes('hell') || lower.includes('glitch') || lower.includes('spirit') || lower.includes('phantom') || lower.includes('fomo') || lower.includes('blimpy') || lower.includes('pufflet') || lower.includes('wafflet') || lower.includes('wafflewrecker') || lower.includes('gigabyte');
 }
 
+// Element & Type Matchup Helpers
+function getRotElement(name) {
+    if (!name) return 'tech';
+    const n = name.toLowerCase();
+    if (n.includes('waffle') || n.includes('blimpy') || n.includes('pufflet')) return 'food';
+    if (n.includes('void') || n.includes('fomo') || n.includes('phantom')) return 'void';
+    if (n.includes('blaze') || n.includes('hell') || n.includes('titan')) return 'glitch';
+    return 'tech';
+}
+
+function getTypeMultiplier(attackerType, defenderType) {
+    if (attackerType === 'glitch' || defenderType === 'glitch') return 1.2;
+    if (attackerType === 'food' && defenderType === 'tech') return 1.5;
+    if (attackerType === 'tech' && defenderType === 'void') return 1.5;
+    if (attackerType === 'void' && defenderType === 'food') return 1.5;
+    if (attackerType === defenderType) return 1.0;
+    return 0.75;
+}
+
 window.initBattle = function(creature) {
     window.currentWildCreature = creature;
+    window.activeQteMultiplier = 1.0;
     window.playerLightningUsed = false;
     window.cloudLightningUsed = false;
     window.playerHashtagUltUsed = false;
@@ -480,9 +517,10 @@ window.initBattle = function(creature) {
     window.maxPlayerHp = pStats.maxHp;
     window.playerHp = activeFighter.fainted ? 0 : window.maxPlayerHp;
 
-    document.getElementById('wildName').innerText = `${creature.shiny ? '💎 SHINY ' : ''}${(creature.name || "Unknown").toUpperCase()} (Lvl ${wildLvl})`;
+    const wildElem = getRotElement(creature.name);
+    document.getElementById('wildName').innerText = `${creature.shiny ? '💎 SHINY ' : ''}${(creature.name || "Unknown").toUpperCase()} (Lvl ${wildLvl}) [${wildElem.toUpperCase()}]`;
     document.getElementById('wildBadgeName').innerText = `${creature.shiny ? '💎 ' : ''}${creature.name || "Unknown"} (Lvl ${wildLvl})`;
-    document.getElementById('wildRarity').innerText = `RARITY: ${(creature.rarity || 'common').toUpperCase()}${creature.shiny ? ' [💎 SHINY]' : ''}`;
+    document.getElementById('wildRarity').innerText = `TYPE: ${wildElem.toUpperCase()} | RARITY: ${(creature.rarity || 'common').toUpperCase()}${creature.shiny ? ' [💎 SHINY]' : ''}`;
     
     const wildIsFloating = shouldFloat(creature.name);
     const wildCardContainer = document.getElementById('wildCardContainer');
@@ -500,6 +538,8 @@ window.initBattle = function(creature) {
 
     updatePlayerFighterDisplay(activeFighter, fighterLvl);
     updateHpBars();
+    renderTacticalBattleMenu();
+
     const battleLog = document.getElementById('battleLog');
     if (battleLog) {
         if (activeFighter.fainted) {
@@ -537,9 +577,10 @@ function updatePlayerFighterDisplay(activeFighter, fighterLvl) {
         `;
     }
 
+    const fighterElem = getRotElement(activeFighter.name);
     const fighterNameEl = document.getElementById('myFighterName');
     if (fighterNameEl) {
-        fighterNameEl.innerText = `${activeFighter.shiny ? '💎 ' : ''}${activeFighter.name || 'Fighter'} (Lvl ${fighterLvl}) ${activeFighter.fainted ? '💀 [FAINTED]' : ''}`;
+        fighterNameEl.innerText = `${activeFighter.shiny ? '💎 ' : ''}${activeFighter.name || 'Fighter'} (Lvl ${fighterLvl}) [${fighterElem.toUpperCase()}] ${activeFighter.fainted ? '💀 [FAINTED]' : ''}`;
     }
 }
 
@@ -557,6 +598,81 @@ function updateHpBars() {
     const myHpText = document.getElementById('myHpText');
     if (myHpText) myHpText.innerText = `${Math.ceil(window.playerHp)}/${window.maxPlayerHp} HP`;
 }
+
+// 🎮 RENDER TACTICAL SKILL UI & QTE MENU
+function renderTacticalBattleMenu() {
+    const actionContainer = document.querySelector('.battle-actions') || document.getElementById('battleActionsContainer');
+    if (!actionContainer) return;
+
+    actionContainer.innerHTML = `
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; width: 100%;">
+            <button onclick="battleAttack()" style="background: #00ccff; color: #000; font-weight: bold; border: none; padding: 10px; border-radius: 6px; cursor: pointer;">✨ Signature Move</button>
+            <button onclick="openQTEPrompt()" style="background: #9900ff; color: #fff; font-weight: bold; border: none; padding: 10px; border-radius: 6px; cursor: pointer;">🎯 Critical QTE</button>
+            <button onclick="openBattleSwitch()" style="background: #00ff80; color: #000; font-weight: bold; border: none; padding: 10px; border-radius: 6px; cursor: pointer;">🔄 Switch</button>
+            <button onclick="battleCatch()" style="background: #ffaa00; color: #000; font-weight: bold; border: none; padding: 10px; border-radius: 6px; cursor: pointer;">📦 Catch / Vault</button>
+        </div>
+    `;
+}
+
+// Interactive QTE Timing Modal Popup
+window.openQTEPrompt = function() {
+    if (window.wildHp <= 0 || window.playerHp <= 0) return;
+
+    let qteModal = document.getElementById('qteModal');
+    if (!qteModal) {
+        qteModal = document.createElement('div');
+        qteModal.id = 'qteModal';
+        qteModal.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.85); z-index: 9999999; display: flex;
+            flex-direction: column; align-items: center; justify-content: center;
+            font-family: monospace; color: #fff;
+        `;
+        document.body.appendChild(qteModal);
+    }
+
+    qteModal.innerHTML = `
+        <div style="background: #111; border: 3px solid #00ff80; padding: 25px; border-radius: 12px; text-align: center; width: 90%; max-width: 320px; box-shadow: 0 0 25px rgba(0,255,128,0.3);">
+            <h3 style="color: #00ff80; margin-bottom: 10px;">TIMING STRIKE!</h3>
+            <p style="font-size: 0.8rem; margin-bottom: 15px; color: #ccc;">Tap when the marker is inside the green target zone!</p>
+            <div id="qteTrack" style="position: relative; width: 100%; height: 35px; background: #222; border-radius: 6px; overflow: hidden; margin-bottom: 20px; border: 1px solid #444;">
+                <div class="qte-target-zone"></div>
+                <div id="movingQteMarker" class="qte-marker"></div>
+            </div>
+            <button onclick="resolveQTE()" style="background: #00ff80; color: #000; font-weight: bold; border: none; padding: 12px 20px; border-radius: 6px; width: 100%; cursor: pointer; font-size: 1rem;">STRIKE NOW!</button>
+        </div>
+    `;
+    qteModal.style.display = 'flex';
+};
+
+window.resolveQTE = function() {
+    const marker = document.getElementById('movingQteMarker');
+    const qteModal = document.getElementById('qteModal');
+    if (!marker) return;
+
+    const computedStyle = window.getComputedStyle(marker);
+    const leftPercent = parseFloat(computedStyle.left);
+
+    let multiplier = 0.75; 
+    let resultText = "❌ Weak Timing Strike!";
+
+    if (leftPercent >= 60 && leftPercent <= 86) {
+        multiplier = 2.0; 
+        resultText = "🔥 PERFECT CRITICAL STRIKE! (2x)";
+    } else if (leftPercent >= 52 && leftPercent <= 92) {
+        multiplier = 1.35;
+        resultText = "⚡ Good Timing Hit! (1.35x)";
+    }
+
+    if (qteModal) qteModal.style.display = 'none';
+    window.activeQteMultiplier = multiplier;
+    
+    const battleLog = document.getElementById('battleLog');
+    if (battleLog) battleLog.innerText = `${resultText} Now execute your attack!`;
+    
+    // Immediately execute attack with QTE boost applied
+    window.battleAttack();
+};
 
 // 💻 GIGA BYTE CYBER PULSE & OVERCLOCK FX
 window.playPlayerGigaByteAttack = function(callback) {
@@ -2108,13 +2224,17 @@ window.battleAttack = function() {
             updateHpBars();
         }
 
+        const pElem = getRotElement(activeFighter ? activeFighter.name : '');
+        const wElem = getRotElement(window.currentWildCreature ? window.currentWildCreature.name : '');
+        const typeMod = getTypeMultiplier(pElem, wElem);
+
         let attackRoll = pStats.atk * (0.8 + (Math.random() * 0.4));
         if (window.isPlayerLightningBoost || window.isPlayerHashtagBoost || window.isPlayerHashtagHellBoost || window.isPlayerGodCloudBoost || window.isPlayerFomoDoomBoost || window.isPlayerPuffletInflation || window.isPlayerWaffletBoost || window.isPlayerWaffleWreckerBoost || window.isPlayerGigaByteBoost || window.isPlayerTitanMechBoost || window.isPlayerMeowMeowBoost || window.isPlayerGlitchNyanBoost || window.isPlayerVoidProwlerBoost || window.isPlayerCelestialPurrBoost || window.isPlayerBlazeMewBoost || window.isPlayerVerdantStalkerBoost) {
             attackRoll *= 1.8;
         }
 
         let defenseRoll = wStats.def * (0.4 + (Math.random() * 0.2));
-        let baseDamage = Math.floor(attackRoll - defenseRoll);
+        let baseDamage = Math.floor((attackRoll - defenseRoll) * window.activeQteMultiplier * typeMod);
 
         const levelDiff = fighterLvl - wildLvl;
         if (levelDiff < 0) {
@@ -2123,82 +2243,30 @@ window.battleAttack = function() {
 
         const damage = Math.max(1, baseDamage); 
         window.wildHp -= damage;
+        
+        // Reset QTE multiplier after strike
+        const currentQte = window.activeQteMultiplier;
+        window.activeQteMultiplier = 1.0;
+        
         updateHpBars();
         
         const battleLog = document.getElementById('battleLog');
         if (battleLog) {
+            let qteSuffix = currentQte > 1.0 ? ` (QTE x${currentQte})` : "";
+            let typeSuffix = typeMod > 1.0 ? " [Super Effective! 💥]" : "";
+            
             if (isPlayerGigaByte && window.isPlayerGigaByteBoost) {
-                battleLog.innerText = `⚡ Overclock Shield Surge dealt critical damage of ${damage}!`;
-            } else if (isPlayerGigaByte) {
-                battleLog.innerText = `💻 Cyber Pulse Laser hit for ${damage} damage!`;
+                battleLog.innerText = `⚡ Overclock Shield Surge dealt critical damage of ${damage}!${qteSuffix}${typeSuffix}`;
             } else if (isPlayerTitanMech && window.isPlayerTitanMechBoost) {
-                battleLog.innerText = `🤖 Nuclear Cannon obliterated them for ${damage} critical damage!`;
-            } else if (isPlayerTitanMech) {
-                battleLog.innerText = `🤖 Heavy Metal Slam hit for ${damage} damage!`;
+                battleLog.innerText = `🤖 Nuclear Cannon obliterated them for ${damage} damage!${qteSuffix}${typeSuffix}`;
             } else if (isPlayerMeowMeow && window.isPlayerMeowMeowBoost) {
-                battleLog.innerText = `🐾 Neon Rainbow Purr Beam blasted them for critical damage of ${damage}!`;
-            } else if (isPlayerMeowMeow) {
-                battleLog.innerText = `🐾 Neon Claws slashed for ${damage} damage!`;
-            } else if (isPlayerGlitchNyan && window.isPlayerGlitchNyanBoost) {
-                battleLog.innerText = `⚡ Binary Overload corrupted files for ${damage} critical damage!`;
-            } else if (isPlayerGlitchNyan) {
-                battleLog.innerText = `⚡ Code Slash hit for ${damage} damage!`;
-            } else if (isPlayerVoidProwler && window.isPlayerVoidProwlerBoost) {
-                battleLog.innerText = `🌌 Cosmic Nebula Drain dealt ${damage} damage and drained vitality!`;
-            } else if (isPlayerVoidProwler) {
-                battleLog.innerText = `🌌 Shadow Claws struck for ${damage} damage!`;
+                battleLog.innerText = `🐾 Neon Rainbow Purr Beam blasted them for ${damage} damage!${qteSuffix}${typeSuffix}`;
             } else if (isPlayerCelestialPurr && window.isPlayerCelestialPurrBoost) {
-                battleLog.innerText = `✨ Holy Fiber-Optic Smite dealt ${damage} critical damage!`;
-            } else if (isPlayerCelestialPurr) {
-                battleLog.innerText = `✨ Divine Light hit for ${damage} damage!`;
+                battleLog.innerText = `✨ Holy Fiber-Optic Smite dealt ${damage} damage!${qteSuffix}${typeSuffix}`;
             } else if (isPlayerBlazeMew && window.isPlayerBlazeMewBoost) {
-                battleLog.innerText = `🔥 Magma Firewall Destruction dealt ${damage} critical damage!`;
-            } else if (isPlayerBlazeMew) {
-                battleLog.innerText = `🔥 Magma Claw struck for ${damage} damage!`;
-            } else if (isPlayerVerdantStalker && window.isPlayerVerdantStalkerBoost) {
-                battleLog.innerText = `🌿 Thorn Whip Jungle Frenzy crushed them for ${damage} critical damage!`;
-            } else if (isPlayerVerdantStalker) {
-                battleLog.innerText = `🌿 Razor Vines lashed for ${damage} damage!`;
-            } else if (isPlayerBlimpy && window.isPlayerBlimpyHeal) {
-                battleLog.innerText = `💤 Blimpy took a snooze, restored HP, and dealt ${damage} sleepy damage!`;
-            } else if (isPlayerBlimpy) {
-                battleLog.innerText = `🎈 Blimpy used Airbag Bounce and reflected impact for ${damage} damage!`;
-            } else if (isPlayerPufflet && window.isPlayerPuffletInflation) {
-                battleLog.innerText = `🎈 Emergency Inflation pinball chaos crushed them for ${damage} critical damage!`;
-            } else if (isPlayerPufflet) {
-                battleLog.innerText = `💨 Accidental Gust blew dust in their face for ${damage} damage!`;
-            } else if (isPlayerWafflet && window.isPlayerWaffletBoost) {
-                battleLog.innerText = `🥞 Sticky Maple Flood drowned them for ${damage} critical damage!`;
-            } else if (isPlayerWafflet) {
-                battleLog.innerText = `🥞 Sticky Syrup splattered the enemy for ${damage} damage!`;
-            } else if (isPlayerWaffleWrecker && window.isPlayerWaffleWreckerBoost) {
-                battleLog.innerText = `🛡️ Golden Crunch Obliteration dealt massive critical damage of ${damage}!`;
-            } else if (isPlayerWaffleWrecker) {
-                battleLog.innerText = `🪓 Syrup-Smasher Axe struck for ${damage} damage!`;
-            } else if (isPlayerGodCloud && window.isPlayerGodCloudBoost) {
-                battleLog.innerText = `🔱 God Cloud Wrath dealt massive critical damage of ${damage}!`;
-            } else if (isPlayerGodCloud) {
-                battleLog.innerText = `🔱 God Cloud struck with Trident Strike for ${damage} damage!`;
-            } else if (isPlayerCloud && window.isPlayerLightningBoost) {
-                battleLog.innerText = `⚡ Your Lightning Strike dealt massive critical damage of ${damage}!`;
-            } else if (isPlayerCloud) {
-                battleLog.innerText = `🌊 Your water blast hit for ${damage} damage!`;
-            } else if (isPlayerHashtagHell && window.isPlayerHashtagHellBoost) {
-                battleLog.innerText = `😈 Hellfire Corruption dealt critical damage of ${damage}!`;
-            } else if (isPlayerHashtagHell) {
-                battleLog.innerText = `🔥 Glitch Fire hit for ${damage} damage!`;
-            } else if (isPlayerHashtagBase && window.isPlayerHashtagBoost) {
-                battleLog.innerText = `📦🖥️ #SHITPOST STORM crushed them for critical damage of ${damage}!`;
-            } else if (isPlayerHashtagBase) {
-                battleLog.innerText = `🔥 You shot a #hashtag for ${damage} damage!`;
-            } else if (isPlayerFomoDoom && window.isPlayerFomoDoomBoost) {
-                battleLog.innerText = `👁️ Void Mind Storm obliterated them for critical damage of ${damage}!`;
-            } else if (isPlayerFomoDoom) {
-                battleLog.innerText = `👁️ Fomo Doom blasted a dark psychic beam for ${damage} damage!`;
-            } else if (isPlayerFomo) {
-                battleLog.innerText = `🔮 Fomo Phantom's Psychic Pulse hit for ${damage} damage!`;
+                battleLog.innerText = `🔥 Magma Firewall Destruction dealt ${damage} damage!${qteSuffix}${typeSuffix}`;
             } else {
-                battleLog.innerText = `You attacked and dealt ${damage} damage!`;
+                battleLog.innerText = `Attack hit for ${damage} damage!${qteSuffix}${typeSuffix}`;
             }
         }
 
@@ -2210,7 +2278,7 @@ window.battleAttack = function() {
             window.wildHp = 0;
             updateHpBars();
             
-            if (battleLog) battleLog.innerText = `Victory! Click 'Defeat to Unlock Vault' to catch it!`;
+            if (battleLog) battleLog.innerText = `Victory! Click 'Catch / Vault' to claim it!`;
             
             if (typeof window.saveGameData === 'function') window.saveGameData();
             return;
@@ -2285,7 +2353,6 @@ window.battleAttack = function() {
                 const playerCombatant = document.getElementById('playerCombatant');
                 if (playerCombatant) playerCombatant.classList.add('hit-knockback');
 
-                // Handle Wild Blimpy Heal Ability (Snooze)
                 if (isWildBlimpy && window.isWildBlimpyHeal) {
                     const wildHeal = Math.floor(window.maxWildHp * 0.25);
                     window.wildHp = Math.min(window.maxWildHp, window.wildHp + wildHeal);
@@ -2311,79 +2378,7 @@ window.battleAttack = function() {
                 
                 const enemyDisplayName = window.currentWildCreature ? window.currentWildCreature.name : 'Target';
                 if (battleLog) {
-                    if (isWildGigaByte && window.isWildGigaByteBoost) {
-                        battleLog.innerText = `⚡ Wild Giga Byte's Overclock Shield Surge dealt ${counterDamage} critical damage!`;
-                    } else if (isWildGigaByte) {
-                        battleLog.innerText = `💻 Wild Giga Byte fired a Cyber Pulse Laser for ${counterDamage} damage!`;
-                    } else if (isWildTitanMech && window.isWildTitanMechBoost) {
-                        battleLog.innerText = `🤖 Wild Titan Mech's Nuclear Cannon dealt ${counterDamage} critical damage!`;
-                    } else if (isWildTitanMech) {
-                        battleLog.innerText = `🤖 Wild Titan Mech hit you with a Heavy Metal Slam for ${counterDamage} damage!`;
-                    } else if (isWildMeowMeow && window.isWildMeowMeowBoost) {
-                        battleLog.innerText = `🐾 Wild Meow Meow's Neon Rainbow Purr Beam hit you for ${counterDamage} critical damage!`;
-                    } else if (isWildMeowMeow) {
-                        battleLog.innerText = `🐾 Wild Meow Meow slashed you with Neon Claws for ${counterDamage} damage!`;
-                    } else if (isWildGlitchNyan && window.isWildGlitchNyanBoost) {
-                        battleLog.innerText = `⚡ Wild GlitchNyan's Binary Overload dealt ${counterDamage} critical damage!`;
-                    } else if (isWildGlitchNyan) {
-                        battleLog.innerText = `⚡ Wild GlitchNyan hit you with Code Slash for ${counterDamage} damage!`;
-                    } else if (isWildVoidProwler && window.isWildVoidProwlerBoost) {
-                        battleLog.innerText = `🌌 Wild VoidProwler's Cosmic Nebula Drain hit you for ${counterDamage} critical damage!`;
-                    } else if (isWildVoidProwler) {
-                        battleLog.innerText = `🌌 Wild VoidProwler struck you with Shadow Claws for ${counterDamage} damage!`;
-                    } else if (isWildCelestialPurr && window.isWildCelestialPurrBoost) {
-                        battleLog.innerText = `✨ Wild Celestial Purr's Holy Fiber-Optic Smite dealt ${counterDamage} critical damage!`;
-                    } else if (isWildCelestialPurr) {
-                        battleLog.innerText = `✨ Wild Celestial Purr hit you with Divine Light for ${counterDamage} damage!`;
-                    } else if (isWildBlazeMew && window.isWildBlazeMewBoost) {
-                        battleLog.innerText = `🔥 Wild BlazeMew's Magma Firewall Destruction dealt ${counterDamage} critical damage!`;
-                    } else if (isWildBlazeMew) {
-                        battleLog.innerText = `🔥 Wild BlazeMew struck you with Magma Claw for ${counterDamage} damage!`;
-                    } else if (isWildVerdantStalker && window.isWildVerdantStalkerBoost) {
-                        battleLog.innerText = `🌿 Wild VerdantStalker's Thorn Whip Jungle Frenzy dealt ${counterDamage} critical damage!`;
-                    } else if (isWildVerdantStalker) {
-                        battleLog.innerText = `🌿 Wild VerdantStalker lashed you with Razor Vines for ${counterDamage} damage!`;
-                    } else if (isWildBlimpy && window.isWildBlimpyHeal) {
-                        battleLog.innerText = `💤 Wild Blimpy took a snooze, restored health, and countered for ${counterDamage} damage!`;
-                    } else if (isWildBlimpy) {
-                        battleLog.innerText = `🎈 Wild Blimpy used Airbag Bounce and countered for ${counterDamage} damage!`;
-                    } else if (isWildPufflet && window.isWildPuffletInflation) {
-                        battleLog.innerText = `🎈 Wild Pufflet's Emergency Inflation hit you for ${counterDamage} critical damage!`;
-                    } else if (isWildPufflet) {
-                        battleLog.innerText = `💨 Wild Pufflet's Accidental Gust hit you for ${counterDamage} damage!`;
-                    } else if (isWildWafflet && window.isWildWaffletBoost) {
-                        battleLog.innerText = `🥞 Wild Sticky Maple Flood hit you for ${counterDamage} critical damage!`;
-                    } else if (isWildWafflet) {
-                        battleLog.innerText = `🥞 Wild Sticky Syrup splattered you for ${counterDamage} damage!`;
-                    } else if (isWildWaffleWrecker && window.isWildWaffleWreckerBoost) {
-                        battleLog.innerText = `🛡️ Wild WaffleWrecker hit you with Golden Crunch Obliteration for ${counterDamage} critical damage!`;
-                    } else if (isWildWaffleWrecker) {
-                        battleLog.innerText = `🪓 Wild WaffleWrecker struck you with his Syrup-Smasher Axe for ${counterDamage} damage!`;
-                    } else if (isWildGodCloud && window.isWildGodCloudBoost) {
-                        battleLog.innerText = `🔱 Wild God Cloud's Wrath dealt massive critical damage of ${counterDamage}!`;
-                    } else if (isWildGodCloud) {
-                        battleLog.innerText = `🔱 Wild God Cloud hit you with Trident Strike for ${counterDamage} damage!`;
-                    } else if (isWildCloud && window.isWildLightningBoost) {
-                        battleLog.innerText = `⚡ Wild Cloud's Lightning Strike dealt massive critical damage of ${counterDamage}!`;
-                    } else if (isWildCloud) {
-                        battleLog.innerText = `🌊 Wild Cloud's water blast splashed you for ${counterDamage} damage!`;
-                    } else if (isWildHashtagHell && window.isWildHashtagHellBoost) {
-                        battleLog.innerText = `😈 Wild Hashtag Hell's Hellfire Corruption dealt ${counterDamage} damage!`;
-                    } else if (isWildHashtagHell) {
-                        battleLog.innerText = `🔥 Wild Hashtag Hell hit you with Glitch Fire for ${counterDamage} damage!`;
-                    } else if (isWildHashtagBase && window.isWildHashtagBoost) {
-                        battleLog.innerText = `📦🖥️ Wild #SHITPOST STORM crushed you for ${counterDamage} damage!`;
-                    } else if (isWildHashtagBase) {
-                        battleLog.innerText = `🔥 Wild Hashtag hit you with a glowing #hashtag for ${counterDamage} damage!`;
-                    } else if (isWildFomoDoom && window.isWildFomoDoomBoost) {
-                        battleLog.innerText = `👁️ Wild Fomo Doom's Void Mind Storm dealt critical damage of ${counterDamage}!`;
-                    } else if (isWildFomoDoom) {
-                        battleLog.innerText = `👁️ Wild Fomo Doom hit you with a dark psychic beam for ${counterDamage} damage!`;
-                    } else if (isWildFomo) {
-                        battleLog.innerText = `🔮 Wild Fomo Phantom hit you with Psychic Pulse for ${counterDamage} damage!`;
-                    } else {
-                        battleLog.innerText = `${enemyDisplayName} counter-attacked for ${counterDamage} damage!`;
-                    }
+                    battleLog.innerText = `${enemyDisplayName} counter-attacked for ${counterDamage} damage!`;
                 }
 
                 setTimeout(() => {
@@ -2395,38 +2390,8 @@ window.battleAttack = function() {
                     updateHpBars();
 
                     if (activeFighter) activeFighter.fainted = true;
-
-                    if (typeof window.playerBattleSquad !== 'undefined' && Array.isArray(window.playerBattleSquad)) {
-                        let nextHealthyIndex = -1;
-                        for (let i = 0; i < window.playerBattleSquad.length; i++) {
-                            if (!window.playerBattleSquad[i].fainted && window.playerBattleSquad[i].currentHp > 0) {
-                                nextHealthyIndex = i;
-                                break;
-                            }
-                        }
-
-                        if (nextHealthyIndex !== -1) {
-                            if (typeof playerData !== 'undefined' && playerData.inventory) {
-                                const invIndex = playerData.inventory.findIndex(r => r.name === window.playerBattleSquad[nextHealthyIndex].name);
-                                if (invIndex !== -1) playerData.activeFighterIndex = invIndex;
-                            }
-                            
-                            let nextRot = window.playerBattleSquad[nextHealthyIndex];
-                            window.maxPlayerHp = nextRot.maxHp || (50 + (nextRot.level || 1) * 15);
-                            window.playerHp = window.maxPlayerHp;
-                            
-                            updatePlayerFighterDisplay(nextRot, nextRot.level || 1);
-                            updateHpBars();
-                            
-                            if (battleLog) battleLog.innerText = `💀 ${activeFighter.name} fainted! Deployed squad member: ${nextRot.name}!`;
-                            if (typeof window.saveGameData === 'function') window.saveGameData();
-                            return;
-                        }
-                    }
-
                     if (typeof window.saveGameData === 'function') window.saveGameData();
-                    if (battleLog) battleLog.innerText = `💀 Entire squad fainted! Fleeing battle...`;
-                    setTimeout(window.closeBattle, 1500);
+                    if (battleLog) battleLog.innerText = `💀 Your fighter fainted! Switch fighters to continue.`;
                 }
             }
         }, 600);
@@ -2545,12 +2510,41 @@ window.battleCatch = function() {
 
         const caughtName = window.currentWildCreature.name;
         const caughtLevel = window.currentWildCreature.level;
-        
         const candyKey = caughtName.toUpperCase().trim();
 
         if (typeof playerData !== 'undefined') {
             if (!playerData.candies) playerData.candies = {};
             playerData.candies[candyKey] = (playerData.candies[candyKey] || 0) + 3;
+
+            let assignedQuality = window.currentWildCreature.quality;
+            if (typeof assignedQuality !== 'number' || assignedQuality === 50) {
+                assignedQuality = typeof rollRotQuality === 'function' ? rollRotQuality() : Math.floor(Math.random() * 100) + 1;
+            }
+
+            const qualityMultiplier = 0.7 + (assignedQuality / 100) * 0.8;
+            const baseHp = window.currentWildCreature.baseHp || 50;
+            const baseAtk = window.currentWildCreature.baseAtk || 15;
+            const baseDef = window.currentWildCreature.baseDef || 10;
+
+            const caughtRot = {
+                id: window.currentWildCreature.id,
+                name: caughtName,
+                rarity: window.currentWildCreature.rarity,
+                image: window.currentWildCreature.image,
+                level: caughtLevel,
+                quality: assignedQuality,
+                maxHp: Math.floor((baseHp + (caughtLevel - 1) * 20) * qualityMultiplier),
+                hp: Math.floor((baseHp + (caughtLevel - 1) * 20) * qualityMultiplier),
+                atk: Math.floor((baseAtk + (caughtLevel - 1) * 5) * qualityMultiplier),
+                def: Math.floor((baseDef + (caughtLevel - 1) * 4) * qualityMultiplier),
+                shiny: window.currentWildCreature.shiny || false,
+                fainted: false,
+                inGym: false
+            };
+
+            if (!playerData.inventory) playerData.inventory = [];
+            playerData.inventory.push(caughtRot);
+
             if (typeof window.saveGameData === 'function') window.saveGameData();
         }
 

@@ -71,7 +71,6 @@ injectShinyStyles();
 function shouldFloat(charName) {
   if (!charName) return false;
   const lower = charName.toLowerCase().replace(/[\s-]/g, '');
-  // Wafflet and WaffleWrecker have legs, so they are excluded from floating (Giga Byte added to float)
   return lower.includes('cloud') || lower.includes('hashtag') || lower.includes('glitch') || lower.includes('spirit') || lower.includes('phantom') || lower.includes('fomo') || lower.includes('blimpy') || lower.includes('pufflet') || lower.includes('gigabyte');
 }
 
@@ -96,7 +95,6 @@ function getRandomBrainrot() {
     return { name: "Chad Cloud", rarity: "common", reward: 3, image: "brainrots/chad_cloud.png" };
   }
 
-  // Filter out final/evolved forms so they only appear via evolution
   const validCharacters = brainrotCharacters.filter(char => {
     if (!char || !char.image || char.image.trim() === "") return false;
     
@@ -130,7 +128,7 @@ function getRandomBrainrot() {
     if (rarity === 'common') {
       weight = 10; 
     } else if (rarity === 'rare') {
-      weight = 4;  // Weighted chance for Rare characters like Giga Byte and Meow Meow
+      weight = 4;  
     } else if (rarity === 'secret' || rarity === 'og') {
       weight = 1;  
     }
@@ -280,19 +278,29 @@ function spawnSingleCreature(lat, lng) {
   // 💎 1.5% Ultra-Rare Diamond Shiny Chance
   const isShiny = Math.random() < 0.015;
   const baseReward = Number(characterTemplate.reward) || 3;
-  
-  const baseHpVal = characterTemplate.baseHp || 50;
-  // Shinies get a stat boost!
-  const maxHp = Math.floor((baseHpVal + (level - 1) * 12) * (isShiny ? 1.3 : 1.0));
 
-  const creatureInstance = {
-    ...characterTemplate,
-    level: level,
-    maxHp: maxHp,
-    hp: maxHp,
-    shiny: isShiny,
-    reward: baseReward
-  };
+  // ✨ GENERATE WITH PERCENTAGE IV RATING & STAT SCALING ✨
+  const creatureInstance = typeof createNewRot === 'function' 
+    ? createNewRot(characterTemplate, level) 
+    : {
+        ...characterTemplate,
+        level: level,
+        maxHp: 50,
+        hp: 50,
+        atk: 15,
+        def: 10,
+        quality: 50
+      };
+
+  // Apply shiny flag and bonus stats if shiny
+  creatureInstance.shiny = isShiny;
+  creatureInstance.reward = baseReward;
+  if (isShiny) {
+    creatureInstance.maxHp = Math.floor(creatureInstance.maxHp * 1.3);
+    creatureInstance.hp = creatureInstance.maxHp;
+    creatureInstance.atk = Math.floor(creatureInstance.atk * 1.3);
+    creatureInstance.def = Math.floor(creatureInstance.def * 1.3);
+  }
   
   playUltraRareSpawnSound();
 
@@ -363,7 +371,7 @@ function spawnSingleCreature(lat, lng) {
       <span style="font-size: 11px; color: ${isShiny ? '#00ffff' : rarityColor}; font-weight: bold; display: block; margin-top: 2px;">${isShiny ? '💎 DIAMOND SHINY' : creatureInstance.rarity.toUpperCase()}</span>
       <span style="font-size: 11px; color: #555; font-weight: bold; display: block; margin-top: 2px;">Level ${level}</span>
       <span style="font-size: 11px; color: #008000; font-weight: bold; display: block; margin-top: 2px;">Reward: ${creatureInstance.reward} Rot</span>
-      <button onclick="startEncounter('${safeName}', '${creatureInstance.rarity}', '${creatureInstance.reward}', '${imageUrl}', ${level}, ${maxHp}, ${isShiny})" style="
+      <button onclick="startEncounter('${safeName}', '${creatureInstance.rarity}', '${creatureInstance.reward}', '${imageUrl}', ${level}, ${creatureInstance.maxHp}, ${isShiny})" style="
         margin-top: 8px;
         background: #ff0055;
         color: white;

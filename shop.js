@@ -297,22 +297,27 @@ window.buyCrate = function(tier, cost) {
   
   playerData.rotBalance -= cost;
 
-  // Add new rot to player inventory
-  const newRot = {
-    id: chosenTemplate.id,
-    name: chosenTemplate.name,
-    rarity: chosenTemplate.rarity,
-    image: chosenTemplate.image,
-    level: tier === 'legendary' ? 10 : (tier === 'epic' ? 5 : 1),
-    maxHp: 50 + ((tier === 'legendary' ? 10 : (tier === 'epic' ? 5 : 1)) - 1) * 20,
-    hp: 50 + ((tier === 'legendary' ? 10 : (tier === 'epic' ? 5 : 1)) - 1) * 20,
-    fainted: false,
-    inGym: false
-  };
+  const targetLevel = tier === 'legendary' ? 10 : (tier === 'epic' ? 5 : 1);
+
+  // Use createNewRot generator so it gets randomized IV % and star rating!
+  const newRot = typeof createNewRot === 'function' 
+    ? createNewRot(chosenTemplate, targetLevel) 
+    : {
+        id: chosenTemplate.id,
+        name: chosenTemplate.name,
+        rarity: chosenTemplate.rarity,
+        image: chosenTemplate.image,
+        level: targetLevel,
+        quality: 50,
+        maxHp: 50,
+        hp: 50,
+        fainted: false,
+        inGym: false
+      };
 
   playerData.inventory.push(newRot);
 
-  alert(`🎉 Crate Opened! You pulled a Lvl ${newRot.level} ${newRot.name} (${newRot.rarity.toUpperCase()})!`);
+  alert(`🎉 Crate Opened! You pulled a Lvl ${newRot.level} ${newRot.name} (${newRot.rarity.toUpperCase()}) with ${newRot.quality}% IV!`);
   updateShopBalances();
 };
 

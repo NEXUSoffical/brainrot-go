@@ -44,6 +44,21 @@
         }
         .btn-hud:active { transform: scale(0.95); }
 
+        /* --- ⚡ QTE TIMING STRIKE MINIGAME STYLES ⚡ --- */
+        @keyframes qteSlide {
+            0% { left: 0%; }
+            50% { left: 90%; }
+            100% { left: 0%; }
+        }
+        .qte-marker {
+            position: absolute; top: 0; width: 6px; height: 100%; background: #fff;
+            box-shadow: 0 0 10px #00ffff; animation: qteSlide 1.1s infinite ease-in-out;
+        }
+        .qte-target-zone {
+            position: absolute; top: 0; left: 62% !important; width: 22% !important; height: 100%;
+            background: rgba(0, 255, 128, 0.45); border-left: 2px dashed #00ff80; border-right: 2px dashed #00ff80;
+        }
+
         /* --- ⚡ MASSIVE SPINNING & GLOWING GYM ANIMATIONS ⚡ --- */
         @keyframes massiveGymBounceAndSpin {
           0%, 100% {
@@ -185,8 +200,8 @@
         .charge-attack { transform: translate(100px, -80px) scale(1.15) !important; }
         .hit-knockback { transform: translate(15px, -15px) scale(0.9) !important; filter: brightness(2) drop-shadow(0 0 15px #ff0000) !important; }
 
-        .battle-controls { max-width: 450px; width: 100%; margin: 0 auto 5px auto; display: flex; flex-direction: column; gap: 6px; z-index: 100; }
-        .btn-action { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; font-family: monospace; transition: transform 0.1s; }
+        .battle-controls { max-width: 450px; width: 100%; margin: 0 auto 5px auto; display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; z-index: 100; }
+        .btn-action { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; font-size: 0.95rem; cursor: pointer; font-family: monospace; transition: transform 0.1s; }
         .btn-action:active { transform: scale(0.98); }
 
         /* Rot-Dex Sticker Book Modal */
@@ -404,10 +419,10 @@
         </div>
 
         <div class="battle-controls">
-            <button id="attackBtn" class="btn-action" style="background: #ff0055; color: #fff;" onclick="battleAttack()">⚔️ ATTACK WILD BRAINROT</button>
-            <button id="vaultCatchBtn" class="btn-action" style="background: #76ff03; color: #000;" onclick="battleCatch()">🔒 DEFEAT TO UNLOCK VAULT</button>
-            <button class="btn-action" style="background: #00ccff; color: #000;" onclick="openBattleSwitch()">🔄 SWITCH ROT</button>
-            <button class="btn-action" style="background: #333; color: #fff;" onclick="closeBattle()">🏃 FLEE BATTLE</button>
+            <button onclick="openQTEPrompt()" class="btn-action" style="background: #9900ff; color: #fff;">🎯 Critical QTE</button>
+            <button id="attackBtn" class="btn-action" style="background: #ff0055; color: #fff;" onclick="battleAttack()">✨ Signature Move</button>
+            <button id="vaultCatchBtn" class="btn-action" style="background: #76ff03; color: #000;" onclick="battleCatch()">📦 Catch / Vault</button>
+            <button class="btn-action" style="background: #00ccff; color: #000;" onclick="openBattleSwitch()">🔄 Switch Rot</button>
         </div>
     </div>
 
@@ -470,14 +485,12 @@
 
         window.addEventListener('DOMContentLoaded', updateRealPlayerCount);
 
-        // Override or inject starter grid rendering helper to only allow Commons
         window.addEventListener('DOMContentLoaded', () => {
             window.populateStarterGrid = function() {
                 const grid = document.getElementById('starterSelectionGrid');
                 if (!grid || typeof brainrotCharacters === 'undefined') return;
                 
                 grid.innerHTML = '';
-                // STRICT FILTER: Only show common starters
                 const commonStarters = brainrotCharacters.filter(c => c.rarity && c.rarity.toLowerCase() === 'common');
                 
                 commonStarters.forEach((char, index) => {

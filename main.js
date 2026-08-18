@@ -124,11 +124,124 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==========================================
+// PERCENTAGE STAT RATING SYSTEM (IVs) & STARS
+// ==========================================
+
+function rollRotQuality() {
+    const rand = Math.random() * 100;
+    if (rand < 1) {
+        return Math.floor(Math.random() * 6) + 95; // 95 to 100 (1% chance)
+    } else if (rand < 10) {
+        return Math.floor(Math.random() * 15) + 80; // 80 to 94 (9% chance)
+    } else if (rand < 50) {
+        return Math.floor(Math.random() * 30) + 50; // 50 to 79 (40% chance)
+    } else {
+        return Math.floor(Math.random() * 49) + 1;  // 1 to 49 (50% chance)
+    }
+}
+
+// Converts percentage (1-100) into visual 3-star string (e.g. ⭐⭐⭐, ⭐⭐✨, etc.)
+function getStarRatingHtml(quality) {
+    const q = quality || 50;
+    const score = (q / 100) * 3; 
+    
+    let starsHtml = '';
+    for (let i = 1; i <= 3; i++) {
+        if (score >= i) {
+            starsHtml += '⭐'; // Full star
+        } else if (score >= i - 0.5) {
+            starsHtml += '🌟'; // Half star / glowing star
+        } else {
+            starsHtml += '☆'; // Empty star
+        }
+    }
+    return starsHtml;
+}
+
+function createNewRot(template, baseLevel = 1) {
+    const quality = rollRotQuality(); 
+    const qualityMultiplier = 0.7 + (quality / 100) * 0.8;
+
+    const baseHp = template.baseHp || 50;
+    const baseAtk = template.baseAtk || 15;
+    const baseDef = template.baseDef || 10;
+
+    const finalHp = Math.floor((baseHp + (baseLevel - 1) * 20) * qualityMultiplier);
+    const finalAtk = Math.floor((baseAtk + (baseLevel - 1) * 5) * qualityMultiplier);
+    const finalDef = Math.floor((baseDef + (baseLevel - 1) * 4) * qualityMultiplier);
+
+    return {
+        id: template.id,
+        name: template.name,
+        rarity: template.rarity,
+        image: template.image,
+        level: baseLevel,
+        quality: quality,
+        maxHp: finalHp,
+        hp: finalHp,
+        atk: finalAtk,
+        def: finalDef,
+        fainted: false,
+        inGym: false
+    };
+}
+
+window.inspectRot = function(index) {
+    if (!playerData || !playerData.inventory || !playerData.inventory[index]) return;
+    const rot = playerData.inventory[index];
+
+    let existingModal = document.getElementById('inspectModal');
+    if (existingModal) existingModal.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'inspectModal';
+    modal.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        background: rgba(10, 10, 15, 0.95); z-index: 9999999;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        color: #fff; font-family: monospace; padding: 20px; box-sizing: border-box;
+    `;
+
+    let qualityColor = '#aaa';
+    if (rot.quality >= 95) qualityColor = '#ffcc00';
+    else if (rot.quality >= 80) qualityColor = '#ff00ff';
+    else if (rot.quality >= 50) qualityColor = '#00ccff';
+
+    const starDisplay = getStarRatingHtml(rot.quality || 50);
+
+    modal.innerHTML = `
+        <div style="background: #16161a; border: 2px solid ${qualityColor}; border-radius: 16px; padding: 30px; text-align: center; max-width: 350px; width: 100%; box-shadow: 0 0 30px rgba(0,0,0,0.8);">
+            <img src="${rot.image || ''}" style="width: 100px; height: 100px; object-fit: contain; margin-bottom: 15px;" onerror="this.style.display='none';" />
+            <h2 style="margin: 0 0 5px 0; color: #fff;">${rot.name}</h2>
+            <p style="margin: 0 0 10px 0; font-size: 0.85rem; color: #aaa; text-transform: uppercase;">${rot.rarity || 'common'} • Lvl ${rot.level}</p>
+            
+            <div style="font-size: 1.3rem; margin-bottom: 12px; letter-spacing: 2px;">${starDisplay}</div>
+
+            <div style="background: rgba(255,255,255,0.05); border-radius: 10px; padding: 12px; margin-bottom: 20px;">
+                <div style="font-size: 1.1rem; font-weight: bold; color: ${qualityColor}; margin-bottom: 8px;">
+                    IV Rating: ${rot.quality || 50}%
+                </div>
+                <div style="font-size: 0.8rem; color: #ccc; display: flex; justify-content: space-around;">
+                    <div>HP: ${rot.maxHp}</div>
+                    <div>ATK: ${rot.atk}</div>
+                    <div>DEF: ${rot.def}</div>
+                </div>
+            </div>
+
+            <button onclick="document.getElementById('inspectModal').remove()" style="background: #333; color: #fff; border: none; padding: 12px 24px; font-weight: bold; border-radius: 8px; cursor: pointer; width: 100%;">BACK</button>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+};
+
+// ==========================================
 // RPG STAT ENGINE & FULL-SCREEN CARD UI
 // ==========================================
 
 window.calculateRotStats = function(rot) {
     const level = rot.level || 1;
+    const qualityMultiplier = 0.7 + ((rot.quality || 50) / 100) * 0.8;
     
     const rarityGrowth = {
         'common': 1.0,
@@ -142,27 +255,22 @@ window.calculateRotStats = function(rot) {
     const mult = rarityGrowth[(rot.rarity || 'common').toLowerCase()] || 1.0;
 
     let baseHp = 50;
-    let baseAtk = 10;
+    let baseAtk = 15;
     let baseDef = 10;
 
     if (typeof brainrotCharacters !== 'undefined') {
         const dbChar = brainrotCharacters.find(c => c.name.toLowerCase().trim() === rot.name.toLowerCase().trim());
-        
         if (dbChar) {
             baseHp = dbChar.baseHp || 50;
-            baseAtk = dbChar.baseAtk || 10;
+            baseAtk = dbChar.baseAtk || 15;
             baseDef = dbChar.baseDef || 10;
         }
-    } else {
-        baseHp = rot.baseHp || 50;
-        baseAtk = rot.baseAtk || 10;
-        baseDef = rot.baseDef || 10;
     }
 
     return {
-        maxHp: Math.floor(baseHp + (level * 5 * mult)),
-        atk: Math.floor(baseAtk + (level * 2 * mult)),
-        def: Math.floor(baseDef + (level * 2 * mult))
+        maxHp: Math.floor((baseHp + (level * 5 * mult)) * qualityMultiplier),
+        atk: Math.floor((baseAtk + (level * 2 * mult)) * qualityMultiplier),
+        def: Math.floor((baseDef + (level * 2 * mult)) * qualityMultiplier)
     };
 };
 
@@ -179,10 +287,8 @@ window.openCardDetails = function(inventoryIndex) {
     }
 
     const candyKey = rot.name.toUpperCase().trim();
-
     if (!playerData.candies) playerData.candies = {};
     const candyCount = playerData.candies[candyKey] || 0; 
-    
     const levelUpCost = rot.level * 2; 
 
     const charData = typeof brainrotCharacters !== 'undefined' 
@@ -218,6 +324,7 @@ window.openCardDetails = function(inventoryIndex) {
     const hpPercent = Math.min(100, (stats.maxHp / 2000) * 100);
     const atkPercent = Math.min(100, (stats.atk / 800) * 100);
     const defPercent = Math.min(100, (stats.def / 800) * 100);
+    const starDisplay = getStarRatingHtml(rot.quality || 50);
 
     detailModal.innerHTML = `
         <div style="background: linear-gradient(180deg, #111, ${rarityColor}44); border: 4px solid ${rarityColor}; border-radius: 20px; padding: 20px; width: 100%; max-width: 320px; text-align: center; box-shadow: 0 0 50px ${rarityColor}88; position: relative;">
@@ -225,9 +332,11 @@ window.openCardDetails = function(inventoryIndex) {
             <button onclick="document.getElementById('cardDetailModal').style.display='none'" style="position: absolute; top: -15px; right: -15px; background: #ff0055; color: white; border: 3px solid #fff; border-radius: 50%; width: 40px; height: 40px; font-weight: bold; font-size: 1.2rem; cursor: pointer; z-index: 10;">X</button>
 
             <h2 style="color: ${rarityColor}; margin: 0 0 5px 0; text-transform: uppercase; font-size: 1.4rem;">${rot.name}</h2>
-            <div style="font-size: 0.9rem; margin-bottom: 15px; color: #aaa; font-weight: bold;">Lvl ${rot.level || 1} | ${(rot.rarity || 'common').toUpperCase()}</div>
+            <div style="font-size: 0.9rem; margin-bottom: 5px; color: #aaa; font-weight: bold;">Lvl ${rot.level || 1} | ${(rot.rarity || 'common').toUpperCase()}</div>
+            <div style="font-size: 1.1rem; margin-bottom: 10px; letter-spacing: 1px;">${starDisplay}</div>
+            <div style="font-size: 0.75rem; color: #ffcc00; margin-bottom: 12px; font-weight: bold; cursor: pointer;" onclick="inspectRot(${inventoryIndex})">IV Rating: ${rot.quality || 50}% (Click to Inspect)</div>
             
-            <div style="width: 100%; height: 180px; background: transparent; border-radius: 10px; overflow: hidden; border: 2px solid #444; margin-bottom: 15px; display: flex; align-items: center; justify-content: center;">
+            <div style="width: 100%; height: 140px; background: transparent; border-radius: 10px; overflow: hidden; border: 2px solid #444; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; cursor: pointer;" onclick="inspectRot(${inventoryIndex})">
                 <img src="${rotImage}" style="max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.8));" onerror="this.style.display='none';">
             </div>
 
@@ -308,6 +417,8 @@ window.levelUpRot = function(index) {
         const newStats = calculateRotStats(rot);
         rot.maxHp = newStats.maxHp;
         rot.hp = newStats.maxHp;
+        rot.atk = newStats.atk;
+        rot.def = newStats.def;
         
         if (typeof window.saveGameData === 'function') window.saveGameData();
         
