@@ -2400,7 +2400,18 @@ window.battleAttack = function() {
 
                     if (activeFighter) activeFighter.fainted = true;
                     if (typeof window.saveGameData === 'function') window.saveGameData();
-                    if (battleLog) battleLog.innerText = `💀 Your fighter fainted! Click 'Switch' to choose another Rot.`;
+                    
+                    if (battleLog) battleLog.innerText = `💀 Your squad was defeated! Fleeing battle...`;
+                    
+                    setTimeout(() => {
+                        if (typeof window.closeBattle === 'function') {
+                            window.closeBattle();
+                        } else {
+                            const modal = document.getElementById('battleModal');
+                            if (modal) modal.style.display = 'none';
+                        }
+                        window.currentWildCreature = null;
+                    }, 1500);
                 }
             }
         }, 600);
