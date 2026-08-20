@@ -616,6 +616,14 @@ function renderTacticalBattleMenu() {
 
 // Interactive QTE Timing Modal Popup
 window.openQTEPrompt = function() {
+    let activeFighter = playerData.inventory[playerData.activeFighterIndex || 0];
+    if (activeFighter && (activeFighter.fainted || window.playerHp <= 0)) {
+        const battleLog = document.getElementById('battleLog');
+        if (battleLog) battleLog.innerText = `⚠️ Your fighter is fainted! Click 'Switch' to choose another Rot.`;
+        if (typeof openBattleSwitch === 'function') openBattleSwitch();
+        return;
+    }
+
     if (window.wildHp <= 0 || window.playerHp <= 0) return;
 
     let qteModal = document.getElementById('qteModal');
@@ -670,7 +678,6 @@ window.resolveQTE = function() {
     const battleLog = document.getElementById('battleLog');
     if (battleLog) battleLog.innerText = `${resultText} Now execute your attack!`;
     
-    // Immediately execute attack with QTE boost applied
     window.battleAttack();
 };
 
@@ -2113,18 +2120,20 @@ window.playWildHashtagHellAttack = function(callback) {
 };
 
 window.battleAttack = function() {
-    if (window.wildHp <= 0) return;
-
     let activeFighter = null;
     if (typeof playerData !== 'undefined' && playerData.inventory && playerData.inventory.length > 0) {
         activeFighter = playerData.inventory[playerData.activeFighterIndex || 0];
     }
 
-    if (activeFighter && activeFighter.fainted) {
+    // Safety check: if active fighter is fainted, block attack and force switch menu
+    if (activeFighter && (activeFighter.fainted || window.playerHp <= 0)) {
         const battleLog = document.getElementById('battleLog');
-        if (battleLog) battleLog.innerText = `⚠️ Your active fighter is fainted! Switch fighters or revive them.`;
+        if (battleLog) battleLog.innerText = `⚠️ Active fighter is fainted! Click 'Switch' to choose another Rot.`;
+        if (typeof openBattleSwitch === 'function') openBattleSwitch();
         return;
     }
+
+    if (window.wildHp <= 0) return;
 
     const wildCombatant = document.getElementById('wildCombatant');
     
@@ -2391,7 +2400,7 @@ window.battleAttack = function() {
 
                     if (activeFighter) activeFighter.fainted = true;
                     if (typeof window.saveGameData === 'function') window.saveGameData();
-                    if (battleLog) battleLog.innerText = `💀 Your fighter fainted! Switch fighters to continue.`;
+                    if (battleLog) battleLog.innerText = `💀 Your fighter fainted! Click 'Switch' to choose another Rot.`;
                 }
             }
         }, 600);

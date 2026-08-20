@@ -1,4 +1,4 @@
-// battlePvP.js - Real-Time Online PvP Combat & Room Sync Engine with Custom Character Abilities
+// battlePvP.js - Real-Time Online PvP Combat & Room Sync Engine with QTE & Type Matchups
 
 if (typeof window.pvpBattleState === 'undefined') {
     window.pvpBattleState = null;
@@ -16,7 +16,8 @@ window.startPvPBattleScene = function(matchId, role) {
     window.pvpBattleState = {
         matchId: matchId,
         role: role, // 'player1' or 'player2'
-        unsubscribeMatch: null
+        unsubscribeMatch: null,
+        activeQteMultiplier: 1.0
     };
 
     let modal = document.getElementById('battlePvPModal');
@@ -94,6 +95,9 @@ window.renderPvPArena = function(matchData) {
     const enemyRarityColor = typeof getRarityColor === 'function' ? getRarityColor(enemyActiveRot.rarity) : '#ff0055';
     const playerRarityColor = typeof getRarityColor === 'function' ? getRarityColor(myActiveRot.rarity) : '#00ff55';
 
+    const myElem = typeof getRotElement === 'function' ? getRotElement(myActiveRot.name) : 'tech';
+    const enemyElem = typeof getRotElement === 'function' ? getRotElement(enemyActiveRot.name) : 'tech';
+
     const isMyTurn = matchData.turn === myData.username;
     const isGameOver = matchData.winner !== null && matchData.winner !== undefined;
 
@@ -143,6 +147,19 @@ window.renderPvPArena = function(matchData) {
                 0% { background-position: 0 0; }
                 100% { background-position: 0 50px; }
             }
+            @keyframes qteSlidePvP {
+                0% { left: 0%; }
+                50% { left: 90%; }
+                100% { left: 0%; }
+            }
+            .qte-marker-pvp {
+                position: absolute; top: 0; width: 6px; height: 100%; background: #fff;
+                box-shadow: 0 0 10px #00ffff; animation: qteSlidePvP 1.1s infinite ease-in-out;
+            }
+            .qte-target-zone-pvp {
+                position: absolute; top: 0; left: 62% !important; width: 22% !important; height: 100%;
+                background: rgba(0, 255, 128, 0.45); border-left: 2px dashed #00ff80; border-right: 2px dashed #00ff80;
+            }
             .fighter-float { animation: floatIdle 3s ease-in-out infinite; }
             .anim-strike { animation: strikeAttack 0.35s ease-out; }
             .anim-flash { animation: damageFlash 0.35s ease-in-out; }
@@ -153,67 +170,136 @@ window.renderPvPArena = function(matchData) {
 
         <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 550px; margin: 0 auto; background: rgba(15, 10, 30, 0.9); padding: 8px 14px; border-radius: 10px; border: 1px solid rgba(255, 0, 127, 0.4); z-index: 10; backdrop-filter: blur(8px);">
             <div style="text-align: left;">
-                <div style="font-size: 0.65rem; color: #ff0055; font-weight: bold; margin-bottom: 2px;">🔴 ${enemyData.username || 'Enemy'}</div>
+                <div style="font-size: 0.65rem; color: #ff0055; font-weight: bold; margin-bottom: 2px;">🔴 ${enemyData.username || 'Enemy'} [${enemyElem.toUpperCase()}]</div>
                 <div style="display: flex; gap: 4px;">${enemyPartyDots}</div>
             </div>
             <div style="text-align: right;">
-                <div style="font-size: 0.65rem; color: #00ff55; font-weight: bold; margin-bottom: 2px;">🟢 ${myData.username || 'You'}</div>
+                <div style="font-size: 0.65rem; color: #00ff55; font-weight: bold; margin-bottom: 2px;">🟢 ${myData.username || 'You'} [${myElem.toUpperCase()}]</div>
                 <div style="display: flex; gap: 4px; justify-content: flex-end;">${myPartyDots}</div>
             </div>
         </div>
 
-        <!-- CARD-FREE CINEMATIC FIELD -->
+        <!-- CINEMATIC FIELD -->
         <div id="arenaField" style="flex: 1; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 15px 0; width: 100%; max-width: 450px; margin: 0 auto; z-index: 10; position: relative;">
             
-            <!-- ENEMY FIGHTER (CLEAN ART + HP BADGE) -->
+            <!-- ENEMY FIGHTER -->
             <div id="pvpEnemyCombatant" class="fighter-float" style="display: flex; flex-direction: column; align-items: center;">
-                <div style="font-size: 0.75rem; color: ${enemyRarityColor}; font-weight: bold; margin-bottom: 4px; text-transform: uppercase; text-shadow: 0 0 8px ${enemyRarityColor};">${enemyActiveRot.name || 'Enemy'}</div>
+                <div style="font-size: 0.75rem; color: ${enemyRarityColor}; font-weight: bold; margin-bottom: 4px; text-transform: uppercase; text-shadow: 0 0 8px ${enemyRarityColor};">${enemyActiveRot.name || 'Enemy'} (Lvl ${enemyActiveRot.level || 1})</div>
                 <div style="width: 120px; height: 120px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 15px ${enemyRarityColor}aa);">
-                    <img src="${enemyActiveRot.image || ''}" style="width: 100%; height: 100%; object-fit: contain; background: transparent !important;" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'><rect width=\'100\' height=\'100\' fill=\'transparent\'/><text x=\'50%\' y=\'50%\' fill=\'%23aaa\' font-size=\'12\' dominant-baseline=\'middle\' text-anchor=\'middle\'>No Image</text></svg>';">
+                    <img src="${enemyActiveRot.image || ''}" style="width: 100%; height: 100%; object-fit: contain; background: transparent !important;" onerror="this.style.display='none';">
                 </div>
                 <div class="hp-badge" style="background: rgba(10, 10, 10, 0.85); border: 2px solid #ff007f; border-radius: 10px; padding: 6px 10px; min-width: 140px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); margin-top: 4px;">
                     <div class="hp-bar-outer" style="width: 100%; height: 8px; background: #222; border-radius: 4px; overflow: hidden; border: 1px solid #444; margin: 2px 0;"><div style="width: ${enemyHpPercent}%; height: 100%; background: #ff0055; transition: width 0.3s ease-out; box-shadow: 0 0 8px #ff0055;"></div></div>
-                    <div style="font-size: 0.55rem; color: #aaa; text-align: right;">${enemyActiveRot.currentHp || 0} / ${enemyActiveRot.maxHp || 100} HP</div>
+                    <div style="font-size: 0.55rem; color: #aaa; text-align: right;">${Math.ceil(enemyActiveRot.currentHp || 0)} / ${enemyActiveRot.maxHp || 100} HP</div>
                 </div>
             </div>
 
             <!-- ACTION LOG -->
             <div style="background: rgba(15, 10, 30, 0.95); border: 2px solid #00ff55; padding: 10px 14px; border-radius: 10px; width: 100%; max-width: 380px; text-align: center; font-size: 0.75rem; color: #00ff55; font-weight: bold; box-shadow: 0 0 15px rgba(0,255,85,0.2);">
                 ${matchData.lastAction || "Match in progress..."} <br>
-                <span style="font-size: 0.7rem; color: ${isMyTurn ? '#00ff55' : '#ffcc00'};">${isMyTurn ? "👉 Your Turn to Attack!" : "⏳ Opponent's Turn..."}</span>
+                <span style="font-size: 0.7rem; color: ${isMyTurn ? '#00ff55' : '#ffcc00'};">${isMyTurn ? "👉 Your Turn! Choose QTE or Attack!" : "⏳ Opponent's Turn..."}</span>
             </div>
 
-            <!-- PLAYER FIGHTER (CLEAN ART + HP BADGE) -->
+            <!-- PLAYER FIGHTER -->
             <div id="pvpPlayerCombatant" class="fighter-float" style="display: flex; flex-direction: column; align-items: center;">
                 <div style="width: 130px; height: 130px; display: flex; align-items: center; justify-content: center; filter: drop-shadow(0 0 20px ${playerRarityColor}aa);">
-                    <img src="${myActiveRot.image || ''}" style="width: 100%; height: 100%; object-fit: contain; background: transparent !important;" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'><rect width=\'100\' height=\'100\' fill=\'transparent\'/><text x=\'50%\' y=\'50%\' fill=\'%23aaa\' font-size=\'12\' dominant-baseline=\'middle\' text-anchor=\'middle\'>No Image</text></svg>';">
+                    <img src="${myActiveRot.image || ''}" style="width: 100%; height: 100%; object-fit: contain; background: transparent !important;" onerror="this.style.display='none';">
                 </div>
                 <div class="hp-badge" style="background: rgba(10, 10, 10, 0.85); border: 2px solid #76ff03; border-radius: 10px; padding: 6px 10px; min-width: 140px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); margin-top: 4px;">
-                    <div style="font-weight: bold; font-size: 0.7rem; color: ${playerRarityColor}; text-align: center; margin-bottom: 2px;">${myActiveRot.name || 'Fighter'}</div>
+                    <div style="font-weight: bold; font-size: 0.7rem; color: ${playerRarityColor}; text-align: center; margin-bottom: 2px;">${myActiveRot.name || 'Fighter'} (Lvl ${myActiveRot.level || 1})</div>
                     <div class="hp-bar-outer" style="width: 100%; height: 8px; background: #222; border-radius: 4px; overflow: hidden; border: 1px solid #444; margin: 2px 0;"><div style="width: ${myHpPercent}%; height: 100%; background: #00ff55; transition: width 0.3s ease-out; box-shadow: 0 0 10px #00ff55;"></div></div>
-                    <div style="font-size: 0.55rem; color: #aaa; text-align: right;">${myActiveRot.currentHp || 0} / ${myActiveRot.maxHp || 100} HP</div>
+                    <div style="font-size: 0.55rem; color: #aaa; text-align: right;">${Math.ceil(myActiveRot.currentHp || 0)} / ${myActiveRot.maxHp || 100} HP</div>
                 </div>
             </div>
 
         </div>
 
         <!-- CONTROLS -->
-        <div style="width: 100%; max-width: 380px; margin: 0 auto; display: flex; flex-direction: column; gap: 6px; z-index: 10;">
-            <button onclick="window.executePvPAttack()" ${!isMyTurn ? 'disabled' : ''} style="width: 100%; padding: 12px; background: ${isMyTurn ? '#ff0055' : '#333'}; color: #fff; border: none; border-radius: 8px; font-weight: bold; font-size: 0.95rem; cursor: ${isMyTurn ? 'pointer' : 'not-allowed'}; font-family: monospace; box-shadow: ${isMyTurn ? '0 0 15px #ff0055aa' : 'none'};">
-                ${isMyTurn ? '⚔️ ATTACK OPPONENT' : '⏳ WAITING FOR OPPONENT...'}
+        <div style="width: 100%; max-width: 380px; margin: 0 auto; display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; z-index: 10;">
+            <button onclick="window.openPvPQTEPrompt()" ${!isMyTurn ? 'disabled' : ''} style="padding: 12px; background: ${isMyTurn ? '#9900ff' : '#333'}; color: #fff; border: none; border-radius: 8px; font-weight: bold; font-size: 0.9rem; cursor: ${isMyTurn ? 'pointer' : 'not-allowed'}; font-family: monospace;">
+                🎯 Critical QTE
             </button>
-            <button onclick="window.exitPvPBattle()" style="width: 100%; padding: 8px; background: rgba(30, 20, 50, 0.9); color: #ccc; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; font-weight: bold; cursor: pointer; font-family: monospace; font-size: 0.75rem;">
+            <button onclick="window.executePvPAttack()" ${!isMyTurn ? 'disabled' : ''} style="padding: 12px; background: ${isMyTurn ? '#ff0055' : '#333'}; color: #fff; border: none; border-radius: 8px; font-weight: bold; font-size: 0.9rem; cursor: ${isMyTurn ? 'pointer' : 'not-allowed'}; font-family: monospace;">
+                ✨ Signature Move
+            </button>
+            <button onclick="window.exitPvPBattle()" style="grid-column: span 2; padding: 8px; background: rgba(30, 20, 50, 0.9); color: #ccc; border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; font-weight: bold; cursor: pointer; font-family: monospace; font-size: 0.75rem;">
                 🏃 SURRENDER / LEAVE
             </button>
         </div>
     `;
 };
 
+// PvP QTE Timing Modal
+window.openPvPQTEPrompt = function() {
+    const matchId = window.pvpBattleState.matchId;
+    const role = window.pvpBattleState.role;
+    
+    firebase.firestore().collection('active_matches').doc(matchId).get().then(doc => {
+        if (!doc.exists) return;
+        const data = doc.data();
+        const myData = role === 'player1' ? data.player1 : data.player2;
+        if (data.turn !== myData.username) return;
+
+        let qteModal = document.getElementById('pvpQteModal');
+        if (!qteModal) {
+            qteModal = document.createElement('div');
+            qteModal.id = 'pvpQteModal';
+            qteModal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+                background: rgba(0,0,0,0.85); z-index: 999999999; display: flex;
+                flex-direction: column; align-items: center; justify-content: center;
+                font-family: monospace; color: #fff;
+            `;
+            document.body.appendChild(qteModal);
+        }
+
+        qteModal.innerHTML = `
+            <div style="background: #111; border: 3px solid #00ff80; padding: 25px; border-radius: 12px; text-align: center; width: 90%; max-width: 320px; box-shadow: 0 0 25px rgba(0,255,128,0.3);">
+                <h3 style="color: #00ff80; margin-bottom: 10px;">PvP TIMING STRIKE!</h3>
+                <p style="font-size: 0.8rem; margin-bottom: 15px; color: #ccc;">Tap when the marker is inside the green zone!</p>
+                <div id="qteTrack" style="position: relative; width: 100%; height: 35px; background: #222; border-radius: 6px; overflow: hidden; margin-bottom: 20px; border: 1px solid #444;">
+                    <div class="qte-target-zone-pvp"></div>
+                    <div id="movingPvPQteMarker" class="qte-marker-pvp"></div>
+                </div>
+                <button onclick="window.resolvePvPQTE()" style="background: #00ff80; color: #000; font-weight: bold; border: none; padding: 12px 20px; border-radius: 6px; width: 100%; cursor: pointer; font-size: 1rem;">STRIKE NOW!</button>
+            </div>
+        `;
+        qteModal.style.display = 'flex';
+    });
+};
+
+window.resolvePvPQTE = function() {
+    const marker = document.getElementById('movingPvPQteMarker');
+    const qteModal = document.getElementById('pvpQteModal');
+    if (!marker) return;
+
+    const computedStyle = window.getComputedStyle(marker);
+    const leftPercent = parseFloat(computedStyle.left);
+
+    let multiplier = 0.75; 
+    let resultText = "❌ Weak Timing Strike!";
+
+    if (leftPercent >= 60 && leftPercent <= 86) {
+        multiplier = 2.0; 
+        resultText = "🔥 PERFECT CRITICAL STRIKE! (2x)";
+    } else if (leftPercent >= 52 && leftPercent <= 92) {
+        multiplier = 1.35;
+        resultText = "⚡ Good Timing Hit! (1.35x)";
+    }
+
+    if (qteModal) qteModal.style.display = 'none';
+    window.pvpBattleState.activeQteMultiplier = multiplier;
+
+    window.executePvPAttack();
+};
+
 window.executePvPAttack = async function() {
     const matchId = window.pvpBattleState.matchId;
     const role = window.pvpBattleState.role;
-    const db = firebase.firestore();
+    const qteMult = window.pvpBattleState.activeQteMultiplier || 1.0;
+    window.pvpBattleState.activeQteMultiplier = 1.0; // Reset
 
+    const db = firebase.firestore();
     const matchRef = db.collection('active_matches').doc(matchId);
     const doc = await matchRef.get();
     if (!doc.exists) return;
@@ -227,16 +313,15 @@ window.executePvPAttack = async function() {
     const myRot = myData.squad[myData.activeIndex];
     const enemyRot = enemyData.squad[enemyData.activeIndex];
 
-    const fighterName = (myRot && myRot.name) ? myRot.name.toLowerCase().trim().replace(/[\s-]/g, '') : "";
-    const isGodCloud = fighterName === "godcloud";
-    const isCloud = fighterName.includes("cloud") && !isGodCloud;
-    const isHashtagHell = fighterName === "hashtaghell";
-    const isHashtagBase = fighterName === "hashtag" && !isHashtagHell;
-    const isFomoDoom = fighterName === "fomodoom";
-    const isFomo = fighterName === "fomophantom" && !isFomoDoom;
-
     const finalizePvPStrike = async () => {
-        const dmg = Math.max(10, Math.floor((myRot.atk || 15) * (0.8 + Math.random() * 0.4)));
+        // Type matchup multipliers
+        const pElem = typeof getRotElement === 'function' ? getRotElement(myRot.name) : 'tech';
+        const wElem = typeof getRotElement === 'function' ? getRotElement(enemyRot.name) : 'tech';
+        const typeMod = typeof getTypeMultiplier === 'function' ? getTypeMultiplier(pElem, wElem) : 1.0;
+
+        const rawDmg = Math.floor((myRot.atk || 15) * (0.8 + Math.random() * 0.4) * qteMult * typeMod);
+        const dmg = Math.max(10, rawDmg);
+        
         enemyRot.currentHp = Math.max(0, enemyRot.currentHp - dmg);
 
         let nextEnemyActiveIndex = enemyData.activeIndex;
@@ -251,7 +336,9 @@ window.executePvPAttack = async function() {
         }
 
         const nextTurnUser = enemyData.username;
-        const actionLog = `${myData.username}'s ${myRot.name} dealt ${dmg} dmg to ${enemyRot.name}!`;
+        let qteText = qteMult > 1.0 ? ` (QTE x${qteMult})` : "";
+        let typeText = typeMod > 1.0 ? " [Super Effective! 💥]" : "";
+        const actionLog = `${myData.username}'s ${myRot.name} dealt ${dmg} dmg to ${enemyRot.name}!${qteText}${typeText}`;
 
         const updates = {};
         if (role === 'player1') {
@@ -269,19 +356,9 @@ window.executePvPAttack = async function() {
         await matchRef.update(updates);
     };
 
-    // Trigger specific custom attack animations if available, else use standard smooth strike
-    if (isGodCloud && typeof window.playPlayerCloudAttack === 'function') {
+    const fighterName = (myRot && myRot.name) ? myRot.name.toLowerCase().trim().replace(/[\s-]/g, '') : "";
+    if (fighterName === "godcloud" && typeof window.playPlayerCloudAttack === 'function') {
         window.playPlayerCloudAttack(finalizePvPStrike, true);
-    } else if (isCloud && typeof window.playPlayerCloudAttack === 'function') {
-        window.playPlayerCloudAttack(finalizePvPStrike, false);
-    } else if (isHashtagHell && typeof window.playPlayerHashtagHellAttack === 'function') {
-        window.playPlayerHashtagHellAttack(finalizePvPStrike);
-    } else if (isHashtagBase && typeof window.playPlayerHashtagBaseAttack === 'function') {
-        window.playPlayerHashtagBaseAttack(finalizePvPStrike);
-    } else if (isFomoDoom && typeof window.playPlayerFomoDoomAttack === 'function') {
-        window.playPlayerFomoDoomAttack(finalizePvPStrike);
-    } else if (isFomo && typeof window.playPlayerFomoAttack === 'function') {
-        window.playPlayerFomoAttack(finalizePvPStrike);
     } else {
         const playerBox = document.getElementById('pvpPlayerCombatant');
         const enemyBox = document.getElementById('pvpEnemyCombatant');

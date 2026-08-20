@@ -1,4 +1,4 @@
-// battle3v3.js - True 3v3 Turn-Based Battle Engine with Robust Turn Recovery
+// battle3v3.js - True 3v3 Turn-Based Battle Engine with QTE & Type Matchups Integration
 
 if (typeof window.battleState === 'undefined') {
     window.battleState = null;
@@ -68,7 +68,7 @@ window.startBattleScene = function(mode = 'ai') {
         enemySquad: enemySquad,
         enemyActiveIndex: 0,
         isTurn: true,
-        log: "⚔️ True 3v3 Showdown Engaged! Defeat all 3 to win!"
+        log: "⚔️ True 3v3 Showdown Engaged with QTE & Types! Defeat all 3 to win!"
     };
 
     const catchModal = document.getElementById('battleModal');
@@ -87,14 +87,17 @@ window.renderTrue3v3Scene = function() {
     const playerHpPercent = Math.max(0, Math.min(100, (activePlayerRot.currentHp / activePlayerRot.maxHp) * 100));
     const enemyHpPercent = Math.max(0, Math.min(100, (activeEnemyRot.currentHp / activeEnemyRot.maxHp) * 100));
 
+    const enemyElem = typeof getRotElement === 'function' ? getRotElement(activeEnemyRot.name) : 'tech';
+    const playerElem = typeof getRotElement === 'function' ? getRotElement(activePlayerRot.name) : 'tech';
+
     const wildNameEl = document.getElementById('wildName');
-    if (wildNameEl) wildNameEl.innerText = `${activeEnemyRot.name.toUpperCase()} (Lvl ${activeEnemyRot.level}) [Enemy ${state.enemyActiveIndex + 1}/3]`;
+    if (wildNameEl) wildNameEl.innerText = `${activeEnemyRot.name.toUpperCase()} (Lvl ${activeEnemyRot.level}) [${enemyElem.toUpperCase()}]`;
 
     const wildBadgeName = document.getElementById('wildBadgeName');
     if (wildBadgeName) wildBadgeName.innerText = `${activeEnemyRot.name} (Lvl ${activeEnemyRot.level})`;
 
     const wildRarity = document.getElementById('wildRarity');
-    if (wildRarity) wildRarity.innerText = `RARITY: ${(activeEnemyRot.rarity || 'common').toUpperCase()}`;
+    if (wildRarity) wildRarity.innerText = `TYPE: ${enemyElem.toUpperCase()} | RARITY: ${(activeEnemyRot.rarity || 'common').toUpperCase()}`;
 
     const wildCardContainer = document.getElementById('wildCardContainer');
     if (wildCardContainer) {
@@ -108,7 +111,7 @@ window.renderTrue3v3Scene = function() {
     }
 
     const myFighterName = document.getElementById('myFighterName');
-    if (myFighterName) myFighterName.innerText = `${activePlayerRot.name} (Lvl ${activePlayerRot.level}) [Your Squad ${state.playerActiveIndex + 1}/3]`;
+    if (myFighterName) myFighterName.innerText = `${activePlayerRot.name} (Lvl ${activePlayerRot.level}) [${playerElem.toUpperCase()}]`;
 
     const playerCardContainer = document.getElementById('playerCardContainer');
     if (playerCardContainer) {
@@ -131,12 +134,15 @@ window.renderTrue3v3Scene = function() {
     const myHpText = document.getElementById('myHpText');
     if (myHpText) myHpText.innerText = `${Math.ceil(activePlayerRot.currentHp)}/${activePlayerRot.maxHp} HP`;
 
-    const attackBtn = document.getElementById('attackBtn');
-    if (attackBtn) {
-        attackBtn.innerText = state.isTurn ? "⚔️ ATTACK ENEMY SQUAD" : "⏳ ENEMY TURN...";
-        attackBtn.onclick = function() {
-            window.executeTrue3v3Attack();
-        };
+    // Update Action Controls Panel to include QTE option for 3v3 battles
+    const controlPanel = document.querySelector('.battle-controls');
+    if (controlPanel) {
+        controlPanel.innerHTML = `
+            <button onclick="window.open3v3QTEPrompt()" class="btn-action" style="background: #9900ff; color: #fff;">🎯 Critical QTE Strike</button>
+            <button id="attackBtn" class="btn-action" style="background: #ff0055; color: #fff;" onclick="window.executeDirect3v3Attack(1.0)">✨ Signature Move</button>
+            <button class="btn-action" style="background: #00ccff; color: #000;" onclick="alert('Switching squad members manually during combat coming soon!')">🔄 Switch Squad</button>
+            <button class="btn-action" style="background: #333; color: #fff;" onclick="window.closeBattle(); window.battleState = null;">🏃 FLEE BATTLE</button>
+        `;
     }
 
     const battleLog = document.getElementById('battleLog');
@@ -145,7 +151,66 @@ window.renderTrue3v3Scene = function() {
     }
 };
 
-window.executeTrue3v3Attack = function() {
+// 3v3 QTE Trigger
+window.open3v3QTEPrompt = function() {
+    const state = window.battleState;
+    if (!state || !state.isTurn) return;
+
+    let qteModal = document.getElementById('qteModal');
+    if (!qteModal) {
+        qteModal = document.createElement('div');
+        qteModal.id = 'qteModal';
+        qteModal.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.85); z-index: 9999999; display: flex;
+            flex-direction: column; align-items: center; justify-content: center;
+            font-family: monospace; color: #fff;
+        `;
+        document.body.appendChild(qteModal);
+    }
+
+    qteModal.innerHTML = `
+        <div style="background: #111; border: 3px solid #00ff80; padding: 25px; border-radius: 12px; text-align: center; width: 90%; max-width: 320px; box-shadow: 0 0 25px rgba(0,255,128,0.3);">
+            <h3 style="color: #00ff80; margin-bottom: 10px;">3v3 TIMING STRIKE!</h3>
+            <p style="font-size: 0.8rem; margin-bottom: 15px; color: #ccc;">Tap when the marker is inside the green zone!</p>
+            <div id="qteTrack" style="position: relative; width: 100%; height: 35px; background: #222; border-radius: 6px; overflow: hidden; margin-bottom: 20px; border: 1px solid #444;">
+                <div class="qte-target-zone"></div>
+                <div id="movingQteMarker" class="qte-marker"></div>
+            </div>
+            <button onclick="window.resolve3v3QTE()" style="background: #00ff80; color: #000; font-weight: bold; border: none; padding: 12px 20px; border-radius: 6px; width: 100%; cursor: pointer; font-size: 1rem;">STRIKE NOW!</button>
+        </div>
+    `;
+    qteModal.style.display = 'flex';
+};
+
+window.resolve3v3QTE = function() {
+    const marker = document.getElementById('movingQteMarker');
+    const qteModal = document.getElementById('qteModal');
+    if (!marker) return;
+
+    const computedStyle = window.getComputedStyle(marker);
+    const leftPercent = parseFloat(computedStyle.left);
+
+    let multiplier = 0.75; 
+    let resultText = "❌ Weak Timing Strike!";
+
+    if (leftPercent >= 60 && leftPercent <= 86) {
+        multiplier = 2.0; 
+        resultText = "🔥 PERFECT CRITICAL STRIKE! (2x)";
+    } else if (leftPercent >= 52 && leftPercent <= 92) {
+        multiplier = 1.35;
+        resultText = "⚡ Good Timing Hit! (1.35x)";
+    }
+
+    if (qteModal) qteModal.style.display = 'none';
+    
+    const battleLog = document.getElementById('battleLog');
+    if (battleLog) battleLog.innerText = `${resultText} Executing 3v3 strike!`;
+
+    window.executeDirect3v3Attack(multiplier);
+};
+
+window.executeDirect3v3Attack = function(qteMultiplier = 1.0) {
     const state = window.battleState;
     if (!state || !state.isTurn) return;
 
@@ -162,10 +227,19 @@ window.executeTrue3v3Attack = function() {
     const isFomo = fighterName === "fomophantom" && !isFomoDoom;
 
     const proceedWithDamage = () => {
-        const dmg = Math.max(12, Math.floor(playerRot.atk * (0.8 + Math.random() * 0.4)));
+        // Type matchup calculations
+        const pElem = typeof getRotElement === 'function' ? getRotElement(playerRot.name) : 'tech';
+        const wElem = typeof getRotElement === 'function' ? getRotElement(enemyRot.name) : 'tech';
+        const typeMod = typeof getTypeMultiplier === 'function' ? getTypeMultiplier(pElem, wElem) : 1.0;
+
+        const rawDmg = Math.floor(playerRot.atk * (0.8 + Math.random() * 0.4) * qteMultiplier * typeMod);
+        const dmg = Math.max(12, rawDmg);
+        
         enemyRot.currentHp = Math.max(0, enemyRot.currentHp - dmg);
         
-        state.log = `💥 ${playerRot.name} dealt ${dmg} damage to enemy ${enemyRot.name}!`;
+        let qteText = qteMultiplier > 1.0 ? ` (QTE x${qteMultiplier})` : "";
+        let typeText = typeMod > 1.0 ? " [Super Effective! 💥]" : "";
+        state.log = `💥 ${playerRot.name} dealt ${dmg} dmg to ${enemyRot.name}!${qteText}${typeText}`;
         renderTrue3v3Scene();
 
         setTimeout(() => {
@@ -173,7 +247,7 @@ window.executeTrue3v3Attack = function() {
                 enemyRot.fainted = true;
                 if (state.enemyActiveIndex < state.enemySquad.length - 1) {
                     state.enemyActiveIndex++;
-                    state.log = `🏆 Enemy ${enemyRot.name} fainted! Next enemy: ${state.enemySquad[state.enemyActiveIndex].name}!`;
+                    state.log = `🏆 Enemy ${enemyRot.name} fainted! Next: ${state.enemySquad[state.enemyActiveIndex].name}!`;
                     state.isTurn = true;
                     renderTrue3v3Scene();
                     return;
@@ -257,7 +331,6 @@ window.executeTrue3v3Attack = function() {
                     safeCallback();
                 }
 
-                // Fail-safe timer: Forces turn back to player if animation callback hangs
                 setTimeout(() => {
                     if (!callbackTriggered) {
                         callbackTriggered = true;
@@ -283,4 +356,8 @@ window.executeTrue3v3Attack = function() {
     } else {
         proceedWithDamage();
     }
+};
+
+window.executeTrue3v3Attack = function() {
+    window.executeDirect3v3Attack(1.0);
 };
