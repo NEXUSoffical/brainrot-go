@@ -424,14 +424,18 @@ function finalizeARCapture(data) {
     const caughtEntity = {
       name: data.name, rarity: data.rarity, image: data.image, level: data.level,
       quality: 85, maxHp: baseMaxHp, hp: baseMaxHp, atk: baseAtk, def: baseDef,
-      fainted: false, inGym: false
+      fainted: false, inGym: false, shiny: data.shiny
     };
 
-    if (!playerData.inventory) playerData.inventory = [];
-    playerData.inventory.push(caughtEntity);
-
-    if (typeof window.addAccountXp === 'function') window.addAccountXp(20);
-    if (typeof window.saveGameData === 'function') window.saveGameData();
+    // 🔥 FIX: Now uses the official addToDex function so your Sticker Book gets updated!
+    if (typeof window.addToDex === 'function') {
+        window.addToDex(caughtEntity);
+    } else {
+        if (!playerData.inventory) playerData.inventory = [];
+        playerData.inventory.push(caughtEntity);
+        if (typeof window.addAccountXp === 'function') window.addAccountXp(20);
+        if (typeof window.saveGameData === 'function') window.saveGameData();
+    }
   }
 
   if (typeof window.removeCapturedCreature === 'function') window.removeCapturedCreature();
