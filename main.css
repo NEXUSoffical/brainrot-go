@@ -7,11 +7,13 @@ body {
     padding: 0;
     overflow: hidden;
     font-family: sans-serif;
+    background: #030107;
 }
 
 #map {
     width: 100vw;
     height: 100vh;
+    background: #030107 !important;
 }
 
 /* CRITICAL FIX: Completely removes Leaflet's default grey box wrappers */
@@ -26,4 +28,47 @@ body {
     background: transparent !important;
     border: none !important;
     box-shadow: none !important;
+}
+
+/* ==========================================
+   SPOOKY HORROR MAP OVERLAYS & FILTERS
+   ========================================== */
+
+/* Force all map tiles and controls into a dark night-vision tactical mode */
+.leaflet-tile {
+    filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) !important;
+}
+
+.leaflet-control-zoom-in, 
+.leaflet-control-zoom-out, 
+.leaflet-control-attribution {
+    filter: invert(100%) hue-rotate(180deg) brightness(85%) contrast(95%) !important;
+}
+
+.leaflet-container {
+    background: #030107 !important;
+}
+
+/* Flashlight / Vignette fog-of-war border around the screen */
+#map::after {
+    content: "";
+    position: absolute;
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%;
+    box-shadow: inset 0 0 100px rgba(0, 0, 0, 0.98);
+    pointer-events: none;
+    z-index: 1000;
+}
+
+/* Spooky pulsing animation for paranormal entity markers */
+@keyframes spookyPulse {
+    0% { transform: scale(1); filter: drop-shadow(0 0 5px #ff0055); }
+    50% { transform: scale(1.18); filter: drop-shadow(0 0 16px #ff0055); }
+    100% { transform: scale(1); filter: drop-shadow(0 0 5px #ff0055); }
+}
+
+.spooky-map-marker {
+    animation: spookyPulse 2s infinite ease-in-out;
 }

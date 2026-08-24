@@ -220,13 +220,16 @@ window.toggleAuthMode = function() {
 
 function setupStarterOptions() {
     const grid = document.getElementById('starterSelectionGrid');
-    if (!grid || typeof brainrotCharacters === 'undefined' || !brainrotCharacters.length) {
+    
+    const sourceList = (typeof paranormalSpawns !== 'undefined' && paranormalSpawns.length) ? paranormalSpawns : ((typeof brainrotCharacters !== 'undefined' && brainrotCharacters.length) ? brainrotCharacters : []);
+    
+    if (!grid || !sourceList.length) {
         setTimeout(setupStarterOptions, 200);
         return;
     }
 
     grid.innerHTML = '';
-    const starters = brainrotCharacters.slice(0, 6);
+    const starters = sourceList.slice(0, 6);
     window.selectedStarter = starters[0];
 
     starters.forEach((char, index) => {
@@ -265,8 +268,10 @@ window.handleAccountAction = async function() {
         if (window.isSignUpMode) {
             await firebase.auth().createUserWithEmailAndPassword(email, password);
 
-            if (!window.selectedStarter && typeof brainrotCharacters !== 'undefined') {
-                window.selectedStarter = brainrotCharacters[0];
+            const sourceList = (typeof paranormalSpawns !== 'undefined' && paranormalSpawns.length) ? paranormalSpawns : ((typeof brainrotCharacters !== 'undefined' && brainrotCharacters.length) ? brainrotCharacters : []);
+
+            if (!window.selectedStarter && sourceList.length > 0) {
+                window.selectedStarter = sourceList[0];
             }
 
             const starterInstance = {
@@ -337,8 +342,10 @@ window.signInWithGoogle = async function() {
         const doc = await docRef.get();
 
         if (!doc.exists) {
-            if (!window.selectedStarter && typeof brainrotCharacters !== 'undefined') {
-                window.selectedStarter = brainrotCharacters[0];
+            const sourceList = (typeof paranormalSpawns !== 'undefined' && paranormalSpawns.length) ? paranormalSpawns : ((typeof brainrotCharacters !== 'undefined' && brainrotCharacters.length) ? brainrotCharacters : []);
+            
+            if (!window.selectedStarter && sourceList.length > 0) {
+                window.selectedStarter = sourceList[0];
             }
 
             const starterInstance = {
@@ -467,7 +474,8 @@ function updateHUD() {
     const widgetXpBar = document.getElementById('widgetXpBar');
     const widgetXpText = document.getElementById('widgetXpText');
 
-    const totalPossible = (typeof brainrotCharacters !== 'undefined' && brainrotCharacters) ? brainrotCharacters.length : 0;
+    const masterList = (typeof paranormalSpawns !== 'undefined' && paranormalSpawns.length) ? paranormalSpawns : ((typeof brainrotCharacters !== 'undefined' && brainrotCharacters) ? brainrotCharacters : []);
+    const totalPossible = masterList.length;
     
     const dexCount = (window.currentDexTab === 'shiny') 
         ? ((window.playerData.shinyDex) ? window.playerData.shinyDex.length : 0)
@@ -532,13 +540,16 @@ window.switchDexTab = function(tabName) {
 
 function renderDexGrid() {
     const dexGrid = document.getElementById('dexGrid');
-    if (!dexGrid || typeof brainrotCharacters === 'undefined' || !brainrotCharacters) return;
+    
+    const masterList = (typeof paranormalSpawns !== 'undefined' && paranormalSpawns.length) ? paranormalSpawns : ((typeof brainrotCharacters !== 'undefined' && brainrotCharacters) ? brainrotCharacters : null);
+    
+    if (!dexGrid || !masterList) return;
 
     dexGrid.innerHTML = '';
     const isShinyTab = window.currentDexTab === 'shiny';
     const unlockedDex = isShinyTab ? (window.playerData.shinyDex || []) : (window.playerData.dex || []);
 
-    brainrotCharacters.forEach((char) => {
+    masterList.forEach((char) => {
         const isUnlocked = unlockedDex.includes(char.name);
         const rarityColor = window.getRarityColor(char.rarity);
         
@@ -554,20 +565,22 @@ function renderDexGrid() {
         `;
 
         if (isUnlocked) {
+            // FIX: Replaced solid white box with a transparent dark background and used object-fit: contain
             card.innerHTML = `
                 ${isShinyTab ? '<div style="font-size: 0.6rem; color: #00ffff; font-family: monospace; font-weight: bold; margin-bottom: 2px;">💎 SHINY</div>' : ''}
                 <div style="font-size: 0.75rem; font-weight: bold; color: ${isShinyTab ? '#00ffff' : rarityColor}; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${char.name}</div>
                 <div style="font-size: 0.65rem; color: #888; margin-bottom: 4px;">${(char.rarity || 'common').toUpperCase()}</div>
-                <div style="width: 100%; height: 90px; background: #fff; border-radius: 6px; overflow: hidden; border: 1px solid #333; margin-bottom: 6px;">
-                    <img src="${char.image || ''}" style="width: 100%; height: 100%; object-fit: cover; ${isShinyTab ? 'filter: brightness(1.2) contrast(2);' : ''}" onerror="this.style.display='none';">
+                <div style="width: 100%; height: 90px; background: rgba(0,0,0,0.4); border-radius: 8px; overflow: hidden; margin-bottom: 6px; display: flex; align-items: center; justify-content: center; padding: 4px; box-sizing: border-box;">
+                    <img src="${char.image || ''}" style="max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 5px 5px rgba(0,0,0,0.8)) ${isShinyTab ? 'brightness(1.2) contrast(2)' : ''};" onerror="this.style.display='none';">
                 </div>
                 <div style="font-size: 0.65rem; color: #00ff55; font-weight: bold;">COLLECTED</div>
             `;
         } else {
+            // FIX: Replaced solid dark box with a semi-transparent one to match the unlocked cards
             card.innerHTML = `
                 <div style="font-size: 0.75rem; font-weight: bold; color: #666; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">???</div>
                 <div style="font-size: 0.65rem; color: #888; margin-bottom: 4px;">${(char.rarity || 'common').toUpperCase()}</div>
-                <div style="width: 100%; height: 90px; background: #1a1a1a; border-radius: 6px; overflow: hidden; border: 1px solid #333; margin-bottom: 6px; display: flex; align-items: center; justify-content: center;">
+                <div style="width: 100%; height: 90px; background: rgba(0,0,0,0.4); border-radius: 8px; overflow: hidden; margin-bottom: 6px; display: flex; align-items: center; justify-content: center;">
                     <span style="font-size: 1.8rem; color: #444; font-weight: bold;">🔒</span>
                 </div>
                 <div style="font-size: 0.65rem; color: #555; font-weight: bold;">LOCKED</div>
@@ -610,7 +623,9 @@ window.openDex = function() {
 
     const standardCount = (window.playerData.dex) ? window.playerData.dex.length : 0;
     const shinyCount = (window.playerData.shinyDex) ? window.playerData.shinyDex.length : 0;
-    const totalCount = (typeof brainrotCharacters !== 'undefined') ? brainrotCharacters.length : 0;
+    
+    const masterList = (typeof paranormalSpawns !== 'undefined' && paranormalSpawns.length) ? paranormalSpawns : ((typeof brainrotCharacters !== 'undefined' && brainrotCharacters) ? brainrotCharacters : []);
+    const totalCount = masterList.length;
 
     modal.innerHTML = `
         <div style="width: 100%; max-width: 800px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">

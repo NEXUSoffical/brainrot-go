@@ -7,11 +7,11 @@ if (typeof window.selectedStarter === 'undefined') {
     window.selectedStarter = null;
 }
 
-// Helper function to safely fallback to a Common starter rot only
+// Helper function to safely fallback to a Common starter entity only
 function ensureCommonStarter() {
-    if (!window.selectedStarter && typeof brainrotCharacters !== 'undefined') {
-        const commonStarters = brainrotCharacters.filter(char => char.rarity && char.rarity.toLowerCase() === 'common');
-        window.selectedStarter = commonStarters.length > 0 ? commonStarters[0] : brainrotCharacters[0];
+    if (!window.selectedStarter && typeof paranormalSpawns !== 'undefined') {
+        const commonStarters = paranormalSpawns.filter(char => char.rarity && char.rarity.toLowerCase() === 'common');
+        window.selectedStarter = commonStarters.length > 0 ? commonStarters[0] : paranormalSpawns[0];
     }
 }
 
@@ -26,7 +26,7 @@ window.toggleAuthMode = function() {
         if (toggleText) toggleText.innerText = "Already have an account? Click here to Log In";
     } else {
         if (starterSec) starterSec.style.display = 'none';
-        if (toggleText) toggleText.innerText = "New player? Click here to Sign Up";
+        if (toggleText) toggleText.innerText = "New hunter? Click here to Sign Up";
     }
 };
 
@@ -44,7 +44,7 @@ window.handleAccountAction = async function() {
         return;
     }
 
-    const email = rawUsername + "@brainrotgo.com";
+    const email = rawUsername + "@ghosthuntergo.com";
 
     try {
         if (window.isSignUpMode) {
@@ -53,20 +53,27 @@ window.handleAccountAction = async function() {
             ensureCommonStarter();
 
             const starterInstance = {
-                ...window.selectedStarter,
+                ...(window.selectedStarter || {
+                    name: "Vampire",
+                    rarity: "common",
+                    image: "brainrots/vampire.png",
+                    baseHp: 60,
+                    baseAtk: 15,
+                    baseDef: 10
+                }),
                 level: 1,
                 xp: 0,
-                maxHp: 50,
-                hp: 50
+                maxHp: 60,
+                hp: 60
             };
 
             if (typeof setPlayerData === 'function') {
                 setPlayerData({
                     username: rawUsername,
-                    rotBalance: 500,
+                    currency: 500,
                     accountLevel: 1,
                     accountXp: 0,
-                    dex: [window.selectedStarter.name],
+                    dex: [starterInstance.name],
                     inventory: [starterInstance],
                     activeFighterIndex: 0,
                     revivePotions: 3,
@@ -78,9 +85,9 @@ window.handleAccountAction = async function() {
                 await window.saveGameData();
             }
             if (typeof showGameToast === 'function') {
-                showGameToast(`Account created successfully! Welcome, ${rawUsername}!`);
+                showGameToast(`Account created successfully! Welcome, Hunter ${rawUsername}!`);
             } else {
-                alert(`Account created successfully! Welcome, ${rawUsername}!`);
+                alert(`Account created successfully! Welcome, Hunter ${rawUsername}!`);
             }
         } else {
             await firebase.auth().signInWithEmailAndPassword(email, password);
@@ -94,7 +101,7 @@ window.handleAccountAction = async function() {
                 if (window.playerData && !window.playerData.inventory) window.playerData.inventory = [];
             }
             
-            localStorage.setItem('brainrot_logged_in_user', rawUsername);
+            localStorage.setItem('ghosthunter_logged_in_user', rawUsername);
         }
 
         const loginModal = document.getElementById('loginModal');
@@ -131,20 +138,27 @@ window.signInWithGoogle = async function() {
             ensureCommonStarter();
 
             const starterInstance = {
-                ...window.selectedStarter,
+                ...(window.selectedStarter || {
+                    name: "Vampire",
+                    rarity: "common",
+                    image: "brainrots/vampire.png",
+                    baseHp: 60,
+                    baseAtk: 15,
+                    baseDef: 10
+                }),
                 level: 1,
                 xp: 0,
-                maxHp: 50,
-                hp: 50
+                maxHp: 60,
+                hp: 60
             };
 
             if (typeof setPlayerData === 'function') {
                 setPlayerData({
                     username: rawUsername,
-                    rotBalance: 500,
+                    currency: 500,
                     accountLevel: 1,
                     accountXp: 0,
-                    dex: [window.selectedStarter.name],
+                    dex: [starterInstance.name],
                     inventory: [starterInstance],
                     activeFighterIndex: 0,
                     revivePotions: 3,
@@ -163,7 +177,7 @@ window.signInWithGoogle = async function() {
             if (window.playerData && !window.playerData.inventory) window.playerData.inventory = [];
         }
 
-        localStorage.setItem('brainrot_logged_in_user', rawUsername);
+        localStorage.setItem('ghosthunter_logged_in_user', rawUsername);
         
         const loginModal = document.getElementById('loginModal');
         if (loginModal) loginModal.style.display = 'none';
@@ -178,8 +192,8 @@ window.signInWithGoogle = async function() {
 
 // Log out user and clear session storage
 window.logoutAccount = async function() {
-    localStorage.removeItem('brainrot_logged_in_user');
-    localStorage.removeItem('brainrot_local_backup');
+    localStorage.removeItem('ghosthunter_logged_in_user');
+    localStorage.removeItem('ghosthunter_local_backup');
     
     if (window._internalPlayerData) {
         window._internalPlayerData.username = "";
@@ -200,25 +214,17 @@ window.logoutAccount = async function() {
 // UNIVERSAL CLOUD SAVE SYSTEM
 // ==========================================
 
-// Global Save Function: Uploads to the Cloud (Firebase) AND saves a local backup!
 window.saveGameData = async function() {
-    // If there is no player logged in, stop right here
     if (typeof playerData === 'undefined' || !playerData.username) return;
 
-    // 1. Clean the data! 
-    // (Firebase hates it when we try to save live map markers, so we strip them out)
     const cleanDataString = JSON.stringify(playerData, (key, value) => {
         if (key === 'marker' || key === '_popup' || key === '_source') return undefined;
         return value;
     });
     
     const cleanData = JSON.parse(cleanDataString);
+    localStorage.setItem('ghosthunter_local_backup', cleanDataString);
 
-    // 2. Save a quick backup to the device's local memory just in case
-    localStorage.setItem('brainrot_local_backup', cleanDataString);
-
-    // 3. ☁️ UPLOAD TO THE CLOUD! ☁️
-    // This tells Firebase to update your master save file on the internet
     try {
         if (typeof firebase !== 'undefined' && firebase.firestore) {
             await firebase.firestore().collection('accounts').doc(playerData.username).set(cleanData);
@@ -229,9 +235,8 @@ window.saveGameData = async function() {
     }
 };
 
-// Auto-load local backup data when the page loads so progress persists on refresh
 document.addEventListener('DOMContentLoaded', () => {
-    const localBackup = localStorage.getItem('brainrot_local_backup');
+    const localBackup = localStorage.getItem('ghosthunter_local_backup');
     if (localBackup && typeof setPlayerData === 'function') {
         try {
             const parsedData = JSON.parse(localBackup);

@@ -12,11 +12,132 @@ window.setInventorySort = function(sortType) {
     renderInventoryGrid();
 };
 
+// Fallback just in case the background card is clicked
+if (typeof window.openCardDetails === 'undefined') {
+    window.openCardDetails = function(index) {
+        console.log("Card details coming soon for index:", index);
+    };
+}
+
+// ==========================================
+// 🗑️ CUSTOM NEON TRANSFER MODAL SYSTEM
+// ==========================================
+window.showTransferModal = function(index) {
+    let inventory = window.playerData.inventory;
+    if (!inventory || !inventory[index]) return;
+    
+    let rot = inventory[index];
+    
+    if (rot.inGym) {
+        alert("❌ You cannot transfer an entity that is currently defending a Ritual Site!");
+        return;
+    }
+    
+    if (index === window.playerData.activeFighterIndex) {
+        alert("❌ You cannot transfer your currently active fighter! Make another entity active first.");
+        return;
+    }
+
+    // 🎨 CUSTOM "ARE YOU SURE" MODAL
+    let confirmModal = document.getElementById('transferConfirmModal');
+    if (!confirmModal) {
+        confirmModal = document.createElement('div');
+        confirmModal.id = 'transferConfirmModal';
+        document.body.appendChild(confirmModal);
+    }
+    
+    const rarityColor = typeof window.getRarityColor === 'function' ? window.getRarityColor(rot.rarity) : '#ff0055';
+
+    confirmModal.style.cssText = `
+        position: fixed !important;
+        top: 0; left: 0; width: 100vw; height: 100vh;
+        background: rgba(0,0,0,0.92);
+        z-index: 999999999 !important; 
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    `;
+
+    confirmModal.innerHTML = `
+        <div style="background: #111; border: 3px solid #ff0055; border-radius: 12px; padding: 25px; width: 90%; max-width: 400px; text-align: center; color: #fff; font-family: monospace; box-shadow: 0 0 30px rgba(255, 0, 85, 0.4);">
+            <h2 style="color: #ff0055; margin-top: 0; font-size: 1.4rem;">⚠️ CONFIRM TRANSFER</h2>
+            <div style="margin: 15px 0; background: rgba(0,0,0,0.5); padding: 15px; border-radius: 8px; border: 1px solid #333;">
+                <img src="${rot.image}" style="width: 90px; height: 90px; object-fit: contain; filter: drop-shadow(0 5px 5px rgba(0,0,0,0.8));">
+                <div style="font-weight: bold; color: ${rarityColor}; margin-top: 10px; font-size: 1.2rem;">${rot.name}</div>
+                <div style="font-size: 0.8rem; color: #888;">Lvl ${rot.level || 1}</div>
+            </div>
+            <p style="color: #aaa; font-size: 0.95rem; margin-bottom: 8px;">Are you sure you want to release this back to the spirit realm?</p>
+            <p style="color: #00ff55; font-weight: bold; font-size: 1rem; margin-bottom: 25px; margin-top: 0;">You will receive 1 Rot Currency.</p>
+            
+            <div style="display: flex; gap: 10px;">
+                <button onclick="executeTransfer(${index})" style="flex: 1; background: #ff0055; color: #fff; border: none; padding: 14px; border-radius: 8px; font-weight: bold; font-family: monospace; cursor: pointer; font-size: 1rem; box-shadow: 0 0 15px rgba(255,0,85,0.5);">YES, TRANSFER</button>
+                <button onclick="document.getElementById('transferConfirmModal').style.display='none'" style="flex: 1; background: #333; color: #fff; border: none; padding: 14px; border-radius: 8px; font-weight: bold; font-family: monospace; cursor: pointer; font-size: 1rem;">CANCEL</button>
+            </div>
+        </div>
+    `;
+};
+
+// This actually fires the deletion when they click "YES, TRANSFER"
+window.executeTransfer = function(index) {
+    document.getElementById('transferConfirmModal').style.display = 'none';
+
+    let inventory = window.playerData.inventory;
+    if (!inventory || !inventory[index]) return;
+
+    // 1. Remove the rot
+    window.playerData.inventory.splice(index, 1);
+    
+    // 2. Adjust active fighter index safely
+    if (window.playerData.activeFighterIndex > index) {
+        window.playerData.activeFighterIndex--;
+    }
+    
+    // 3. Reward exactly 1 Rot currency
+    window.playerData.rotBalance = (window.playerData.rotBalance || 0) + 1;
+    
+    // 4. 🔥 FORCE INSTANT UI REDRAW
+    renderInventoryGrid();
+    
+    // 5. 🛡️ Run HUD updates and Cloud Saves in an isolated background thread 
+    setTimeout(() => {
+        try { if (typeof updateHUD === 'function') updateHUD(); } catch (e) {}
+        try { if (typeof window.saveGameData === 'function') window.saveGameData(); } catch (e) {}
+    }, 10);
+};
+
+window.setActiveFighter = function(index) {
+    let rot = window.playerData.inventory[index];
+    if (!rot) return;
+
+    if (rot.fainted) {
+        alert("❌ This entity has fainted! Use a Revive Potion first.");
+        return;
+    }
+    if (rot.inGym) {
+        alert("❌ This entity is currently bound to a Ritual Site!");
+        return;
+    }
+    
+    window.playerData.activeFighterIndex = index;
+    
+    // 🔥 INSTANT UI REDRAW
+    renderInventoryGrid();
+    
+    // 🛡️ ISOLATED BACKGROUND SAVE
+    setTimeout(() => {
+        try { if (typeof updateHUD === 'function') updateHUD(); } catch (e) {}
+        try { if (typeof window.saveGameData === 'function') window.saveGameData(); } catch (e) {}
+    }, 10);
+};
+
 function renderInventoryGrid() {
     let inventoryGrid = document.getElementById('inventoryGrid');
     let modal = document.getElementById('inventoryModal');
-
-    if (!modal) {
+    
+    let isModalOpen = false;
+    if (modal) {
+        isModalOpen = (modal.style.display === 'flex' || modal.style.display === 'block');
+    } else {
         modal = document.createElement('div');
         modal.id = 'inventoryModal';
         document.body.appendChild(modal);
@@ -35,7 +156,7 @@ function renderInventoryGrid() {
         border-radius: 0 !important;
         background: rgba(0,0,0,0.95) !important;
         z-index: 9999999 !important;
-        display: none;
+        display: ${isModalOpen ? 'flex' : 'none'} !important;
         flex-direction: column !important;
         align-items: center !important;
         padding: 20px !important;
@@ -44,8 +165,23 @@ function renderInventoryGrid() {
         color: #fff !important;
     `;
 
+    // 🔧 THE ULTIMATE AUTO-REPAIR SCRIPT (WITH ACCENT REMOVAL) 🔧
+    if (window.playerData && window.playerData.inventory) {
+        window.playerData.inventory.forEach(rot => {
+            if (rot.name) {
+                let cleanName = rot.name.trim();
+                // Strip special accents so things like "Púca" become "Puca" perfectly matching the file!
+                cleanName = cleanName.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                // Ensure the first letter is always capitalized
+                cleanName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
+                // Reconstruct the perfect file path
+                rot.image = 'brainrots/' + cleanName + '.png';
+            }
+        });
+    }
+
     const currentSlots = (window.playerData.inventory || []).length;
-    const maxSlots = 100;
+    const maxSlots = window.playerData.maxInventorySlots || 100;
 
     modal.innerHTML = `
         <div style="width: 100%; max-width: 800px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
@@ -83,7 +219,7 @@ function renderInventoryGrid() {
     if (window.currentInventoryTab === 'rots') {
         let inventory = window.playerData.inventory || [];
         if (inventory.length === 0) {
-            inventoryGrid.innerHTML = `<p style="grid-column: 1 / -1; color: #777; font-size: 0.9rem; padding: 40px; text-align: center;">Your inventory is empty! Catch rots on the map.</p>`;
+            inventoryGrid.innerHTML = `<p style="grid-column: 1 / -1; color: #777; font-size: 0.9rem; padding: 40px; text-align: center;">Your inventory is empty! Catch entities on the map.</p>`;
             return;
         }
 
@@ -121,7 +257,7 @@ function renderInventoryGrid() {
             const isShiny = rot.shiny === true;
             const rarityColor = typeof window.getRarityColor === 'function' ? window.getRarityColor(rot.rarity) : '#00ff55';
             const rotLevel = rot.level || 1;
-            const stats = typeof calculateRotStats === 'function' ? calculateRotStats(rot) : { maxHp: 50, atk: 10, def: 10 };
+            const stats = typeof calculateRotStats === 'function' ? calculateRotStats(rot) : { maxHp: (rot.maxHp || 50), atk: (rot.atk || 10), def: (rot.def || 10) };
 
             const card = document.createElement('div');
             card.style.cssText = `
@@ -142,8 +278,8 @@ function renderInventoryGrid() {
                 ${isShiny ? '<div style="font-size:0.6rem; color:#00ffff; font-family:monospace; font-weight:bold; margin-bottom:2px;">💎 SHINY</div>' : ''}
                 <div style="font-size: 0.75rem; font-weight: bold; color: ${rarityColor}; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${rot.name}</div>
                 <div style="font-size: 0.65rem; color: #aaa; margin-bottom: 4px;">Lvl ${rotLevel} | ${(rot.rarity || 'common').toUpperCase()}</div>
-                <div style="width: 100%; height: 90px; background: #fff; border-radius: 6px; overflow: hidden; border: 1px solid #333; margin-bottom: 6px;">
-                    <img src="${rot.image || ''}" style="width: 100%; height: 100%; object-fit: cover; ${isFainted || isInGym ? 'filter: grayscale(100%);' : (isShiny ? 'filter: brightness(1.2) contrast(2);' : '')}" onerror="this.style.display='none';">
+                <div style="width: 100%; height: 90px; background: rgba(0,0,0,0.4); border-radius: 8px; overflow: hidden; margin-bottom: 6px; display: flex; align-items: center; justify-content: center; padding: 4px; box-sizing: border-box;">
+                    <img src="${rot.image || ''}" style="max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 5px 5px rgba(0,0,0,0.8)) ${isFainted || isInGym ? 'grayscale(100%) ' : ''}${isShiny ? 'brightness(1.2) contrast(2)' : ''};" onerror="this.style.display='none';">
                 </div>
                 <div style="font-size: 0.65rem; color: #00ff55; font-weight: bold;">
                     ❤️ ${stats.maxHp} | ⚔️ ${stats.atk}
@@ -153,7 +289,7 @@ function renderInventoryGrid() {
                 </div>
                 <div style="display: flex; gap: 4px; margin-top: 6px;">
                     ${!isActive && !isInGym && !isFainted ? `<button onclick="event.stopPropagation(); setActiveFighter(${index})" style="background: #00ff00; color: #000; border: none; padding: 4px; font-size: 0.6rem; font-weight: bold; border-radius: 4px; cursor: pointer; flex: 1;">ACTIVE</button>` : ''}
-                    <button onclick="event.stopPropagation(); transferRot(${index})" style="background: #ff0055; color: #fff; border: none; padding: 4px; font-size: 0.6rem; font-weight: bold; border-radius: 4px; cursor: pointer; flex: 1;">TRANSFER</button>
+                    <button onclick="event.stopPropagation(); showTransferModal(${index})" style="background: #ff0055; color: #fff; border: none; padding: 4px; font-size: 0.6rem; font-weight: bold; border-radius: 4px; cursor: pointer; flex: 1;">TRANSFER</button>
                 </div>
             `;
             inventoryGrid.appendChild(card);
@@ -195,10 +331,14 @@ window.switchInventoryTab = function(tabName) {
 };
 
 window.openInventory = window.openInventoryModal = function() {
-    renderInventoryGrid();
-    const modal = document.getElementById('inventoryModal');
+    let modal = document.getElementById('inventoryModal');
+    if (!modal) {
+        renderInventoryGrid();
+        modal = document.getElementById('inventoryModal');
+    }
     if (modal) {
         modal.style.display = 'flex';
+        renderInventoryGrid();
     }
 };
 

@@ -59,7 +59,7 @@ window.toggleMovementMode = function() {
 
     if (isRealWorldMode) {
         if (btn) btn.innerText = "🗺️ MODE: REAL GPS";
-        alert("📍 Switched to Real-World GPS Mode! Your character will now follow your physical steps.");
+        alert("📍 Switched to Real-World GPS Mode! Your hunter will now follow your physical steps.");
         
         isWalking = false;
         clearInterval(moveInterval);
@@ -155,12 +155,12 @@ function initPlayer() {
                     <path d="M 56 103 Q 60 100 68 103 Z" fill="#d0d0d0"/>
                 </g>
 
-                <!-- Torso (Gray Hoodie) -->
-                <path d="M 32 55 Q 50 50 68 55 L 70 88 Q 50 94 30 88 Z" fill="#6b7280"/>
-                <!-- Hoodie Front Pocket / Strings -->
-                <path d="M 43 72 Q 50 78 57 72" stroke="#4b5563" stroke-width="2.5" fill="none"/>
-                <line x1="45" y1="58" x2="45" y2="70" stroke="#9ca3af" stroke-width="2"/>
-                <line x1="55" y1="58" x2="55" y2="70" stroke="#9ca3af" stroke-width="2"/>
+                <!-- Torso (Ghost Hunter Jacket) -->
+                <path d="M 32 55 Q 50 50 68 55 L 70 88 Q 50 94 30 88 Z" fill="#4f46e5"/>
+                <!-- Jacket Details / Equipment Straps -->
+                <path d="M 43 72 Q 50 78 57 72" stroke="#312e81" stroke-width="2.5" fill="none"/>
+                <line x1="45" y1="58" x2="45" y2="70" stroke="#e0e7ff" stroke-width="2"/>
+                <line x1="56" y1="58" x2="56" y2="70" stroke="#e0e7ff" stroke-width="2"/>
 
                 <!-- Head & Face -->
                 <circle cx="50" cy="44" r="15" fill="#fcd34d"/>
@@ -171,18 +171,14 @@ function initPlayer() {
                 <circle cx="57" cy="40.5" r="1" fill="#ffffff"/>
                 <!-- Smile -->
                 <path d="M 47 48 Q 50 51 53 48" stroke="#1f2937" stroke-width="2" fill="none" stroke-linecap="round"/>
-                <!-- Cute beak/nose detail -->
-                <path d="M 49 45 L 51 45 L 50 47 Z" fill="#ea580c"/>
 
-                <!-- Messy Top-Knot Hair (Man-bun) -->
-                <path d="M 35 40 C 33 22, 42 20, 48 24 C 52 18, 65 22, 65 38 C 67 44, 35 44, 35 40 Z" fill="#38220f"/>
-                <!-- Top bun circle -->
-                <circle cx="48" cy="18" r="7" fill="#38220f"/>
-                <circle cx="50" cy="16" r="3" fill="#4e3524"/>
+                <!-- Hunter Cap -->
+                <path d="M 35 40 C 33 22, 42 20, 48 24 C 52 18, 65 22, 65 38 C 67 44, 35 44, 35 40 Z" fill="#1e1b4b"/>
+                <rect x="42" y="30" width="18" height="4" rx="2" fill="#ff0055"/>
 
-                <!-- Smartphone in Hand -->
+                <!-- EMF Reader / Device in Hand -->
                 <rect x="68" y="62" width="14" height="20" rx="3" fill="#111827"/>
-                <rect x="70" y="64" width="10" height="16" rx="1" fill="#38bdf8"/>
+                <rect x="70" y="64" width="10" height="16" rx="1" fill="#00ff80"/>
             </svg>
         </div>
     `;

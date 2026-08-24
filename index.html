@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BRAINROT GO</title>
+    <title>GHOST HUNTER GO</title>
     
     <!-- OpenStreetMap Leaflet Engine -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -24,12 +24,12 @@
 
         .hud {
             position: absolute; top: 15px; left: 15px; z-index: 1000;
-            background: rgba(10, 10, 10, 0.85); border: 2px solid #76ff03;
+            background: rgba(10, 10, 10, 0.85); border: 2px solid #ff0055;
             border-radius: 10px; padding: 10px 14px; color: #fff;
-            box-shadow: 0 0 15px rgba(118, 255, 3, 0.4); font-family: monospace;
+            box-shadow: 0 0 15px rgba(255, 0, 85, 0.4); font-family: monospace;
             max-width: 220px;
         }
-        .hud h1 { font-size: 1rem; color: #76ff03; text-shadow: 0 0 5px #76ff03; margin-bottom: 4px; }
+        .hud h1 { font-size: 1rem; color: #ff0055; text-shadow: 0 0 5px #ff0055; margin-bottom: 4px; }
         .hud p { font-size: 0.75rem; margin: 2px 0; color: #ccc; }
 
         .hud-buttons {
@@ -38,13 +38,13 @@
         }
 
         .btn-hud {
-            background: #76ff03; color: #000; border: none; padding: 10px 16px;
+            background: #ff0055; color: #fff; border: none; padding: 10px 16px;
             font-size: 0.9rem; font-weight: bold; border-radius: 30px; cursor: pointer;
-            box-shadow: 0 0 15px #76ff03; font-family: monospace; transition: transform 0.1s;
+            box-shadow: 0 0 15px #ff0055; font-family: monospace; transition: transform 0.1s;
         }
         .btn-hud:active { transform: scale(0.95); }
 
-        /* --- ⚡ QTE TIMING STRIKE MINIGAME STYLES ⚡ --- */
+        /* --- QTE TIMING STRIKE MINIGAME STYLES --- */
         @keyframes qteSlide {
             0% { left: 0%; }
             50% { left: 90%; }
@@ -59,15 +59,15 @@
             background: rgba(0, 255, 128, 0.45); border-left: 2px dashed #00ff80; border-right: 2px dashed #00ff80;
         }
 
-        /* --- ⚡ MASSIVE SPINNING & GLOWING GYM ANIMATIONS ⚡ --- */
+        /* --- MASSIVE SPINNING & GLOWING GYM ANIMATIONS --- */
         @keyframes massiveGymBounceAndSpin {
           0%, 100% {
             transform: translateY(0px) rotate(0deg) scale(1.4);
-            filter: drop-shadow(0 0 20px #00ff55);
+            filter: drop-shadow(0 0 20px #9900ff);
           }
           50% {
             transform: translateY(-15px) rotate(180deg) scale(1.6);
-            filter: drop-shadow(0 0 40px #00ffff) drop-shadow(0 0 20px #00ff55);
+            filter: drop-shadow(0 0 40px #00ffff) drop-shadow(0 0 20px #9900ff);
           }
         }
         @keyframes groundRadarPulse {
@@ -93,12 +93,12 @@
             z-index: 99999; justify-content: center; align-items: center;
         }
         .menu-drawer {
-            background: #111; border: 3px solid #76ff03; border-radius: 20px;
+            background: #110a1c; border: 3px solid #9900ff; border-radius: 20px;
             padding: 20px; width: 90%; max-width: 320px; text-align: center;
-            box-shadow: 0 0 30px rgba(118, 255, 3, 0.4); font-family: monospace;
+            box-shadow: 0 0 30px rgba(153, 0, 255, 0.4); font-family: monospace;
             display: flex; flex-direction: column; gap: 10px; max-height: 85vh; overflow-y: auto;
         }
-        .menu-drawer h2 { color: #76ff03; font-size: 1.2rem; margin-bottom: 5px; text-shadow: 0 0 8px #76ff03; }
+        .menu-drawer h2 { color: #ff0055; font-size: 1.2rem; margin-bottom: 5px; text-shadow: 0 0 8px #ff0055; }
 
         /* MOBILE TOUCH D-PAD CONTROLS */
         .mobile-dpad {
@@ -106,14 +106,14 @@
             width: 140px; height: 140px; display: grid;
             grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr);
             gap: 4px; background: rgba(0, 0, 0, 0.4); padding: 8px; border-radius: 50%;
-            backdrop-filter: blur(4px); border: 2px solid rgba(118,255,3,0.3);
+            backdrop-filter: blur(4px); border: 2px solid rgba(255,0,85,0.3);
         }
         .dpad-btn {
-            background: rgba(118, 255, 3, 0.2); border: 1px solid #76ff03; color: #76ff03;
+            background: rgba(255, 0, 85, 0.2); border: 1px solid #ff0055; color: #ff0055;
             font-size: 1.2rem; display: flex; align-items: center; justify-content: center;
             border-radius: 8px; cursor: pointer; font-weight: bold;
         }
-        .dpad-btn:active { background: rgba(118, 255, 3, 0.6); color: #000; }
+        .dpad-btn:active { background: rgba(255, 0, 85, 0.6); color: #000; }
         .dpad-up { grid-column: 2; grid-row: 1; }
         .dpad-left { grid-column: 1; grid-row: 2; }
         .dpad-right { grid-column: 3; grid-row: 2; }
@@ -127,9 +127,9 @@
             color: #fff; font-family: monospace; padding: 20px;
         }
         .login-box {
-            background: #111; border: 3px solid #76ff03; border-radius: 15px;
+            background: #110a1c; border: 3px solid #9900ff; border-radius: 15px;
             padding: 20px; width: 100%; max-width: 400px; text-align: center;
-            box-shadow: 0 0 30px rgba(118,255,3,0.4);
+            box-shadow: 0 0 30px rgba(153,0,255,0.4);
         }
         .login-input {
             width: 100%; padding: 10px; margin: 8px 0; background: #222;
@@ -147,7 +147,7 @@
             align-items: center; transition: all 0.2s;
         }
         .starter-option:hover, .starter-option.selected {
-            border-color: #76ff03; box-shadow: 0 0 10px #76ff03; background: #1a2a1a;
+            border-color: #ff0055; box-shadow: 0 0 10px #ff0055; background: #2a101a;
         }
 
         /* STRICT LOCATION ERROR MODAL */
@@ -161,12 +161,12 @@
         #battleModal {
             display: none;
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            z-index: 99999; background: radial-gradient(circle at center, rgba(15, 23, 42, 0.9) 0%, rgba(3, 7, 18, 0.95) 100%);
+            z-index: 99999; background: radial-gradient(circle at center, rgba(15, 2, 20, 0.9) 0%, rgba(3, 1, 7, 0.95) 100%);
             backdrop-filter: blur(10px); flex-direction: column; justify-content: space-between;
             padding: 15px; color: #fff;
         }
         .battle-header { text-align: center; margin-top: 5px; }
-        .battle-header h2 { font-size: 1.5rem; color: #ff007f; text-shadow: 0 0 12px #ff007f; }
+        .battle-header h2 { font-size: 1.5rem; color: #ff0055; text-shadow: 0 0 12px #ff0055; }
 
         .battle-arena-field {
             flex: 1; position: relative; width: 100%; max-width: 500px;
@@ -175,11 +175,11 @@
         }
         .platform {
             position: absolute; width: 150px; height: 65px; border-radius: 50%;
-            background: radial-gradient(ellipse at center, rgba(0, 255, 128, 0.3) 0%, rgba(0, 255, 128, 0) 70%);
-            border: 2px solid rgba(0, 255, 128, 0.4); box-shadow: 0 0 20px rgba(0, 255, 128, 0.3);
+            background: radial-gradient(ellipse at center, rgba(153, 0, 255, 0.3) 0%, rgba(153, 0, 255, 0) 70%);
+            border: 2px solid rgba(153, 0, 255, 0.4); box-shadow: 0 0 20px rgba(153, 0, 255, 0.3);
             transform: rotateX(60deg);
         }
-        .platform-wild { top: 90px; right: 20px; border-color: rgba(255, 0, 127, 0.5); background: radial-gradient(ellipse at center, rgba(255, 0, 127, 0.3) 0%, rgba(255, 0, 127, 0) 70%); }
+        .platform-wild { top: 90px; right: 20px; border-color: rgba(255, 0, 85, 0.5); background: radial-gradient(ellipse at center, rgba(255, 0, 85, 0.3) 0%, rgba(255, 0, 85, 0) 70%); }
         .platform-player { bottom: 50px; left: 20px; }
 
         .combatant {
@@ -190,12 +190,12 @@
         .combatant-player { bottom: 25px; left: 25px; }
 
         .hp-badge {
-            background: rgba(10, 10, 10, 0.85); border: 2px solid #ff007f;
+            background: rgba(10, 10, 10, 0.85); border: 2px solid #ff0055;
             border-radius: 10px; padding: 6px 10px; min-width: 140px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.5); font-family: monospace; margin-top: 4px;
         }
         .hp-bar-outer { width: 100%; height: 8px; background: #222; border-radius: 4px; overflow: hidden; border: 1px solid #444; margin: 3px 0; }
-        .hp-bar-inner { height: 100%; background: #76ff03; width: 100%; transition: width 0.3s ease-out; }
+        .hp-bar-inner { height: 100%; background: #00ff80; width: 100%; transition: width 0.3s ease-out; }
 
         .charge-attack { transform: translate(100px, -80px) scale(1.15) !important; }
         .hit-knockback { transform: translate(15px, -15px) scale(0.9) !important; filter: brightness(2) drop-shadow(0 0 15px #ff0000) !important; }
@@ -204,15 +204,15 @@
         .btn-action { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; font-size: 0.95rem; cursor: pointer; font-family: monospace; transition: transform 0.1s; }
         .btn-action:active { transform: scale(0.98); }
 
-        /* Rot-Dex Sticker Book Modal */
+        /* Paranormal Codex Sticker Book Modal */
         .game-modal {
             display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2000;
-            background: rgba(15, 15, 15, 0.96); border: 3px solid #ff007f; border-radius: 15px; padding: 18px;
-            text-align: center; color: #fff; box-shadow: 0 0 25px rgba(255, 0, 127, 0.6); width: 92%; max-width: 440px;
+            background: rgba(15, 10, 25, 0.96); border: 3px solid #9900ff; border-radius: 15px; padding: 18px;
+            text-align: center; color: #fff; box-shadow: 0 0 25px rgba(153, 0, 255, 0.6); width: 92%; max-width: 440px;
         }
         .modal-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-height: 280px; overflow-y: auto; margin-top: 12px; padding-right: 4px; }
-        .close-x-btn { position: absolute; top: 15px; right: 20px; background: none; border: none; color: #ff007f; font-size: 1.6rem; cursor: pointer; font-weight: bold; }
-        .leaflet-marker-pane .custom-brainrot-pin { pointer-events: auto !important; z-index: 9999 !important; }
+        .close-x-btn { position: absolute; top: 15px; right: 20px; background: none; border: none; color: #ff0055; font-size: 1.6rem; cursor: pointer; font-weight: bold; }
+        .leaflet-marker-pane .clean-monster-icon { pointer-events: auto !important; z-index: 9999 !important; }
     </style>
 </head>
 <body>
@@ -224,7 +224,7 @@
         left: 0 !important;
         width: 100vw !important;
         height: 100vh !important;
-        background: url('brainrots/homescreen.png') no-repeat center center/cover !important;
+        background: radial-gradient(circle, #1a0b2e 0%, #05020a 100%) !important;
         z-index: 99999999 !important;
         display: flex;
         flex-direction: column;
@@ -237,21 +237,24 @@
         overflow-y: auto;
     ">
         <!-- Dark Tint Overlay for Text Readability -->
-        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.45); z-index: 1;"></div>
+        <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.65); z-index: 1;"></div>
 
         <!-- Top Active Players Badge -->
         <div style="width: 100%; display: flex; justify-content: flex-start; max-width: 450px; z-index: 2;">
-            <div style="background: rgba(0, 0, 0, 0.85); border: 1px solid rgba(52, 211, 110, 0.4); padding: 6px 14px; border-radius: 20px; display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: bold;">
-                <div style="width: 8px; height: 8px; background-color: #00ff66; border-radius: 50%; box-shadow: 0 0 8px #00ff66;"></div>
-                <span id="landingPlayerCount" style="color: #fff;">1</span> <span style="color:#aaa;">players live</span>
+            <div style="background: rgba(10, 5, 20, 0.85); border: 1px solid rgba(153, 0, 255, 0.4); padding: 6px 14px; border-radius: 20px; display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: bold;">
+                <div style="width: 8px; height: 8px; background-color: #00ff80; border-radius: 50%; box-shadow: 0 0 8px #00ff80;"></div>
+                <span id="landingPlayerCount" style="color: #fff;">1</span> <span style="color:#aaa;">hunters live</span>
             </div>
         </div>
 
         <!-- Center Content & Play Button -->
         <div style="display: flex; flex-direction: column; align-items: center; text-align: center; width: 100%; max-width: 450px; gap: 15px; z-index: 2; margin: auto 0;">
+            <h1 style="color: #ff0055; font-size: 2.2rem; text-shadow: 0 0 15px #ff0055; margin-bottom: 5px;">GHOST HUNTER GO</h1>
+            <p style="color: #ccc; font-size: 0.85rem; margin-bottom: 10px;">Track, trace, and trap paranormal entities in your city!</p>
+
             <button onclick="dismissHomeScreen()" style="
-                background: linear-gradient(135deg, #7bff9e, #34d36e);
-                color: #0a2312;
+                background: linear-gradient(135deg, #ff0055, #9900ff);
+                color: #fff;
                 font-size: 1.3rem;
                 font-weight: 900;
                 padding: 16px 0;
@@ -260,110 +263,110 @@
                 border: none;
                 border-radius: 30px;
                 cursor: pointer;
-                box-shadow: 0 6px 20px rgba(52, 211, 110, 0.6);
+                box-shadow: 0 6px 20px rgba(255, 0, 85, 0.6);
                 text-transform: uppercase;
                 letter-spacing: 1px;
-            ">Play Now</button>
+            ">Start Hunting</button>
 
             <!-- Contract Address Pill -->
-            <div onclick="copyLandingCA()" style="background: rgba(0, 0, 0, 0.85); border: 1px solid rgba(255, 255, 255, 0.2); padding: 8px 16px; border-radius: 25px; display: inline-flex; align-items: center; gap: 10px; font-size: 0.8rem; cursor: pointer;">
-                <span style="color: #34d36e; font-weight: bold;">$ROT CA</span>
-                <span id="landingCAText" style="color: #ccc;">8Byg...Qpump</span>
+            <div onclick="copyLandingCA()" style="background: rgba(10, 5, 20, 0.85); border: 1px solid rgba(153, 0, 255, 0.3); padding: 8px 16px; border-radius: 25px; display: inline-flex; align-items: center; gap: 10px; font-size: 0.8rem; cursor: pointer;">
+                <span style="color: #ff0055; font-weight: bold;">$GHOST CA</span>
+                <span id="landingCAText" style="color: #ccc;">0xGh0st...Pump</span>
                 <span>📋</span>
             </div>
         </div>
 
         <!-- Bottom Social Links & Docs Button -->
         <div style="display: flex; gap: 12px; align-items: center; justify-content: center; width: 100%; max-width: 450px; z-index: 2;">
-            <a href="docs.html" style="background: rgba(0,0,0,0.85); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 8px 16px; border-radius: 20px; text-decoration: none; font-weight: bold; font-size: 0.8rem; display: flex; align-items: center; gap: 6px;">📄 Game Docs</a>
-            <a href="https://twitter.com" target="_blank" style="background: rgba(0,0,0,0.85); border: 1px solid rgba(255,255,255,0.2); color: #fff; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 0.9rem;">𝕏</a>
-            <a href="https://discord.gg/yourinvite" target="_blank" style="background: rgba(0,0,0,0.85); border: 1px solid rgba(255,255,255,0.2); color: #fff; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 0.9rem;">💬</a>
+            <a href="docs.html" style="background: rgba(10, 5, 20, 0.85); border: 1px solid rgba(153, 0, 255, 0.3); color: #fff; padding: 8px 16px; border-radius: 20px; text-decoration: none; font-weight: bold; font-size: 0.8rem; display: flex; align-items: center; gap: 6px;">📄 Field Guide</a>
+            <a href="https://twitter.com" target="_blank" style="background: rgba(10, 5, 20, 0.85); border: 1px solid rgba(153, 0, 255, 0.3); color: #fff; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 0.9rem;">𝕏</a>
+            <a href="https://discord.gg/yourinvite" target="_blank" style="background: rgba(10, 5, 20, 0.85); border: 1px solid rgba(153, 0, 255, 0.3); color: #fff; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 0.9rem;">💬</a>
         </div>
     </div>
 
     <!-- ACCOUNT LOGIN / REGISTER MODAL -->
     <div id="loginModal">
         <div class="login-box">
-            <h2 style="color: #76ff03; font-size: 1.4rem; text-shadow: 0 0 10px #76ff03;">🔑 BRAINROT GO ACCOUNT</h2>
-            <p style="font-size: 0.75rem; color: #aaa; margin-top: 4px;">Log in or sign up to play!</p>
+            <h2 style="color: #ff0055; font-size: 1.4rem; text-shadow: 0 0 10px #ff0055;">🔑 HUNTER VAULT LOGIN</h2>
+            <p style="font-size: 0.75rem; color: #aaa; margin-top: 4px;">Log in or sign up to access your relic vault!</p>
             
-            <input type="text" id="usernameInput" class="login-input" placeholder="Username..." maxlength="15">
+            <input type="text" id="usernameInput" class="login-input" placeholder="Hunter Username..." maxlength="15">
             <input type="password" id="passwordInput" class="login-input" placeholder="Password..." maxlength="20">
             
             <div id="starterSection" style="display: none; margin-top: 8px;">
-                <p style="font-size: 0.75rem; color: #76ff03; text-align: left;">CHOOSE STARTER ROT:</p>
+                <p style="font-size: 0.75rem; color: #ff0055; text-align: left;">CHOOSE STARTER ENTITY:</p>
                 <div id="starterSelectionGrid" class="starter-grid"></div>
             </div>
             
             <button class="btn-hud" style="width: 100%; margin-top: 12px;" onclick="handleAccountAction()">CONTINUE</button>
             <button class="btn-hud" style="background: #fff; color: #000; width: 100%; margin-top: 8px; font-weight: bold; border: 2px solid #ccc; box-shadow: 0 0 10px #fff;" onclick="signInWithGoogle()">🌐 SIGN IN WITH GOOGLE</button>
             
-            <p id="loginToggleText" style="font-size: 0.7rem; color: #888; margin-top: 10px; cursor: pointer; text-decoration: underline;" onclick="toggleAuthMode()">New player? Click here to Sign Up</p>
+            <p id="loginToggleText" style="font-size: 0.7rem; color: #888; margin-top: 10px; cursor: pointer; text-decoration: underline;" onclick="toggleAuthMode()">New hunter? Click here to Sign Up</p>
         </div>
     </div>
 
     <!-- STRICT LOCATION ERROR MODAL -->
     <div id="locationErrorModal">
-        <div style="background: #111; border: 3px solid #ff0055; border-radius: 15px; padding: 30px; max-width: 400px; box-shadow: 0 0 30px rgba(255,0,85,0.4);">
+        <div style="background: #110a1c; border: 3px solid #ff0055; border-radius: 15px; padding: 30px; max-width: 400px; box-shadow: 0 0 30px rgba(255,0,85,0.4);">
             <h2 style="color: #ff0055; font-size: 1.5rem; margin-bottom: 10px; text-shadow: 0 0 10px #ff0055;">⚠️ GPS BLOCKED!</h2>
-            <p style="font-size: 0.85rem; color: #ccc; line-height: 1.4; margin-bottom: 15px;">Brainrot Go needs your real-world location to build the map.</p>
+            <p style="font-size: 0.85rem; color: #ccc; line-height: 1.4; margin-bottom: 15px;">Ghost Hunter Go needs your real-world location to track local paranormal anomalies.</p>
             <button class="btn-hud" style="background: #ff0055; color: #fff; width: 100%; border: none; padding: 12px; border-radius: 5px; font-weight: bold; cursor: pointer;" onclick="location.reload()">I FIXED IT! RELOAD GAME</button>
         </div>
     </div>
 
     <!-- HUD Overlay -->
     <div class="hud">
-        <h1 id="hudTitle">🔄 BRAINROT GO</h1>
-        <p>⭐ <b>ACC LVL:</b> <span id="accountLevelVal">1</span></p>
+        <h1 id="hudTitle">👻 GHOST HUNTER</h1>
+        <p>⭐ <b>HUNTER LVL:</b> <span id="accountLevelVal">1</span></p>
         <p>📍 <b>LAT:</b> <span id="latVal">Loading...</span></p>
         <p>📍 <b>LNG:</b> <span id="lngVal">Loading...</span></p>
         <hr style="margin: 6px 0; border-color: #333;">
-        <p>📦 <b>INVENTORY:</b> <span id="inventoryCount">0</span> Rots</p>
-        <p>💩 <b>ROT:</b> <span id="rotBalance">500</span></p>
+        <p>📦 <b>INVENTORY:</b> <span id="inventoryCount">0</span> Relics</p>
+        <p>🪙 <b>CURRENCY:</b> <span id="rotBalance">500</span></p>
     </div>
 
     <!-- PLAYER PROFILE WIDGET (TOP RIGHT) -->
     <div id="playerProfileWidget" style="
         position: absolute; top: 15px; right: 15px; z-index: 1000;
-        background: rgba(10, 10, 10, 0.9); border: 2px solid #76ff03;
+        background: rgba(10, 10, 10, 0.9); border: 2px solid #ff0055;
         border-radius: 12px; padding: 8px 12px; color: #fff;
-        box-shadow: 0 0 15px rgba(118, 255, 3, 0.4); font-family: monospace;
+        box-shadow: 0 0 15px rgba(255, 0, 85, 0.4); font-family: monospace;
         display: flex; align-items: center; gap: 10px; width: 180px; pointer-events: none;
     ">
-        <div style="position: relative; width: 42px; height: 42px; border-radius: 50%; border: 2px solid #76ff03; overflow: hidden; background: #222; flex-shrink: 0;">
+        <div style="position: relative; width: 42px; height: 42px; border-radius: 50%; border: 2px solid #ff0055; overflow: hidden; background: #222; flex-shrink: 0;">
             <img id="widgetActiveRotImg" src="" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'">
         </div>
         <div style="display: flex; flex-direction: column; text-align: left; width: 100%; overflow: hidden;">
-            <div style="font-size: 0.75rem; font-weight: bold; color: #76ff03; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="widgetUsername">Player</div>
+            <div style="font-size: 0.75rem; font-weight: bold; color: #ff0055; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="widgetUsername">Hunter</div>
             <div style="font-size: 0.65rem; color: #fff;">LVL <span id="widgetAccLevel">1</span></div>
             <div style="width: 100%; height: 5px; background: #333; border-radius: 3px; margin-top: 3px; overflow: hidden; border: 1px solid #555;">
-                <div id="widgetXpBar" style="height: 100%; background: #76ff03; width: 0%; transition: width 0.3s ease;"></div>
+                <div id="widgetXpBar" style="height: 100%; background: #ff0055; width: 0%; transition: width 0.3s ease;"></div>
             </div>
             <div style="font-size: 0.55rem; color: #aaa; margin-top: 2px; text-align: right;"><span id="widgetXpText">0 / 200</span> XP</div>
         </div>
     </div>
 
-    <!-- CLEANED UP HUD BUTTONS (Bottom Right) -->
+    <!-- HUD BUTTONS (Bottom Right) -->
     <div class="hud-buttons">
-        <button id="bgmToggleBtn" class="btn-hud" style="background: #ff00ff; color: #fff;" onclick="window.gameAudio.toggleBgm()">🔇 BGM: OFF</button>
-        <button class="btn-hud" style="background: linear-gradient(135deg, #76ff03, #00e676); color: #000; box-shadow: 0 0 20px rgba(118,255,3,0.6); font-size: 1rem; padding: 12px 22px;" onclick="toggleGameMenu()">☰ MENU</button>
+        <button id="bgmToggleBtn" class="btn-hud" style="background: #9900ff; color: #fff;" onclick="window.gameAudio.toggleBgm()">🔇 BGM: OFF</button>
+        <button class="btn-hud" style="background: linear-gradient(135deg, #ff0055, #9900ff); color: #fff; box-shadow: 0 0 20px rgba(255,0,85,0.6); font-size: 1rem; padding: 12px 22px;" onclick="toggleGameMenu()">☰ MENU</button>
     </div>
 
     <!-- EXPANDED GAME MENU DRAWER MODAL -->
     <div id="menuModal">
         <div class="menu-drawer">
-            <h2>🧠 GAME MENU</h2>
-            <p style="font-size: 0.7rem; color: #aaa; margin-bottom: 5px;">Access all features & tools</p>
+            <h2>📜 HUNTER MENU</h2>
+            <p style="font-size: 0.7rem; color: #aaa; margin-bottom: 5px;">Access gear, vault, and radar</p>
             
             <button id="movementModeBtn" class="btn-hud" style="width: 100%; background: #ffcc00; color: #000;" onclick="closeGameMenu(); window.toggleMovementMode()">🕹️ MODE: D-PAD</button>
-            <button class="btn-hud" style="width: 100%; background: linear-gradient(135deg, #00ff55, #00ffee); color: #000;" onclick="closeGameMenu(); window.openBattlePassModal()">🏆 BATTLE PASS</button>
-            <button class="btn-hud" style="width: 100%; background: #333; color: #aaa; border: 1px dashed #777; cursor: not-allowed;" onclick="alert('🌐 TRADE MARKET & CHAT: Coming soon in the next update!')">🔒 TRADE MARKET (SOON)</button>
+            <button class="btn-hud" style="width: 100%; background: linear-gradient(135deg, #9900ff, #ff0055); color: #fff;" onclick="closeGameMenu(); window.openBattlePassModal()">🏆 HUNTER PASS</button>
+            <button class="btn-hud" style="width: 100%; background: #333; color: #aaa; border: 1px dashed #777; cursor: not-allowed;" onclick="alert('🌐 BLACK MARKET TRADE: Coming soon in the next update!')">🔒 BLACK MARKET (SOON)</button>
             <button class="btn-hud" style="width: 100%;" onclick="closeGameMenu(); openInventory()">📦 INVENTORY</button>
-            <button class="btn-hud" style="width: 100%; background: #00ccff; color: #000;" onclick="closeGameMenu(); openDex()">📖 ROT-DEX (<span id="dexCountModal">0</span>/<span id="totalBrainrotsModal">0</span>)</button>
-            <button class="btn-hud" style="width: 100%; background: #00ff55; color: #000;" onclick="closeGameMenu(); openReviveModal()">🧪 REVIVE (<span id="potionHudCountModal">3</span>)</button>
-            <button class="btn-hud" style="width: 100%; background: #ffcc00; color: #000;" onclick="closeGameMenu(); openShopModal()">🛒 SHOP</button>
-            <button class="btn-hud" style="width: 100%; background: #9900ff; color: #fff;" onclick="closeGameMenu(); openTeamSelect('ai')">⚔️ 3v3 AI BATTLE</button>
-            <button class="btn-hud" style="width: 100%; background: #ff007f; color: #fff;" onclick="closeGameMenu(); openTeamSelect('pvp')">🌐 ONLINE PVP</button>
+            <button class="btn-hud" style="width: 100%; background: #00ccff; color: #000;" onclick="closeGameMenu(); openDex()">📖 PARANORMAL DEX (<span id="dexCountModal">0</span>/<span id="totalBrainrotsModal">0</span>)</button>
+            <button class="btn-hud" style="width: 100%; background: #00ff80; color: #000;" onclick="closeGameMenu(); openReviveModal()">🧪 REVIVE POTIONS (<span id="potionHudCountModal">3</span>)</button>
+            <button class="btn-hud" style="width: 100%; background: #ffcc00; color: #000;" onclick="closeGameMenu(); openShopModal()">🛒 WAND SHOP</button>
+            <button class="btn-hud" style="width: 100%; background: #9900ff; color: #fff;" onclick="closeGameMenu(); openTeamSelect('ai')">⚔️ 3v3 ANOMALY BATTLE</button>
+            <button class="btn-hud" style="width: 100%; background: #ff007f; color: #fff;" onclick="closeGameMenu(); openTeamSelect('pvp')">🌐 ONLINE PVP DUEL</button>
             
             <hr style="border-color: #333; margin: 5px 0;">
             <button class="btn-hud" style="width: 100%; background: #ff0055; color: #fff; font-size: 0.8rem;" onclick="closeGameMenu(); logoutAccount()">🚪 LOGOUT</button>
@@ -385,8 +388,8 @@
     <!-- 3D BATTLE ARENA OVERLAY -->
     <div id="battleModal">
         <div class="battle-header">
-            <h2 id="wildName">WILD ANOMALY!</h2>
-            <p id="wildRarity" style="color: #ffcc00; font-family: monospace; font-size: 0.8rem;">RARITY: LEGENDARY</p>
+            <h2 id="wildName">PARANORMAL ANOMALY!</h2>
+            <p id="wildRarity" style="color: #ffcc00; font-family: monospace; font-size: 0.8rem;">RARITY: RARE</p>
         </div>
 
         <div id="arenaField" class="battle-arena-field">
@@ -395,8 +398,8 @@
 
             <div id="wildCombatant" class="combatant combatant-wild">
                 <div id="wildCardContainer"></div>
-                <div class="hp-badge" style="border-color: #ff007f;">
-                    <div style="font-weight: bold; font-size: 0.7rem;" id="wildBadgeName">WILD TARGET</div>
+                <div class="hp-badge" style="border-color: #ff0055;">
+                    <div style="font-weight: bold; font-size: 0.7rem;" id="wildBadgeName">WILD ENTITY</div>
                     <div class="hp-bar-outer"><div id="wildHpBar" class="hp-bar-inner" style="background: #ff0055;"></div></div>
                     <div id="wildHpText" style="font-size: 0.55rem; color: #aaa; text-align: right;">100/100 HP</div>
                 </div>
@@ -406,39 +409,39 @@
                 <div id="playerFighterInner" style="width: 100px; height: 100px; display: flex; align-items: center; justify-content: center;">
                     <div id="playerCardContainer" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;"></div>
                 </div>
-                <div class="hp-badge" style="border-color: #76ff03;">
-                    <div id="myFighterName" style="font-weight: bold; font-size: 0.7rem;">Fighter (Lvl 1)</div>
+                <div class="hp-badge" style="border-color: #ff0055;">
+                    <div id="myFighterName" style="font-weight: bold; font-size: 0.7rem;">Hunter Entity (Lvl 1)</div>
                     <div class="hp-bar-outer"><div id="myHpBar" class="hp-bar-inner"></div></div>
                     <div id="myHpText" style="font-size: 0.55rem; color: #aaa;">50/50 HP</div>
                 </div>
             </div>
         </div>
 
-        <div id="battleLog" style="font-size: 0.85rem; color: #76ff03; font-family: monospace; text-align: center; margin-bottom: 6px; min-height: 20px;">
-            Prepare for battle!
+        <div id="battleLog" style="font-size: 0.85rem; color: #00ff80; font-family: monospace; text-align: center; margin-bottom: 6px; min-height: 20px;">
+            Trace the binding spiral to contain the anomaly!
         </div>
 
         <div class="battle-controls">
             <button onclick="openQTEPrompt()" class="btn-action" style="background: #9900ff; color: #fff;">🎯 Critical QTE</button>
             <button id="attackBtn" class="btn-action" style="background: #ff0055; color: #fff;" onclick="battleAttack()">✨ Signature Move</button>
-            <button id="vaultCatchBtn" class="btn-action" style="background: #76ff03; color: #000;" onclick="battleCatch()">📦 Catch / Vault</button>
-            <button class="btn-action" style="background: #00ccff; color: #000;" onclick="openBattleSwitch()">🔄 Switch Rot</button>
+            <button id="vaultCatchBtn" class="btn-action" style="background: #00ff80; color: #000;" onclick="battleCatch()">📦 Vault / Capture</button>
+            <button class="btn-action" style="background: #00ccff; color: #000;" onclick="openBattleSwitch()">🔄 Switch Entity</button>
         </div>
     </div>
 
-    <!-- ROT-DEX STICKER BOOK MODAL -->
+    <!-- PARANORMAL DEX MODAL -->
     <div id="dexModal" class="game-modal" style="border-color: #00ccff; box-shadow: 0 0 25px rgba(0,204,255,0.6);">
         <button class="close-x-btn" style="color: #00ccff;" onclick="closeDex()">✖</button>
-        <h2 style="color: #00ccff; font-size: 1.3rem; margin-bottom: 8px; text-shadow: 0 0 10px #00ccff;">📖 ROT-DEX STICKER BOOK</h2>
-        <p style="font-size: 0.75rem; color: #aaa;">Collect all stickers by exploring and catching rots!</p>
+        <h2 style="color: #00ccff; font-size: 1.3rem; margin-bottom: 8px; text-shadow: 0 0 10px #00ccff;">📖 PARANORMAL DEX</h2>
+        <p style="font-size: 0.75rem; color: #aaa;">Log all discovered spirits and entities!</p>
         <div id="dexGrid" class="modal-grid"></div>
-        <button class="btn-action" style="background: #00ccff; color: #000; margin-top: 12px;" onclick="closeDex()">CLOSE ROT-DEX</button>
+        <button class="btn-action" style="background: #00ccff; color: #000; margin-top: 12px;" onclick="closeDex()">CLOSE DEX</button>
     </div>
 
     <!-- ADMIN ACCOUNTS PANEL MODAL -->
     <div id="adminModal" class="game-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); width:90%; max-width:500px; max-height:80vh; overflow-y:auto; border-color:#ff0055; box-shadow:0 0 25px rgba(255,0,85,0.6); z-index:999999; text-align:left;">
         <button class="close-x-btn" style="color:#ff0055;" onclick="closeAdminPanel()">✖</button>
-        <h2 style="color:#ff0055; font-size:1.2rem; margin-bottom:12px; text-shadow:0 0 10px #ff0055;">🛠️ ADMIN: ALL ACCOUNTS</h2>
+        <h2 style="color:#ff0055; font-size:1.2rem; margin-bottom:12px; text-shadow:0 0 10px #ff0055;">🛠️ ADMIN: ALL HUNTER ACCOUNTS</h2>
         <div id="adminAccountsList" style="display:flex; flex-direction:column; gap:10px;"></div>
         <div style="margin-top:15px; display:flex; justify-content:space-between;">
             <button onclick="clearAllAccounts()" style="background:#ff0055; color:#fff; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:0.75rem; font-family:monospace;">WIPE ALL ACCOUNTS</button>
@@ -459,12 +462,12 @@
         }
 
         function copyLandingCA() {
-            const fullCA = "8BygVz9qpumpFakeContractAddressExample12345";
+            const fullCA = "0xGhostHunterGoContractAddressExample123456789";
             navigator.clipboard.writeText(fullCA);
             const caText = document.getElementById('landingCAText');
             if (caText) {
                 caText.innerText = "Copied!";
-                setTimeout(() => { caText.innerText = "8Byg...Qpump"; }, 2000);
+                setTimeout(() => { caText.innerText = "0xGh0st...Pump"; }, 2000);
             }
         }
 
@@ -488,10 +491,10 @@
         window.addEventListener('DOMContentLoaded', () => {
             window.populateStarterGrid = function() {
                 const grid = document.getElementById('starterSelectionGrid');
-                if (!grid || typeof brainrotCharacters === 'undefined') return;
+                if (!grid || typeof paranormalSpawns === 'undefined') return;
                 
                 grid.innerHTML = '';
-                const commonStarters = brainrotCharacters.filter(c => c.rarity && c.rarity.toLowerCase() === 'common');
+                const commonStarters = paranormalSpawns.filter(c => c.rarity && c.rarity.toLowerCase() === 'common');
                 
                 commonStarters.forEach((char, index) => {
                     const div = document.createElement('div');
