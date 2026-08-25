@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- 📱 STRICT MOBILE VIEWPORT LOCK -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover">
     <title>GHOST HUNTER GO</title>
     
     <!-- OpenStreetMap Leaflet Engine -->
@@ -18,8 +19,10 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
-        body, html { width: 100vw; height: 100vh; overflow: hidden; font-family: 'Arial', sans-serif; background: #000; }
+        /* 📱 STRICT MOBILE TOUCH LOCKS */
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+        body, html { width: 100vw; height: 100vh; overflow: hidden; font-family: 'Arial', sans-serif; background: #000; overscroll-behavior: none; }
+        
         #map { width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; z-index: 1; }
 
         .hud {

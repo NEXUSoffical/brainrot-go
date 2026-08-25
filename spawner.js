@@ -3,9 +3,45 @@
 let spawnedCreatures = [];
 let lastSpawnLat = null;
 let lastSpawnLng = null;
+let isNearWater = false;
+let lastWaterCheckTime = 0;
 
 window.activeCreatures = spawnedCreatures;
 window.currentBattleEntry = null;
+
+// ==========================================
+// 🌊 WATER BIOME CHECKER (Overpass API)
+// ==========================================
+async function checkNearbyWater(lat, lng) {
+    // Only ping the map data every 60 seconds to avoid lag
+    if (Date.now() - lastWaterCheckTime < 60000) return;
+    lastWaterCheckTime = Date.now();
+
+    const query = `
+        [out:json][timeout:5];
+        (
+          way["natural"="water"](around:150, ${lat}, ${lng});
+          way["waterway"](around:150, ${lat}, ${lng});
+          way["natural"="coastline"](around:150, ${lat}, ${lng});
+        );
+        out count;
+    `;
+
+    try {
+        const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
+        const response = await fetch(url);
+        const data = await response.json();
+
+        const totalWaterObjects = (data.elements && data.elements[0]) ? Number(data.elements[0].tags.total) : 0;
+        isNearWater = totalWaterObjects > 0;
+        
+        if (isNearWater) {
+            console.log("🌊 WATER BIOME ACTIVE! Water entities have boosted spawn rates!");
+        }
+    } catch (err) {
+        console.warn("Could not check water biome:", err);
+    }
+}
 
 // ==========================================
 // 🎬 POKEMON GO STYLE SPAWN RINGS & HOVERING
@@ -101,35 +137,43 @@ function getRandomLevel() {
 // 🎟️ THE BRUTAL HARDCORE LOTTERY SYSTEM 🎟️
 // ==========================================
 function getRandomBrainrot() {
+  // Uses your external database file!
   if (typeof paranormalSpawns === 'undefined' || !Array.isArray(paranormalSpawns)) {
-    return { name: "Vampire", rarity: "common", reward: 3, image: "brainrots/Vampire.png" };
+    return { name: "Vampire", rarity: "common", type: "urban", reward: 3, image: "brainrots/Vampire.png" };
   }
   
   const validCharacters = paranormalSpawns.filter(char => char && char.image && char.image.trim() !== "");
   if (validCharacters.length === 0) {
-    return { name: "Vampire", rarity: "common", reward: 3, image: "brainrots/Vampire.png" };
+    return { name: "Vampire", rarity: "common", type: "urban", reward: 3, image: "brainrots/Vampire.png" };
   }
 
-  const getWeight = (rarity) => {
-    switch((rarity || '').toLowerCase()) {
-      case 'common': return 1000000; 
-      case 'uncommon': return 200000; 
-      case 'rare': return 5000;       
-      case 'epic': return 25;         
-      case 'secret': return 1;        
-      default: return 1000000;
+  const getWeight = (char) => {
+    let baseWeight = 1000000;
+    switch((char.rarity || '').toLowerCase()) {
+      case 'common': baseWeight = 1000000; break;
+      case 'uncommon': baseWeight = 200000; break;
+      case 'rare': baseWeight = 5000; break;
+      case 'epic': baseWeight = 25; break;
+      case 'secret': baseWeight = 1; break;
     }
+    
+    // 🌊 WATER BIOME BOOST: Multiply odds by 8x if near water!
+    if (isNearWater && char.type === 'water') {
+        baseWeight *= 8;
+    }
+    
+    return baseWeight;
   };
 
   let totalWeight = 0;
   validCharacters.forEach(char => {
-    totalWeight += getWeight(char.rarity);
+    totalWeight += getWeight(char);
   });
 
   let randomNum = Math.random() * totalWeight;
 
   for (let i = 0; i < validCharacters.length; i++) {
-    randomNum -= getWeight(validCharacters[i].rarity);
+    randomNum -= getWeight(validCharacters[i]);
     if (randomNum <= 0) {
       return validCharacters[i];
     }
@@ -340,15 +384,15 @@ window.registerARTap = function() {
               document.getElementById('arControlsArea').appendChild(shockwave);
               
               // The beast bursts back out and flees!
-              vampireImg.style.transform = ''; // Clear inline styles
+              vampireImg.style.transform = ''; 
               vampireImg.style.filter = '';
               vampireImg.style.display = 'block';
-              vampireImg.className = 'anim-flee'; // Apply new CSS keyframes
+              vampireImg.className = 'anim-flee'; 
               
               setTimeout(() => {
                 document.getElementById('arSpellOverlay').style.display = 'none';
                 handleEscape(data);
-              }, 900); // Wait for flee animation to finish
+              }, 900); 
               
           } else {
               // ✨ SUCCESS CATCH
@@ -412,6 +456,7 @@ function handleEscape(data) {
 function finalizeARCapture(data) {
   if (typeof playerData !== 'undefined') {
     let baseMaxHp = 60, baseAtk = 15, baseDef = 10;
+    // Reads from your external database file!
     if (typeof paranormalSpawns !== 'undefined') {
         const dbEntry = paranormalSpawns.find(c => c.name === data.name);
         if (dbEntry) {
@@ -427,7 +472,6 @@ function finalizeARCapture(data) {
       fainted: false, inGym: false, shiny: data.shiny
     };
 
-    // 🔥 FIX: Now uses the official addToDex function so your Sticker Book gets updated!
     if (typeof window.addToDex === 'function') {
         window.addToDex(caughtEntity);
     } else {
@@ -515,7 +559,7 @@ function spawnSingleCreature(lat, lng) {
 // 🌲 ORGANIC WILDERNESS SPAWNING LOGIC 🌲
 // ==========================================
 function initSpawner() {
-  setInterval(() => {
+  setInterval(async () => {
     let currentPos = null;
     if (typeof playerLat !== 'undefined' && typeof playerLat !== null) {
       currentPos = { lat: playerLat, lng: playerLng };
@@ -525,6 +569,9 @@ function initSpawner() {
     }
 
     if (!currentPos || typeof map === 'undefined' || !map) return;
+
+    // 🌊 Check for water biomes nearby before spawning
+    await checkNearbyWater(currentPos.lat, currentPos.lng);
 
     spawnedCreatures = spawnedCreatures.filter(creature => {
       const distance = map.distance([currentPos.lat, currentPos.lng], [creature.lat, creature.lng]);

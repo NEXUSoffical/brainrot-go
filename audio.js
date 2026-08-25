@@ -1,4 +1,4 @@
-// audio.js - Dynamic Multi-Bar Chiptune Arcade Audio System for Brainrot Go
+// audio.js - Dynamic Procedural Horror Audio System for Ghost Hunter Go
 
 class GameAudioSystem {
     constructor() {
@@ -23,7 +23,9 @@ class GameAudioSystem {
         
         const btn = document.getElementById('bgmToggleBtn');
         if (btn) {
-            btn.innerText = this.bgmEnabled ? '🎵 Arcade BGM: ON' : '🔇 Arcade BGM: OFF';
+            btn.innerText = this.bgmEnabled ? '🎵 CREEPY BGM: ON' : '🔇 CREEPY BGM: OFF';
+            btn.style.color = this.bgmEnabled ? '#00ff55' : '#ff0055';
+            btn.style.borderColor = this.bgmEnabled ? '#00ff55' : '#ff0055';
         }
 
         if (this.bgmEnabled) {
@@ -36,30 +38,25 @@ class GameAudioSystem {
     startDynamicLoop() {
         if (this.bgmTimer) clearInterval(this.bgmTimer);
         
-        // Extended multi-bar arcade song sequence with matching bassline notes
+        // 👻 HAUNTED MUSIC BOX SEQUENCE (Minor keys, dissonant intervals)
         const songSequence = [
-            // Phrase 1: Upbeat Intro
-            { l: 440.00, b: 110.00, d: 0.15 }, { l: 523.25, b: 0, d: 0.15 }, 
-            { l: 659.25, b: 110.00, d: 0.15 }, { l: 783.99, b: 0, d: 0.3 },
-            { l: 659.25, b: 130.81, d: 0.15 }, { l: 783.99, b: 0, d: 0.45 }, 
-            { l: 523.25, b: 130.81, d: 0.3 }, { l: 587.33, b: 0, d: 0.15 },
+            // Phrase 1: The Creeping Intro
+            { l: 880.00, b: 110.00, d: 0.4 }, { l: 0,      b: 0,      d: 0.2 }, 
+            { l: 932.33, b: 0,      d: 0.4 }, { l: 880.00, b: 0,      d: 0.4 },
+            { l: 659.25, b: 110.00, d: 0.6 }, { l: 0,      b: 0,      d: 0.2 }, 
+            { l: 698.46, b: 0,      d: 0.4 }, { l: 659.25, b: 0,      d: 0.4 },
 
-            // Phrase 2: Ascending Challenge
-            { l: 880.00, b: 146.83, d: 0.15 }, { l: 783.99, b: 0, d: 0.15 }, 
-            { l: 659.25, b: 146.83, d: 0.15 }, { l: 523.25, b: 0, d: 0.3 },
-            { l: 587.33, b: 164.81, d: 0.15 }, { l: 659.25, b: 0, d: 0.15 }, 
-            { l: 880.00, b: 164.81, d: 0.45 }, { l: 783.99, b: 0, d: 0.3 },
+            // Phrase 2: The Tension Rises
+            { l: 587.33, b: 146.83, d: 0.6 }, { l: 0,      b: 0,      d: 0.2 }, 
+            { l: 659.25, b: 0,      d: 0.4 }, { l: 698.46, b: 0,      d: 0.4 },
+            { l: 880.00, b: 146.83, d: 0.6 }, { l: 0,      b: 0,      d: 0.2 }, 
+            { l: 932.33, b: 0,      d: 0.4 }, { l: 1046.50,b: 0,      d: 0.4 },
 
-            // Phrase 3: High Energy Hook
-            { l: 1046.50, b: 220.00, d: 0.15 }, { l: 880.00, b: 0, d: 0.15 }, 
-            { l: 783.99, b: 220.00, d: 0.15 }, { l: 659.25, b: 0, d: 0.3 },
-            { l: 523.25, b: 196.00, d: 0.15 }, { l: 587.33, b: 0, d: 0.15 }, 
-            { l: 659.25, b: 196.00, d: 0.3 }, { l: 783.99, b: 0, d: 0.3 },
-
-            // Phrase 4: Resolution & Reset
-            { l: 659.25, b: 130.81, d: 0.15 }, { l: 587.33, b: 0, d: 0.15 }, 
-            { l: 523.25, b: 130.81, d: 0.15 }, { l: 440.00, b: 0, d: 0.3 },
-            { l: 392.00, b: 110.00, d: 0.3 }, { l: 440.00, b: 110.00, d: 0.6 }
+            // Phrase 3: The Dark Descent & Heartbeat
+            { l: 932.33, b: 130.81, d: 0.4 }, { l: 880.00, b: 0,      d: 0.4 }, 
+            { l: 698.46, b: 130.81, d: 0.4 }, { l: 659.25, b: 0,      d: 0.4 },
+            { l: 587.33, b: 110.00, d: 0.8 }, { l: 0,      b: 0,      d: 0.2 }, 
+            { l: 0,      b: 0,      d: 0.2 }, { l: 0,      b: 0,      d: 0.2 }
         ];
         
         let step = 0;
@@ -70,36 +67,39 @@ class GameAudioSystem {
             const current = songSequence[step];
             const now = this.ctx.currentTime;
 
-            // Lead Melody Track (Square Wave)
-            const leadOsc = this.ctx.createOscillator();
-            const leadGain = this.ctx.createGain();
-            leadOsc.type = 'square';
-            leadOsc.frequency.setValueAtTime(current.l, now);
-            leadGain.gain.setValueAtTime(0.04, now);
-            leadGain.gain.exponentialRampToValueAtTime(0.0001, now + current.d);
-            leadOsc.connect(leadGain);
-            leadGain.connect(this.ctx.destination);
-            leadOsc.start(now);
-            leadOsc.stop(now + current.d + 0.05);
+            // 👻 GHOSTLY MELODY (Sine Wave = smooth, hollow, glass-like)
+            if (current.l > 0) {
+                const leadOsc = this.ctx.createOscillator();
+                const leadGain = this.ctx.createGain();
+                leadOsc.type = 'sine'; 
+                leadOsc.frequency.setValueAtTime(current.l, now);
+                leadGain.gain.setValueAtTime(0.06, now);
+                leadGain.gain.exponentialRampToValueAtTime(0.0001, now + current.d * 1.5);
+                leadOsc.connect(leadGain);
+                leadGain.connect(this.ctx.destination);
+                leadOsc.start(now);
+                leadOsc.stop(now + current.d * 1.5 + 0.05);
+            }
 
-            // Synchronized Bassline Track (Triangle Wave)
+            // 🫀 OMINOUS HEARTBEAT BASS (Triangle Wave = deep and punchy)
             if (current.b > 0) {
                 const bassOsc = this.ctx.createOscillator();
                 const bassGain = this.ctx.createGain();
                 bassOsc.type = 'triangle';
                 bassOsc.frequency.setValueAtTime(current.b, now);
-                bassGain.gain.setValueAtTime(0.07, now);
-                bassGain.gain.exponentialRampToValueAtTime(0.0001, now + current.d * 1.5);
+                bassGain.gain.setValueAtTime(0.09, now);
+                bassGain.gain.exponentialRampToValueAtTime(0.0001, now + current.d * 2);
                 bassOsc.connect(bassGain);
                 bassGain.connect(this.ctx.destination);
                 bassOsc.start(now);
-                bassOsc.stop(now + current.d * 1.5 + 0.05);
+                bassOsc.stop(now + current.d * 2 + 0.05);
             }
 
             step = (step + 1) % songSequence.length;
         };
 
-        this.bgmTimer = setInterval(playStep, 180);
+        // ⏱️ Slower tempo (280ms instead of 180ms) for maximum suspense
+        this.bgmTimer = setInterval(playStep, 280);
     }
 
     stopDynamicLoop() {
@@ -109,21 +109,26 @@ class GameAudioSystem {
         }
     }
 
+    // ==========================================
+    // PROCEDURAL SOUND EFFECTS 
+    // ==========================================
+
     playSpawn() {
         try {
             this.initContext();
             const now = this.ctx.currentTime;
-            [440, 554.37, 659.25, 880].forEach((freq, i) => {
+            // Dissonant, creepy chord for spawns
+            [220.00, 233.08, 261.63, 150.00].forEach((freq, i) => {
                 const osc = this.ctx.createOscillator();
                 const gain = this.ctx.createGain();
                 osc.type = 'square';
-                osc.frequency.setValueAtTime(freq, now + i * 0.05);
-                gain.gain.setValueAtTime(0.05, now + i * 0.05);
-                gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.05 + 0.1);
+                osc.frequency.setValueAtTime(freq, now + i * 0.08);
+                gain.gain.setValueAtTime(0.05, now + i * 0.08);
+                gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.08 + 0.3);
                 osc.connect(gain);
                 gain.connect(this.ctx.destination);
-                osc.start(now + i * 0.05);
-                osc.stop(now + i * 0.05 + 0.15);
+                osc.start(now + i * 0.08);
+                osc.stop(now + i * 0.08 + 0.35);
             });
         } catch (e) { console.warn(e); }
     }
@@ -132,6 +137,7 @@ class GameAudioSystem {
         try {
             this.initContext();
             const now = this.ctx.currentTime;
+            // Success Chime
             [523.25, 659.25, 783.99, 1046.50, 1318.51].forEach((freq, i) => {
                 const osc = this.ctx.createOscillator();
                 const gain = this.ctx.createGain();
@@ -152,15 +158,16 @@ class GameAudioSystem {
             this.initContext();
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
+            // Deep aggressive hit
             osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(220, this.ctx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(50, this.ctx.currentTime + 0.12);
-            gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 0.12);
+            osc.frequency.setValueAtTime(150, this.ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(30, this.ctx.currentTime + 0.15);
+            gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 0.15);
             osc.connect(gain);
             gain.connect(this.ctx.destination);
             osc.start();
-            osc.stop(this.ctx.currentTime + 0.15);
+            osc.stop(this.ctx.currentTime + 0.2);
         } catch (e) { console.warn(e); }
     }
 }
