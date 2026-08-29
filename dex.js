@@ -1,4 +1,4 @@
-// dex.js - Cloud-Connected Account Management, Full-Screen Sticker Dex & Admin System
+// dex.js - Cloud-Connected Account Management, Auto-Cleansing Dex & Admin System
 
 if (typeof window.isSignUpMode === 'undefined') {
     window.isSignUpMode = false;
@@ -80,17 +80,9 @@ window.beastLoreDatabase = {
 
 if (!window._internalPlayerData) {
     window._internalPlayerData = {
-        username: "",
-        rotBalance: 500,
-        accountLevel: 1,
-        accountXp: 0,
-        dex: [],         
-        shinyDex: [],    
-        inventory: [],   
-        activeFighterIndex: 0,
-        revivePotions: 3,
-        luckyEggs: 0,
-        maxInventorySlots: 100
+        username: "", rotBalance: 500, accountLevel: 1, accountXp: 0,
+        dex: [], shinyDex: [], inventory: [], activeFighterIndex: 0,
+        revivePotions: 3, luckyEggs: 0, maxInventorySlots: 100
     };
 }
 
@@ -109,6 +101,23 @@ if (!window.playerData) {
             return true;
         }
     });
+}
+
+// 🧼 AUTO-CLEANSER HELPER FUNCTION
+function cleanseInventory(rawInventory) {
+    if (!rawInventory || !Array.isArray(rawInventory)) return [];
+    if (typeof paranormalSpawns === 'undefined') return rawInventory; // Failsafe if DB isn't loaded
+
+    // Get a list of every single VALID name from your database
+    const validNames = paranormalSpawns.map(p => p.name);
+    
+    // Filter the inventory: KEEP only the ones that exist in the database!
+    const cleanInventory = rawInventory.filter(entity => validNames.includes(entity.name));
+    
+    if (cleanInventory.length < rawInventory.length) {
+        console.log(`🧹 Auto-Cleanser removed ${rawInventory.length - cleanInventory.length} deprecated entities!`);
+    }
+    return cleanInventory;
 }
 
 function setPlayerData(newData) {
@@ -133,7 +142,10 @@ function setPlayerData(newData) {
 
     window._internalPlayerData.dex = newData.dex || window._internalPlayerData.dex || [];
     window._internalPlayerData.shinyDex = newData.shinyDex || window._internalPlayerData.shinyDex || [];
-    window._internalPlayerData.inventory = newData.inventory || window._internalPlayerData.inventory || [];
+    
+    // 🔥 RUN THE INVENTORY CLEANSER HERE
+    window._internalPlayerData.inventory = cleanseInventory(newData.inventory || window._internalPlayerData.inventory || []);
+    
     window._internalPlayerData.activeFighterIndex = typeof newData.activeFighterIndex !== 'undefined' ? newData.activeFighterIndex : (window._internalPlayerData.activeFighterIndex || 0);
     window._internalPlayerData.revivePotions = typeof newData.revivePotions !== 'undefined' ? newData.revivePotions : (window._internalPlayerData.revivePotions || 3);
     window._internalPlayerData.luckyEggs = typeof newData.luckyEggs !== 'undefined' ? newData.luckyEggs : (window._internalPlayerData.luckyEggs || 0);
@@ -239,7 +251,8 @@ window.loadGameData = async function() {
                     accountXp: bestAccountXp,
                     dex: mergedDex,
                     shinyDex: mergedShinyDex,
-                    inventory: finalInventory,
+                    // 🔥 RUN THE INVENTORY CLEANSER ON CLOUD LOAD TOO
+                    inventory: cleanseInventory(finalInventory),
                     activeFighterIndex: cloudData.activeFighterIndex || localData?.activeFighterIndex || 0,
                     revivePotions: bestRevives,
                     luckyEggs: bestEggs,
@@ -532,6 +545,20 @@ window.getRarityColor = function(rarity) {
 };
 
 function updateHUD() {
+    // 🔧 AUTO-SYNC DEX WITH INVENTORY 🔧
+    if (window.playerData && window.playerData.inventory) {
+        if (!window.playerData.dex) window.playerData.dex = [];
+        if (!window.playerData.shinyDex) window.playerData.shinyDex = [];
+        
+        window.playerData.inventory.forEach(rot => {
+            if (rot.shiny) {
+                if (!window.playerData.shinyDex.includes(rot.name)) window.playerData.shinyDex.push(rot.name);
+            } else {
+                if (!window.playerData.dex.includes(rot.name)) window.playerData.dex.push(rot.name);
+            }
+        });
+    }
+
     const dexCountEl = document.getElementById('dexCount');
     const totalBrainrotsEl = document.getElementById('totalBrainrots');
     const inventoryCountEl = document.getElementById('inventoryCount');

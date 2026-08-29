@@ -351,7 +351,7 @@
 
     <!-- HUD BUTTONS (Bottom Right) -->
     <div class="hud-buttons">
-        <button id="bgmToggleBtn" class="btn-hud" style="background: #9900ff; color: #fff;" onclick="window.gameAudio.toggleBgm()">🔇 BGM: OFF</button>
+        <button id="bgmToggleBtn" class="btn-hud" style="background: #9900ff; color: #fff;" onclick="window.gameAudio.toggleBgm()">🔈 BGM: OFF</button>
         <button class="btn-hud" style="background: linear-gradient(135deg, #ff0055, #9900ff); color: #fff; box-shadow: 0 0 20px rgba(255,0,85,0.6); font-size: 1rem; padding: 12px 22px;" onclick="toggleGameMenu()">☰ MENU</button>
     </div>
 
@@ -364,7 +364,7 @@
             <button id="movementModeBtn" class="btn-hud" style="width: 100%; background: #ffcc00; color: #000;" onclick="closeGameMenu(); window.toggleMovementMode()">🕹️ MODE: D-PAD</button>
             <button class="btn-hud" style="width: 100%; background: linear-gradient(135deg, #9900ff, #ff0055); color: #fff;" onclick="closeGameMenu(); window.openBattlePassModal()">🏆 HUNTER PASS</button>
             <button class="btn-hud" style="width: 100%; background: #333; color: #aaa; border: 1px dashed #777; cursor: not-allowed;" onclick="alert('🌐 BLACK MARKET TRADE: Coming soon in the next update!')">🔒 BLACK MARKET (SOON)</button>
-            <button class="btn-hud" style="width: 100%;" onclick="closeGameMenu(); openInventory()">📦 INVENTORY</button>
+            <button class="btn-hud" style="width: 100%;" onclick="closeGameMenu(); openInventory()">📦 INVENTORY & GEAR</button>
             <button class="btn-hud" style="width: 100%; background: #00ccff; color: #000;" onclick="closeGameMenu(); openDex()">📖 PARANORMAL DEX (<span id="dexCountModal">0</span>/<span id="totalBrainrotsModal">0</span>)</button>
             <button class="btn-hud" style="width: 100%; background: #00ff80; color: #000;" onclick="closeGameMenu(); openReviveModal()">🧪 REVIVE POTIONS (<span id="potionHudCountModal">3</span>)</button>
             <button class="btn-hud" style="width: 100%; background: #ffcc00; color: #000;" onclick="closeGameMenu(); openShopModal()">🛒 WAND SHOP</button>
@@ -551,6 +551,7 @@
 
     <!-- Game Scripts with Cache-Busting Version Query Parameters -->
     <script src="database.js?v=3.2"></script>
+    <script src="gear.js?v=3.2"></script>
     <script src="collision.js?v=3.2"></script>
     <script src="player.js?v=3.2"></script>
     <script src="evolution.js?v=3.2"></script>
@@ -571,6 +572,7 @@
     <script src="audio.js?v=3.2"></script>
     <script src="battlePass.js?v=3.2"></script>
     <script src="trade.js?v=3.2"></script>
+    <script src="armory.js?v=3.2"></script>
     <script src="main.js?v=3.2"></script>
 </body>
 </html>

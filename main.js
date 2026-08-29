@@ -3,19 +3,22 @@
 // ==========================================
 let map;
 
-// Inject the floating animation & RAIN for the map sprites
-function injectAnimationStyles() {
-    if (document.getElementById('mapSpriteAnimations')) return;
+// 🦇 UNIQUE ID TO PREVENT CONFLICTS WITH SWORD ANIMATIONS 🦇
+function applySpookyMapTheme() {
+    if (document.getElementById('spookyMapTheme')) return;
     const style = document.createElement('style');
-    style.id = 'mapSpriteAnimations';
+    style.id = 'spookyMapTheme';
     style.innerHTML = `
-        @keyframes floatSprite {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-15px); }
+        /* Forces the free map to invert into a sleek dark radar */
+        .leaflet-tile-pane {
+            filter: invert(100%) hue-rotate(180deg) brightness(85%) contrast(130%) grayscale(20%) !important;
+            -webkit-filter: invert(100%) hue-rotate(180deg) brightness(85%) contrast(130%) grayscale(20%) !important;
         }
-        .animated-map-sprite {
-            animation: floatSprite 2.5s ease-in-out infinite;
+        /* Hides the white map background while tiles load */
+        #map, .leaflet-container {
+            background: #05020a !important;
         }
+        
         @keyframes fadeInOut {
             0% { opacity: 0; transform: translate(-50%, -10px); }
             15% { opacity: 1; transform: translate(-50%, 0); }
@@ -25,7 +28,7 @@ function injectAnimationStyles() {
     `;
     document.head.appendChild(style);
 }
-injectAnimationStyles();
+applySpookyMapTheme();
 
 // NON-BLOCKING TOAST NOTIFICATION SYSTEM (Replaces annoying alerts!)
 window.showGameToast = function(message) {
@@ -77,17 +80,17 @@ function startStrictLocation() {
             if(document.getElementById('latVal')) document.getElementById('latVal').innerText = lat.toFixed(5);
             if(document.getElementById('lngVal')) document.getElementById('lngVal').innerText = lng.toFixed(5);
 
-            // If the map hasn't been built yet, build it right where THEY are standing with Dark Spooky Tiles!
+            // If the map hasn't been built yet, build it right where THEY are standing
             if (!map) {
                 map = L.map('map', { 
                     zoomControl: false, 
                     keyboard: false 
                 }).setView([lat, lng], 19);
                 
-                // Dark Tactical Spooky Map Tiles
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                // 100% Free OpenStreetMap Base - Watermarks bypassed & Spooky CSS applied!
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     maxZoom: 19,
-                    attribution: '&copy; <a href="https://carto.com/">CARTO</a>'
+                    attribution: '© OpenStreetMap'
                 }).addTo(map);
 
                 setTimeout(() => {
