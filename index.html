@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- 📱 STRICT MOBILE VIEWPORT LOCK -->
+    <!-- STRICT MOBILE VIEWPORT LOCK -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover">
     <title>GHOST HUNTER GO</title>
     
@@ -19,7 +19,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 
     <style>
-        /* 📱 STRICT MOBILE TOUCH LOCKS */
+        /* STRICT MOBILE TOUCH LOCKS */
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
         body, html { width: 100vw; height: 100vh; overflow: hidden; font-family: 'Arial', sans-serif; background: #000; overscroll-behavior: none; }
         
@@ -247,7 +247,7 @@
         <div style="width: 100%; display: flex; justify-content: flex-start; max-width: 450px; z-index: 2;">
             <div style="background: rgba(10, 5, 20, 0.85); border: 1px solid rgba(153, 0, 255, 0.4); padding: 6px 14px; border-radius: 20px; display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: bold;">
                 <div style="width: 8px; height: 8px; background-color: #00ff80; border-radius: 50%; box-shadow: 0 0 8px #00ff80;"></div>
-                <span id="landingPlayerCount" style="color: #fff;">1</span> <span style="color:#aaa;">hunters live</span>
+                <span id="landingPlayerCount" style="color: #fff;">1</span> <span style="color:#aaa;">HUNTERS LIVE</span>
             </div>
         </div>
 
@@ -270,28 +270,28 @@
                 box-shadow: 0 6px 20px rgba(255, 0, 85, 0.6);
                 text-transform: uppercase;
                 letter-spacing: 1px;
-            ">Start Hunting</button>
+            ">START HUNTING</button>
 
             <!-- Contract Address Pill -->
             <div onclick="copyLandingCA()" style="background: rgba(10, 5, 20, 0.85); border: 1px solid rgba(153, 0, 255, 0.3); padding: 8px 16px; border-radius: 25px; display: inline-flex; align-items: center; gap: 10px; font-size: 0.8rem; cursor: pointer;">
                 <span style="color: #ff0055; font-weight: bold;">$GHOST CA</span>
                 <span id="landingCAText" style="color: #ccc;">0xGh0st...Pump</span>
-                <span>📋</span>
+                <span>[COPY]</span>
             </div>
         </div>
 
         <!-- Bottom Social Links & Docs Button -->
         <div style="display: flex; gap: 12px; align-items: center; justify-content: center; width: 100%; max-width: 450px; z-index: 2;">
-            <a href="docs.html" style="background: rgba(10, 5, 20, 0.85); border: 1px solid rgba(153, 0, 255, 0.3); color: #fff; padding: 8px 16px; border-radius: 20px; text-decoration: none; font-weight: bold; font-size: 0.8rem; display: flex; align-items: center; gap: 6px;">📄 Field Guide</a>
-            <a href="https://twitter.com" target="_blank" style="background: rgba(10, 5, 20, 0.85); border: 1px solid rgba(153, 0, 255, 0.3); color: #fff; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 0.9rem;">𝕏</a>
-            <a href="https://discord.gg/yourinvite" target="_blank" style="background: rgba(10, 5, 20, 0.85); border: 1px solid rgba(153, 0, 255, 0.3); color: #fff; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 0.9rem;">💬</a>
+            <a href="docs.html" style="background: rgba(10, 5, 20, 0.85); border: 1px solid rgba(153, 0, 255, 0.3); color: #fff; padding: 8px 16px; border-radius: 20px; text-decoration: none; font-weight: bold; font-size: 0.8rem; display: flex; align-items: center; gap: 6px;">FIELD GUIDE</a>
+            <a href="https://twitter.com" target="_blank" style="background: rgba(10, 5, 20, 0.85); border: 1px solid rgba(153, 0, 255, 0.3); color: #fff; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 0.9rem;">X</a>
+            <a href="https://discord.gg/yourinvite" target="_blank" style="background: rgba(10, 5, 20, 0.85); border: 1px solid rgba(153, 0, 255, 0.3); color: #fff; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 0.9rem;">DISCORD</a>
         </div>
     </div>
 
     <!-- ACCOUNT LOGIN / REGISTER MODAL -->
     <div id="loginModal">
         <div class="login-box">
-            <h2 style="color: #ff0055; font-size: 1.4rem; text-shadow: 0 0 10px #ff0055;">🔑 HUNTER VAULT LOGIN</h2>
+            <h2 style="color: #ff0055; font-size: 1.4rem; text-shadow: 0 0 10px #ff0055;">HUNTER VAULT LOGIN</h2>
             <p style="font-size: 0.75rem; color: #aaa; margin-top: 4px;">Log in or sign up to access your relic vault!</p>
             
             <input type="text" id="usernameInput" class="login-input" placeholder="Hunter Username..." maxlength="15">
@@ -303,7 +303,7 @@
             </div>
             
             <button class="btn-hud" style="width: 100%; margin-top: 12px;" onclick="handleAccountAction()">CONTINUE</button>
-            <button class="btn-hud" style="background: #fff; color: #000; width: 100%; margin-top: 8px; font-weight: bold; border: 2px solid #ccc; box-shadow: 0 0 10px #fff;" onclick="signInWithGoogle()">🌐 SIGN IN WITH GOOGLE</button>
+            <button class="btn-hud" style="background: #fff; color: #000; width: 100%; margin-top: 8px; font-weight: bold; border: 2px solid #ccc; box-shadow: 0 0 10px #fff;" onclick="signInWithGoogle()">SIGN IN WITH GOOGLE</button>
             
             <p id="loginToggleText" style="font-size: 0.7rem; color: #888; margin-top: 10px; cursor: pointer; text-decoration: underline;" onclick="toggleAuthMode()">New hunter? Click here to Sign Up</p>
         </div>
@@ -312,7 +312,7 @@
     <!-- STRICT LOCATION ERROR MODAL -->
     <div id="locationErrorModal">
         <div style="background: #110a1c; border: 3px solid #ff0055; border-radius: 15px; padding: 30px; max-width: 400px; box-shadow: 0 0 30px rgba(255,0,85,0.4);">
-            <h2 style="color: #ff0055; font-size: 1.5rem; margin-bottom: 10px; text-shadow: 0 0 10px #ff0055;">⚠️ GPS BLOCKED!</h2>
+            <h2 style="color: #ff0055; font-size: 1.5rem; margin-bottom: 10px; text-shadow: 0 0 10px #ff0055;">GPS BLOCKED!</h2>
             <p style="font-size: 0.85rem; color: #ccc; line-height: 1.4; margin-bottom: 15px;">Ghost Hunter Go needs your real-world location to track local paranormal anomalies.</p>
             <button class="btn-hud" style="background: #ff0055; color: #fff; width: 100%; border: none; padding: 12px; border-radius: 5px; font-weight: bold; cursor: pointer;" onclick="location.reload()">I FIXED IT! RELOAD GAME</button>
         </div>
@@ -320,13 +320,13 @@
 
     <!-- HUD Overlay -->
     <div class="hud">
-        <h1 id="hudTitle">👻 GHOST HUNTER</h1>
-        <p>⭐ <b>HUNTER LVL:</b> <span id="accountLevelVal">1</span></p>
-        <p>📍 <b>LAT:</b> <span id="latVal">Loading...</span></p>
-        <p>📍 <b>LNG:</b> <span id="lngVal">Loading...</span></p>
+        <h1 id="hudTitle">GHOST HUNTER</h1>
+        <p><b>HUNTER LVL:</b> <span id="accountLevelVal">1</span></p>
+        <p><b>LAT:</b> <span id="latVal">Loading...</span></p>
+        <p><b>LNG:</b> <span id="lngVal">Loading...</span></p>
         <hr style="margin: 6px 0; border-color: #333;">
-        <p>📦 <b>INVENTORY:</b> <span id="inventoryCount">0</span> Relics</p>
-        <p>🪙 <b>CURRENCY:</b> <span id="rotBalance">500</span></p>
+        <p><b>INVENTORY:</b> <span id="inventoryCount">0</span> Relics</p>
+        <p><b>CURRENCY:</b> <span id="rotBalance">500</span></p>
     </div>
 
     <!-- PLAYER PROFILE WIDGET (TOP RIGHT) -->
@@ -352,41 +352,38 @@
 
     <!-- HUD BUTTONS (Bottom Right) -->
     <div class="hud-buttons">
-        <button id="bgmToggleBtn" class="btn-hud" style="background: #9900ff; color: #fff;" onclick="window.gameAudio.toggleBgm()">🔈 BGM: OFF</button>
-        <button class="btn-hud" style="background: linear-gradient(135deg, #ff0055, #9900ff); color: #fff; box-shadow: 0 0 20px rgba(255,0,85,0.6); font-size: 1rem; padding: 12px 22px;" onclick="toggleGameMenu()">☰ MENU</button>
+        <button id="bgmToggleBtn" class="btn-hud" style="background: #9900ff; color: #fff;" onclick="window.gameAudio.toggleBgm()">BGM: OFF</button>
+        <button class="btn-hud" style="background: linear-gradient(135deg, #ff0055, #9900ff); color: #fff; box-shadow: 0 0 20px rgba(255,0,85,0.6); font-size: 1rem; padding: 12px 22px;" onclick="toggleGameMenu()">MENU</button>
     </div>
 
     <!-- EXPANDED GAME MENU DRAWER MODAL -->
     <div id="menuModal">
         <div class="menu-drawer">
-            <h2>📜 HUNTER MENU</h2>
+            <h2>HUNTER MENU</h2>
             <p style="font-size: 0.7rem; color: #aaa; margin-bottom: 5px;">Access gear, vault, and radar</p>
             
-            <button id="movementModeBtn" class="btn-hud" style="width: 100%; background: #ffcc00; color: #000;" onclick="closeGameMenu(); window.toggleMovementMode()">🕹️ MODE: D-PAD</button>
-            <button class="btn-hud" style="width: 100%; background: linear-gradient(135deg, #9900ff, #ff0055); color: #fff;" onclick="closeGameMenu(); window.openBattlePassModal()">🏆 HUNTER PASS</button>
-            <button class="btn-hud" style="width: 100%; background: #333; color: #aaa; border: 1px dashed #777; cursor: not-allowed;" onclick="alert('🌐 BLACK MARKET TRADE: Coming soon in the next update!')">🔓 BLACK MARKET (SOON)</button>
-            <button class="btn-hud" style="width: 100%;" onclick="closeGameMenu(); openInventory()">📦 INVENTORY & GEAR</button>
-            <button class="btn-hud" style="width: 100%; background: #00ccff; color: #000;" onclick="closeGameMenu(); openDex()">📖 PARANORMAL DEX (<span id="dexCountModal">0</span>/<span id="totalBrainrotsModal">0</span>)</button>
-            <button class="btn-hud" style="width: 100%; background: #00ff80; color: #000;" onclick="closeGameMenu(); openReviveModal()">🧪 REVIVE POTIONS (<span id="potionHudCountModal">3</span>)</button>
-            
-            <!-- CHANGED BUTTON BELOW TO REMOVE "WAND" -->
-            <button class="btn-hud" style="width: 100%; background: #ffcc00; color: #000;" onclick="closeGameMenu(); openShopModal()">🛒 SHOP</button>
-            
-            <button class="btn-hud" style="width: 100%; background: #9900ff; color: #fff;" onclick="closeGameMenu(); openTeamSelect('ai')">⚔️ 3v3 ANOMALY BATTLE</button>
-            <button class="btn-hud" style="width: 100%; background: #ff007f; color: #fff;" onclick="closeGameMenu(); openTeamSelect('pvp')">🌐 ONLINE PVP DUEL</button>
+            <button id="movementModeBtn" class="btn-hud" style="width: 100%; background: #ffcc00; color: #000;" onclick="closeGameMenu(); window.toggleMovementMode()">MODE: D-PAD</button>
+            <button class="btn-hud" style="width: 100%; background: linear-gradient(135deg, #9900ff, #ff0055); color: #fff;" onclick="closeGameMenu(); window.openBattlePassModal()">HUNTER PASS</button>
+            <button class="btn-hud" style="width: 100%; background: #333; color: #aaa; border: 1px dashed #777; cursor: not-allowed;" onclick="alert('BLACK MARKET TRADE: Coming soon in the next update!')">BLACK MARKET (SOON)</button>
+            <button class="btn-hud" style="width: 100%;" onclick="closeGameMenu(); openInventory()">INVENTORY & GEAR</button>
+            <button class="btn-hud" style="width: 100%; background: #00ccff; color: #000;" onclick="closeGameMenu(); openDex()">PARANORMAL DEX (<span id="dexCountModal">0</span>/<span id="totalBrainrotsModal">0</span>)</button>
+            <button class="btn-hud" style="width: 100%; background: #00ff80; color: #000;" onclick="closeGameMenu(); openReviveModal()">REVIVE POTIONS (<span id="potionHudCountModal">3</span>)</button>
+            <button class="btn-hud" style="width: 100%; background: #ffcc00; color: #000;" onclick="closeGameMenu(); openShopModal()">SHOP</button>
+            <button class="btn-hud" style="width: 100%; background: #9900ff; color: #fff;" onclick="closeGameMenu(); openTeamSelect('ai')">3v3 ANOMALY BATTLE</button>
+            <button class="btn-hud" style="width: 100%; background: #ff007f; color: #fff;" onclick="closeGameMenu(); openTeamSelect('pvp')">ONLINE PVP DUEL</button>
             
             <hr style="border-color: #333; margin: 5px 0;">
-            <button class="btn-hud" style="width: 100%; background: #ff0055; color: #fff; font-size: 0.8rem;" onclick="closeGameMenu(); logoutAccount()">🚪 LOGOUT</button>
-            <button class="btn-action" style="width: 100%; background: #333; color: #fff; margin-top: 5px;" onclick="toggleGameMenu()">✖ CLOSE</button>
+            <button class="btn-hud" style="width: 100%; background: #ff0055; color: #fff; font-size: 0.8rem;" onclick="closeGameMenu(); logoutAccount()">LOGOUT</button>
+            <button class="btn-action" style="width: 100%; background: #333; color: #fff; margin-top: 5px;" onclick="toggleGameMenu()">CLOSE</button>
         </div>
     </div>
 
-    <!-- MOBILE TOUCH D-PAD -->
+    <!-- MOBILE TOUCH D-PAD (Using safe HTML codes for arrows) -->
     <div class="mobile-dpad">
-        <div class="dpad-btn dpad-up" ontouchstart="simulateKey('ArrowUp', true)" ontouchend="simulateKey('ArrowUp', false)" onmousedown="simulateKey('ArrowUp', true)" onmouseup="simulateKey('ArrowUp', false)">▲</div>
-        <div class="dpad-btn dpad-left" ontouchstart="simulateKey('ArrowLeft', true)" ontouchend="simulateKey('ArrowLeft', false)" onmousedown="simulateKey('ArrowLeft', true)" onmouseup="simulateKey('ArrowLeft', false)">◀</div>
-        <div class="dpad-btn dpad-right" ontouchstart="simulateKey('ArrowRight', true)" ontouchend="simulateKey('ArrowRight', false)" onmousedown="simulateKey('ArrowRight', true)" onmouseup="simulateKey('ArrowRight', false)">▶</div>
-        <div class="dpad-btn dpad-down" ontouchstart="simulateKey('ArrowDown', true)" ontouchend="simulateKey('ArrowDown', false)" onmousedown="simulateKey('ArrowDown', true)" onmouseup="simulateKey('ArrowDown', false)">▼</div>
+        <div class="dpad-btn dpad-up" ontouchstart="simulateKey('ArrowUp', true)" ontouchend="simulateKey('ArrowUp', false)" onmousedown="simulateKey('ArrowUp', true)" onmouseup="simulateKey('ArrowUp', false)">&#9650;</div>
+        <div class="dpad-btn dpad-left" ontouchstart="simulateKey('ArrowLeft', true)" ontouchend="simulateKey('ArrowLeft', false)" onmousedown="simulateKey('ArrowLeft', true)" onmouseup="simulateKey('ArrowLeft', false)">&#9664;</div>
+        <div class="dpad-btn dpad-right" ontouchstart="simulateKey('ArrowRight', true)" ontouchend="simulateKey('ArrowRight', false)" onmousedown="simulateKey('ArrowRight', true)" onmouseup="simulateKey('ArrowRight', false)">&#9654;</div>
+        <div class="dpad-btn dpad-down" ontouchstart="simulateKey('ArrowDown', true)" ontouchend="simulateKey('ArrowDown', false)" onmousedown="simulateKey('ArrowDown', true)" onmouseup="simulateKey('ArrowDown', false)">&#9660;</div>
     </div>
 
     <!-- Map Container -->
@@ -429,17 +426,17 @@
         </div>
 
         <div class="battle-controls">
-            <button onclick="openQTEPrompt()" class="btn-action" style="background: #9900ff; color: #fff;">🎯 Critical QTE</button>
-            <button id="attackBtn" class="btn-action" style="background: #ff0055; color: #fff;" onclick="battleAttack()">✨ Signature Move</button>
-            <button id="vaultCatchBtn" class="btn-action" style="background: #00ff80; color: #000;" onclick="battleCatch()">📦 Vault / Capture</button>
-            <button class="btn-action" style="background: #00ccff; color: #000;" onclick="openBattleSwitch()">🔄 Switch Entity</button>
+            <button onclick="openQTEPrompt()" class="btn-action" style="background: #9900ff; color: #fff;">Critical QTE</button>
+            <button id="attackBtn" class="btn-action" style="background: #ff0055; color: #fff;" onclick="battleAttack()">Signature Move</button>
+            <button id="vaultCatchBtn" class="btn-action" style="background: #00ff80; color: #000;" onclick="battleCatch()">Vault / Capture</button>
+            <button class="btn-action" style="background: #00ccff; color: #000;" onclick="openBattleSwitch()">Switch Entity</button>
         </div>
     </div>
 
     <!-- PARANORMAL DEX MODAL -->
     <div id="dexModal" class="game-modal" style="border-color: #00ccff; box-shadow: 0 0 25px rgba(0,204,255,0.6);">
-        <button class="close-x-btn" style="color: #00ccff;" onclick="closeDex()">✖</button>
-        <h2 style="color: #00ccff; font-size: 1.3rem; margin-bottom: 8px; text-shadow: 0 0 10px #00ccff;">📖 PARANORMAL DEX</h2>
+        <button class="close-x-btn" style="color: #00ccff;" onclick="closeDex()">X</button>
+        <h2 style="color: #00ccff; font-size: 1.3rem; margin-bottom: 8px; text-shadow: 0 0 10px #00ccff;">PARANORMAL DEX</h2>
         <p style="font-size: 0.75rem; color: #aaa;">Log all discovered spirits and entities!</p>
         <div id="dexGrid" class="modal-grid"></div>
         <button class="btn-action" style="background: #00ccff; color: #000; margin-top: 12px;" onclick="closeDex()">CLOSE DEX</button>
@@ -447,8 +444,8 @@
 
     <!-- ADMIN ACCOUNTS PANEL MODAL -->
     <div id="adminModal" class="game-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); width:90%; max-width:500px; max-height:80vh; overflow-y:auto; border-color:#ff0055; box-shadow:0 0 25px rgba(255,0,85,0.6); z-index:999999; text-align:left;">
-        <button class="close-x-btn" style="color:#ff0055;" onclick="closeAdminPanel()">✖</button>
-        <h2 style="color:#ff0055; font-size:1.2rem; margin-bottom:12px; text-shadow:0 0 10px #ff0055;">🛠️ ADMIN: ALL HUNTER ACCOUNTS</h2>
+        <button class="close-x-btn" style="color:#ff0055;" onclick="closeAdminPanel()">X</button>
+        <h2 style="color:#ff0055; font-size:1.2rem; margin-bottom:12px; text-shadow:0 0 10px #ff0055;">ADMIN: ALL HUNTER ACCOUNTS</h2>
         <div id="adminAccountsList" style="display:flex; flex-direction:column; gap:10px;"></div>
         <div style="margin-top:15px; display:flex; justify-content:space-between;">
             <button onclick="clearAllAccounts()" style="background:#ff0055; color:#fff; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; font-weight:bold; font-size:0.75rem; font-family:monospace;">WIPE ALL ACCOUNTS</button>
@@ -577,6 +574,7 @@
     <script src="battlePass.js?v=3.2"></script>
     <script src="trade.js?v=3.2"></script>
     <script src="armory.js?v=3.2"></script>
+    <script src="altars.js?v=3.9"></script>
     <script src="main.js?v=3.2"></script>
 </body>
 </html>
