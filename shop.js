@@ -66,49 +66,6 @@ function openShopModal() {
         </div>
       </div>
 
-      <div style="font-size: 0.85rem; color: #ff00ff; font-weight: bold; letter-spacing: 1.5px; margin-top: 10px;">ENTITY CONTAINMENT CRATES</div>
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px;">
-        
-        <div style="background: #16161a; border: 2px solid #aaa; border-radius: 12px; padding: 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <div style="font-size: 2.2rem;">📦</div>
-            <div>
-              <div style="font-weight: bold; font-size: 1rem; color: #fff;">Common Crate</div>
-              <div style="font-size: 0.7rem; color: #aaa; margin-top: 2px;">Guaranteed Common Entity</div>
-            </div>
-          </div>
-          <button onclick="buyCrate('common', 300)" style="background: #ffcc00; color: #000; border: none; padding: 10px 14px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 0.9rem; box-shadow: 0 0 12px rgba(255,204,0,0.4); white-space: nowrap;">
-            🪙 300
-          </button>
-        </div>
-
-        <div style="background: #16161a; border: 2px solid #ff007f; border-radius: 12px; padding: 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <div style="font-size: 2.2rem;">🎁</div>
-            <div>
-              <div style="font-weight: bold; font-size: 1rem; color: #fff;">Epic Crate</div>
-              <div style="font-size: 0.7rem; color: #ff007f; margin-top: 2px;">Chance for Epic / Rare</div>
-            </div>
-          </div>
-          <button onclick="buyCrate('epic', 1000)" style="background: #ffcc00; color: #000; border: none; padding: 10px 14px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 0.9rem; box-shadow: 0 0 12px rgba(255,204,0,0.4); white-space: nowrap;">
-            🪙 1000
-          </button>
-        </div>
-
-        <div style="background: #16161a; border: 2px solid #00ff55; border-radius: 12px; padding: 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <div style="font-size: 2.2rem;">🌟</div>
-            <div>
-              <div style="font-weight: bold; font-size: 1rem; color: #fff;">Legendary Crate</div>
-              <div style="font-size: 0.7rem; color: #00ff55; margin-top: 2px;">High chance for Legends!</div>
-            </div>
-          </div>
-          <button onclick="buyCrate('legendary', 2500)" style="background: #ffcc00; color: #000; border: none; padding: 10px 14px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 0.9rem; box-shadow: 0 0 12px rgba(255,204,0,0.4); white-space: nowrap;">
-            🪙 2500
-          </button>
-        </div>
-      </div>
-
       <div style="font-size: 0.85rem; color: #76ff03; font-weight: bold; letter-spacing: 1.5px; margin-top: 10px;">UTILITY & UPGRADES</div>
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px;">
         
@@ -186,6 +143,10 @@ function openShopModal() {
   `;
   document.body.appendChild(modal);
 }
+
+// =========================================================
+// CS:GO STYLE WEAPON UNBOXING SYSTEM
+// =========================================================
 
 window.openWeaponCrate = function(tier, cost) {
     if (!playerData) return;
@@ -307,6 +268,10 @@ window.openWeaponCrate = function(tier, cost) {
     }, 6500); 
 };
 
+// =========================================================
+// STANDARD SHOP FUNCTIONS
+// =========================================================
+
 window.buyItem = function(itemType, cost) {
   if (!playerData) return;
   if ((playerData.rotBalance || 0) < cost) {
@@ -317,36 +282,6 @@ window.buyItem = function(itemType, cost) {
     playerData.revivePotions = (playerData.revivePotions || 0) + 1;
     if(typeof showGameToast === 'function') showGameToast("+1 Revive Potion!");
   }
-  updateShopBalances();
-};
-
-window.buyCrate = function(tier, cost) {
-  if (!playerData) return;
-  if ((playerData.rotBalance || 0) < cost) {
-    alert("Not enough coins!"); return;
-  }
-  const maxSlots = playerData.maxInventorySlots || 20;
-  if (!playerData.inventory) playerData.inventory = [];
-  if (playerData.inventory.length >= maxSlots) {
-    alert("Your vault is full! Expand your capacity."); return;
-  }
-  if (typeof brainrotCharacters === 'undefined') return;
-
-  let pool = [];
-  if (tier === 'common') pool = brainrotCharacters.filter(c => c.rarity && c.rarity.toLowerCase() === 'common');
-  else if (tier === 'epic') pool = brainrotCharacters.filter(c => c.rarity && (c.rarity.toLowerCase() === 'epic' || c.rarity.toLowerCase() === 'rare'));
-  else if (tier === 'legendary') pool = brainrotCharacters.filter(c => c.rarity && (c.rarity.toLowerCase() === 'legendary' || c.rarity.toLowerCase() === 'epic'));
-  if (pool.length === 0) pool = brainrotCharacters; 
-
-  const chosenTemplate = pool[Math.floor(Math.random() * pool.length)];
-  playerData.rotBalance -= cost;
-  const targetLevel = tier === 'legendary' ? 10 : (tier === 'epic' ? 5 : 1);
-  const newRot = typeof createNewRot === 'function' 
-    ? createNewRot(chosenTemplate, targetLevel) 
-    : { id: chosenTemplate.id, name: chosenTemplate.name, rarity: chosenTemplate.rarity, image: chosenTemplate.image, level: targetLevel, quality: 50, maxHp: 50, hp: 50, fainted: false, inGym: false };
-  playerData.inventory.push(newRot);
-
-  alert(`Crate Opened! You contained a Lvl ${newRot.level} ${newRot.name} (${newRot.rarity.toUpperCase()}) with ${newRot.quality}% IV!`);
   updateShopBalances();
 };
 
@@ -367,6 +302,10 @@ function updateShopBalances() {
   const mainBalanceEl = document.getElementById('rotBalance');
   if (mainBalanceEl && playerData) mainBalanceEl.innerText = playerData.rotBalance;
 }
+
+// =========================================================
+// STRIPE CHECKOUT CONNECTOR
+// =========================================================
 
 window.buyRotCurrency = async function(packageId, priceInCents) {
     try {

@@ -381,11 +381,6 @@ window.executeTurnBasedCombat = function() {
     }, 1000); 
 };
 
-window.fleeBattle = function() {
-    document.getElementById('battleOverlay').style.display = 'none';
-    window.currentBattleEntry = null;
-};
-
 function finalizeCapture(data) {
     if (typeof playerData !== 'undefined') {
         const isShiny = Math.random() < 0.02; 
@@ -399,6 +394,11 @@ function finalizeCapture(data) {
 
         if (!playerData.inventory) playerData.inventory = [];
         playerData.inventory.push(caughtEntity);
+        
+        // --- ADDED: LEADERBOARD STAT TRACKER ---
+        window.playerData.totalCatches = (window.playerData.totalCatches || 0) + 1;
+        // ---------------------------------------
+
         if (typeof window.addAccountXp === 'function') window.addAccountXp(20);
         
         let deadSpawns = JSON.parse(localStorage.getItem('deadSpawns') || '[]');
@@ -408,7 +408,7 @@ function finalizeCapture(data) {
         if (typeof window.saveGameData === 'function') window.saveGameData();
 
         if (isShiny) {
-            alert(`✨ CRITICAL CAPTURE! You caught a SHINY Lvl ${data.level} ${data.name}! ✨`);
+            alert(`âœ✨ CRITICAL CAPTURE! You caught a SHINY Lvl ${data.level} ${data.name}! ✨`);
         } else {
             alert(`SLAIN! You captured the essence of the Lvl ${data.level} ${data.name}!`);
         }
