@@ -1,38 +1,24 @@
-// gear.js - Weapons and Player Stat Calculations
+// gear.js - The Official Ghost Hunter Arsenal
 
-window.gameWeapons = [
-    // 🟢 COMMONS 
-    { id: "wpn_01", name: "Bent Butter Knife", rarity: "common", atk: 5, image: "gear/knife.png" },
-    { id: "wpn_02", name: "Rusty Iron Sword", rarity: "common", atk: 12, image: "gear/rusty.png" },
-    { id: "wpn_03", name: "Chipped Wood Axe", rarity: "common", atk: 16, image: "gear/axe.png" },
+const weaponDatabase = [
+    // --- COMMONS ---
+    { id: "w_01", name: "Kitchen Knife", rarity: "Common", atk: 3, image: "gear/knife.png" },
+    { id: "w_02", name: "Rusty Sword", rarity: "Common", atk: 4, image: "gear/rusty_sword.png" },
+    { id: "w_03", name: "Wooden Club", rarity: "Common", atk: 2, image: "gear/club.png" },
+    { id: "w_04", name: "Basic Axe", rarity: "Common", atk: 5, image: "gear/axe.png" },
+    { id: "w_05", name: "Iron Dagger", rarity: "Common", atk: 4, image: "gear/dagger.png" },
 
-    // 🔵 UNCOMMONS
-    { id: "wpn_05", name: "Thief's Silver Dagger", rarity: "uncommon", atk: 25, image: "gear/dagger.png" },
-    { id: "wpn_06", name: "Spiked Goblin Club", rarity: "uncommon", atk: 34, image: "gear/club.png" },
+    // --- UNCOMMONS ---
+    { id: "w_06", name: "Steel Katana", rarity: "Uncommon", atk: 12, image: "gear/katana.png" },
 
-    // 🟣 EPICS
-    { id: "wpn_07", name: "Swift Neon Katana", rarity: "epic", atk: 65, image: "gear/katana.png" },
-    { id: "wpn_08", name: "Heavy Blood-Axe", rarity: "epic", atk: 85, image: "gear/bloodaxe.png" },
-    
-    // 🟠 LEGENDARIES
-    { id: "wpn_09", name: "Blazing Sun-Sword", rarity: "legendary", atk: 120, image: "gear/fire_sword.png" }
+    // --- RARES ---
+    { id: "w_07", name: "Blood Axe", rarity: "Rare", atk: 20, image: "gear/bloodaxe.png" },
+    { id: "w_08", name: "Fire Sword", rarity: "Rare", atk: 22, image: "gear/fire_sword.png" },
+    { id: "w_09", name: "Ecto-Saber", rarity: "Rare", atk: 24, image: "gear/ecto_saber.png" },
+
+    // --- EPICS ---
+    { id: "w_10", name: "Aqueous Katana", rarity: "Epic", atk: 35, image: "gear/aqueous_katana.png" },
+
+    // --- LEGENDARIES ---
+    { id: "w_11", name: "The Soul Render", rarity: "Legendary", atk: 60, image: "gear/soul_render.png" }
 ];
-
-// Calculates the player's total stats based on Level + Weapon
-window.calculatePlayerGearStats = function(playerData) {
-    let pLevel = playerData?.accountLevel || 1;
-    
-    // HP and Defense naturally scale up with the player's level
-    let totalHp = 100 + (pLevel * 15); 
-    let totalDef = pLevel * 2; 
-    
-    let totalAtk = 10; // Base damage with bare fists
-
-    // Only add weapon stats
-    if (playerData?.equipped?.weapon) {
-        let wpn = window.gameWeapons.find(w => w.id === playerData.equipped.weapon);
-        if (wpn) totalAtk = wpn.atk;
-    }
-
-    return { maxHp: totalHp, atk: totalAtk, def: totalDef };
-};

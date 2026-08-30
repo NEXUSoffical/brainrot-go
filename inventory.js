@@ -2,30 +2,22 @@
 
 window.injectAnimationStyles = window.injectAnimationStyles || function() {};
 
-// --- GLOBAL DATABASE FALLBACK ---
-if (!window.gameWeapons || window.gameWeapons.length === 0) {
-    window.gameWeapons = [
-        { id: "wpn_01", name: "Bent Butter Knife", rarity: "common", atk: 5, image: "gear/knife.png" },
-        { id: "wpn_02", name: "Rusty Iron Sword", rarity: "common", atk: 12, image: "gear/rusty.png" },
-        { id: "wpn_03", name: "Chipped Wood Axe", rarity: "common", atk: 16, image: "gear/axe.png" },
-        { id: "wpn_05", name: "Thief's Silver Dagger", rarity: "uncommon", atk: 25, image: "gear/dagger.png" },
-        { id: "wpn_06", name: "Spiked Goblin Club", rarity: "uncommon", atk: 34, image: "gear/club.png" },
-        { id: "wpn_07", name: "Swift Neon Katana", rarity: "epic", atk: 65, image: "gear/katana.png" },
-        { id: "wpn_08", name: "Heavy Blood-Axe", rarity: "epic", atk: 85, image: "gear/bloodaxe.png" },
-        { id: "wpn_09", name: "Blazing Sun-Sword", rarity: "legendary", atk: 120, image: "gear/fire_sword.png" }
-    ];
-}
+// Use the new weaponDatabase from gear.js if it exists, otherwise use fallback
+const getGlobalWeapons = () => {
+    return (typeof weaponDatabase !== 'undefined') ? weaponDatabase : (window.gameWeapons || []);
+};
 
 if (typeof window.currentInventoryTab === 'undefined') window.currentInventoryTab = 'rots';
 if (typeof window.currentInventorySort === 'undefined') window.currentInventorySort = 'newest';
 
 // ==========================================
-// 🛡️ MASTER CHARACTER RENDERING ENGINE
+// MASTER CHARACTER RENDERING ENGINE
 // ==========================================
 window.getHunterDollHtml = function(scale = 1) {
+    const weapons = getGlobalWeapons();
     let eqWpn = null;
-    if (window.gameWeapons && window.gameWeapons.length > 0) {
-        eqWpn = window.gameWeapons.find(w => w.id === window.playerData?.equipped?.weapon) || window.gameWeapons[0];
+    if (weapons && weapons.length > 0) {
+        eqWpn = weapons.find(w => w.id === window.playerData?.equipped?.weapon) || weapons[0];
     }
 
     return `
@@ -37,21 +29,18 @@ window.getHunterDollHtml = function(scale = 1) {
 };
 
 // ==========================================
-// 🖼️ TOP RIGHT AVATAR UPDATER
+// TOP RIGHT AVATAR UPDATER
 // ==========================================
 window.updateTopRightAvatar = function() {
     const widget = document.getElementById('playerProfileWidget');
     if (!widget) return;
     
-    // Grab the empty circle (the very first element inside the widget)
     let circle = widget.firstElementChild;
     if (circle) {
         circle.style.overflow = 'hidden';
         circle.style.display = 'flex';
         circle.style.justifyContent = 'center';
-        circle.style.alignItems = 'flex-start'; // Align top so the head shows perfectly
-        
-        // Inject the exact same doll logic, but scaled down to 30% size!
+        circle.style.alignItems = 'flex-start'; 
         circle.innerHTML = `<div style="transform: translateY(5px);">${window.getHunterDollHtml(0.3)}</div>`;
     }
 };
@@ -70,21 +59,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 window.openWardrobeModal();
             };
             
-            // Inject the avatar into the top right circle as soon as the game loads
             if (typeof window.updateTopRightAvatar === 'function') window.updateTopRightAvatar();
         }
     }, 1000);
 });
 
 // ==========================================
-// ⚔️ WEAPON VAULT 
+// WEAPON VAULT 
 // ==========================================
 window.equipWeapon = function(weaponId) {
     if (!window.playerData.equipped) window.playerData.equipped = {};
     window.playerData.equipped.weapon = weaponId;
     if (typeof window.saveGameData === 'function') window.saveGameData();
     
-    // Automatically update the top right circle the exact second a new weapon is equipped!
     if (typeof window.updateTopRightAvatar === 'function') window.updateTopRightAvatar();
     
     window.openWardrobeModal(); 
@@ -93,10 +80,10 @@ window.equipWeapon = function(weaponId) {
 function getGearRarityColor(rarity) {
     switch ((rarity || '').toLowerCase()) {
         case 'secret': return '#ff00ea'; 
-        case 'legendary': return '#ffaa00';
-        case 'epic': return '#9900ff';      
-        case 'rare': return '#00ccff'; 
-        case 'uncommon': return '#00ff80';  
+        case 'legendary': return '#ffcc00';
+        case 'epic': return '#ff007f';      
+        case 'rare': return '#9900ff'; 
+        case 'uncommon': return '#00ccff';  
         default: return '#aaaaaa';         
     }
 }
@@ -109,13 +96,15 @@ window.openWardrobeModal = function() {
         document.body.appendChild(modal);
     }
 
-    if (!window.gameWeapons || window.gameWeapons.length === 0) {
+    const weapons = getGlobalWeapons();
+
+    if (!weapons || weapons.length === 0) {
         modal.innerHTML = `<div style="color:red; text-align:center; padding:40px; background:#111; height:100vh;">CRITICAL ERROR: gear.js database is empty or missing!</div>`;
         modal.style.display = 'block';
         return;
     }
 
-    const starterId = window.gameWeapons[0].id;
+    const starterId = weapons[0].id;
 
     if (!window.playerData) window.playerData = {};
     if (!window.playerData.gear) window.playerData.gear = [];
@@ -123,10 +112,18 @@ window.openWardrobeModal = function() {
         window.playerData.equipped = { weapon: starterId };
     }
 
-    // Safely reconstruct gear ownership
+    // SYNC UNBOXED WEAPONS FROM SHOP INTO GEAR ARRAY
+    if (window.playerData.armory && window.playerData.armory.length > 0) {
+        window.playerData.armory.forEach(w => {
+            if (w && w.id && !window.playerData.gear.includes(w.id)) {
+                window.playerData.gear.push(w.id);
+            }
+        });
+    }
+
     let saveText = JSON.stringify(window.playerData.gear);
     let validGear = [];
-    window.gameWeapons.forEach(wpn => {
+    weapons.forEach(wpn => {
         if (saveText.includes(wpn.id) || wpn.id === starterId || window.playerData.equipped.weapon === wpn.id) {
             validGear.push(wpn.id);
         }
@@ -134,13 +131,13 @@ window.openWardrobeModal = function() {
     window.playerData.gear = [...new Set(validGear)];
     if (typeof window.saveGameData === 'function') window.saveGameData();
 
-    // --- STRICT STATS CALCULATION ---
+    // STRICT STATS CALCULATION
     let stats = { maxHp: 100, atk: 5, def: 0 };
     let pLevel = Number(window.playerData.accountLevel) || 1;
     stats.maxHp = 100 + (pLevel * 15);
     stats.def = pLevel * 2;
 
-    let safeWpn = window.gameWeapons.find(w => w.id === window.playerData.equipped.weapon);
+    let safeWpn = weapons.find(w => w.id === window.playerData.equipped.weapon);
     if (safeWpn) {
         stats.atk = Number(safeWpn.atk || safeWpn.attack || safeWpn.damage || 5);
     }
@@ -159,7 +156,7 @@ window.openWardrobeModal = function() {
 
     modal.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <h2 style="margin: 0; color: #00ff80; font-size: 1.5rem;">🛡️ HUNTER PROFILE</h2>
+            <h2 style="margin: 0; color: #00ff80; font-size: 1.5rem;">HUNTER PROFILE</h2>
             <button onclick="document.getElementById('wardrobeModal').style.display='none'" style="background: #ff0055; border: 2px solid #fff; color: #fff; width: 35px; height: 35px; border-radius: 50%; font-weight: bold; cursor: pointer;">X</button>
         </div>
 
@@ -180,10 +177,9 @@ window.openWardrobeModal = function() {
     `;
     modal.style.display = 'flex';
 
-    // --- DIRECT DOM INJECTION ---
     const listContainer = document.getElementById('armoryListContainer');
     
-    window.gameWeapons.forEach(wpn => {
+    weapons.forEach(wpn => {
         if (window.playerData.gear.includes(wpn.id)) {
             const isEquipped = window.playerData.equipped.weapon === wpn.id;
             const rarityColor = getGearRarityColor(wpn.rarity);
@@ -217,7 +213,7 @@ window.openWardrobeModal = function() {
 };
 
 // ==========================================
-// 📦 INVENTORY UI (ROTS & ITEMS)
+// INVENTORY UI (ENTITIES & ITEMS)
 // ==========================================
 window.setInventorySort = function(sortType) { window.currentInventorySort = sortType; renderInventoryGrid(); };
 window.switchInventoryTab = function(tabName) { window.currentInventoryTab = tabName; renderInventoryGrid(); };
@@ -265,20 +261,20 @@ function renderInventoryGrid() {
 
     modal.innerHTML = `
         <div style="width: 100%; max-width: 800px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <h2 style="margin: 0; color: #ffcc00; font-size: 1.4rem;">📦 VAULT</h2>
+            <h2 style="margin: 0; color: #ffcc00; font-size: 1.4rem;">VAULT</h2>
             <button onclick="closeInventory()" style="background: #ff0055; color: #fff; border: 2px solid #fff; border-radius: 50%; width: 35px; height: 35px; font-weight: bold; cursor: pointer;">X</button>
         </div>
 
         <div style="width: 100%; max-width: 800px; display: flex; gap: 8px; margin-bottom: 10px;">
-            <button onclick="switchInventoryTab('rots')" style="flex: 1; background: ${window.currentInventoryTab === 'rots' ? '#ffcc00' : '#222'}; color: ${window.currentInventoryTab === 'rots' ? '#000' : '#fff'}; border: 2px solid #ffcc00; padding: 10px; font-weight: bold; border-radius: 8px; cursor: pointer; font-family: monospace;">🧠 ROTS (${currentSlots})</button>
-            <button onclick="switchInventoryTab('items')" style="flex: 1; background: ${window.currentInventoryTab === 'items' ? '#00ccff' : '#222'}; color: ${window.currentInventoryTab === 'items' ? '#000' : '#fff'}; border: 2px solid #00ccff; padding: 10px; font-weight: bold; border-radius: 8px; cursor: pointer; font-family: monospace;">🧪 ITEMS</button>
+            <button onclick="switchInventoryTab('rots')" style="flex: 1; background: ${window.currentInventoryTab === 'rots' ? '#ffcc00' : '#222'}; color: ${window.currentInventoryTab === 'rots' ? '#000' : '#fff'}; border: 2px solid #ffcc00; padding: 10px; font-weight: bold; border-radius: 8px; cursor: pointer; font-family: monospace;">ENTITIES (${currentSlots})</button>
+            <button onclick="switchInventoryTab('items')" style="flex: 1; background: ${window.currentInventoryTab === 'items' ? '#00ccff' : '#222'}; color: ${window.currentInventoryTab === 'items' ? '#000' : '#fff'}; border: 2px solid #00ccff; padding: 10px; font-weight: bold; border-radius: 8px; cursor: pointer; font-family: monospace;">ITEMS</button>
         </div>
 
         ${window.currentInventoryTab === 'rots' ? `
         <div style="width: 100%; max-width: 800px; display: flex; gap: 8px; margin-bottom: 15px;">
-            <button onclick="setInventorySort('power')" style="flex: 1; padding: 8px; background: ${window.currentInventorySort === 'power' ? '#00ff55' : '#222'}; color: ${window.currentInventorySort === 'power' ? '#000' : '#fff'}; border: 2px solid #00ff55; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: monospace; font-size: 0.8rem;">⚔️ POWER</button>
-            <button onclick="setInventorySort('rarity')" style="flex: 1; padding: 8px; background: ${window.currentInventorySort === 'rarity' ? '#00ccff' : '#222'}; color: ${window.currentInventorySort === 'rarity' ? '#000' : '#fff'}; border: 2px solid #00ccff; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: monospace; font-size: 0.8rem;">💎 RARITY</button>
-            <button onclick="setInventorySort('newest')" style="flex: 1; padding: 8px; background: ${window.currentInventorySort === 'newest' ? '#ff0055' : '#222'}; color: ${window.currentInventorySort === 'newest' ? '#000' : '#fff'}; border: 2px solid #ff0055; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: monospace; font-size: 0.8rem;">⏳ NEWEST</button>
+            <button onclick="setInventorySort('power')" style="flex: 1; padding: 8px; background: ${window.currentInventorySort === 'power' ? '#00ff55' : '#222'}; color: ${window.currentInventorySort === 'power' ? '#000' : '#fff'}; border: 2px solid #00ff55; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: monospace; font-size: 0.8rem;">POWER</button>
+            <button onclick="setInventorySort('rarity')" style="flex: 1; padding: 8px; background: ${window.currentInventorySort === 'rarity' ? '#00ccff' : '#222'}; color: ${window.currentInventorySort === 'rarity' ? '#000' : '#fff'}; border: 2px solid #00ccff; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: monospace; font-size: 0.8rem;">RARITY</button>
+            <button onclick="setInventorySort('newest')" style="flex: 1; padding: 8px; background: ${window.currentInventorySort === 'newest' ? '#ff0055' : '#222'}; color: ${window.currentInventorySort === 'newest' ? '#000' : '#fff'}; border: 2px solid #ff0055; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: monospace; font-size: 0.8rem;">NEWEST</button>
         </div>` : ''}
 
         <div id="inventoryGrid" style="width: 100%; max-width: 800px; max-height: calc(100vh - 220px); overflow-y: auto; padding: 5px;"></div>
@@ -330,15 +326,15 @@ function renderInventoryGrid() {
             `;
             card.setAttribute('onclick', `openCardDetails(${index})`);
             card.innerHTML = `
-                ${isShiny ? '<div style="font-size:0.6rem; color:#00ffff; font-family:monospace; font-weight:bold; margin-bottom:2px;">💎 SHINY</div>' : ''}
+                ${isShiny ? '<div style="font-size:0.6rem; color:#00ffff; font-family:monospace; font-weight:bold; margin-bottom:2px;">SHINY</div>' : ''}
                 <div style="font-size: 0.75rem; font-weight: bold; color: ${rarityColor}; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${rot.name}</div>
                 <div style="font-size: 0.65rem; color: #aaa; margin-bottom: 4px;">Lvl ${rot.level || 1} | ${(rot.rarity || 'common').toUpperCase()}</div>
                 <div style="width: 100%; height: 90px; background: rgba(0,0,0,0.4); border-radius: 8px; overflow: hidden; margin-bottom: 6px; display: flex; align-items: center; justify-content: center; padding: 4px; box-sizing: border-box;">
                     <img src="${rot.image || ''}" style="max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 5px 5px rgba(0,0,0,0.8)) ${isFainted || isInGym ? 'grayscale(100%) ' : ''}${isShiny ? 'brightness(1.2) contrast(2)' : ''};" onerror="this.style.display='none';">
                 </div>
-                <div style="font-size: 0.65rem; color: #00ff55; font-weight: bold;">❤️ ${stats.maxHp} | ⚔️ ${stats.atk}</div>
+                <div style="font-size: 0.65rem; color: #00ff55; font-weight: bold;">HP: ${stats.maxHp} | ATK: ${stats.atk}</div>
                 <div style="font-size: 0.6rem; color: ${isInGym ? '#00ccff' : (isFainted ? '#ff0055' : '#00ff00')}; margin-top: 2px;">
-                    ${isInGym ? '🏰 [IN GYM]' : (isFainted ? '💀 FAINTED' : 'READY')}
+                    ${isInGym ? '[IN GYM]' : (isFainted ? 'FAINTED' : 'READY')}
                 </div>
             `;
             inventoryGrid.appendChild(card);
@@ -356,7 +352,6 @@ function renderInventoryGrid() {
             itemsHtml += `
             <div style="background: #222; border: 2px solid #00ffcc; border-radius: 10px; padding: 15px; display: flex; align-items: center; justify-content: space-between;">
                 <div style="display: flex; align-items: center; gap: 12px;">
-                    <div style="font-size: 2.2rem;">🧪</div>
                     <div style="text-align: left;"><div style="font-weight: bold; font-size: 1rem; color: #fff;">Revive Potion (x${revives})</div><div style="font-size: 0.75rem; color: #00ffcc;">Wakes up a fainted entity!</div></div>
                 </div>
                 <button onclick="useRevivePotionMenu()" style="background: #00ffcc; color: #000; border: none; padding: 10px 16px; font-weight: bold; border-radius: 6px; cursor: pointer;">USE</button>
@@ -367,7 +362,6 @@ function renderInventoryGrid() {
             itemsHtml += `
             <div style="background: #222; border: 2px solid #ff00ff; border-radius: 10px; padding: 15px; display: flex; align-items: center; justify-content: space-between;">
                 <div style="display: flex; align-items: center; gap: 12px;">
-                    <div style="font-size: 2.2rem;">🥚</div>
                     <div style="text-align: left;"><div style="font-weight: bold; font-size: 1rem; color: #fff;">Lucky Egg (x${luckyEggs})</div><div style="font-size: 0.75rem; color: #ff00ff;">Double Account XP for 1hr!</div></div>
                 </div>
                 <button onclick="useLuckyEgg()" style="background: #ff00ff; color: #000; border: none; padding: 10px 16px; font-weight: bold; border-radius: 6px; cursor: pointer;">USE</button>

@@ -548,33 +548,42 @@
             const modal = document.getElementById('menuModal');
             if (modal) modal.style.display = 'none';
         }
+
+        // MASTER WEAPON SYNC - Forces the hidden save engine to recognize your weapons
+        setInterval(() => {
+            if (window.playerData && window._internalPlayerData) {
+                if (window.playerData.gear) window._internalPlayerData.gear = window.playerData.gear;
+                if (window.playerData.equipped) window._internalPlayerData.equipped = window.playerData.equipped;
+            }
+        }, 500);
+
     </script>
 
     <!-- Game Scripts with Cache-Busting Version Query Parameters -->
-    <script src="database.js?v=3.2"></script>
-    <script src="gear.js?v=3.2"></script>
-    <script src="collision.js?v=3.2"></script>
-    <script src="player.js?v=3.2"></script>
-    <script src="evolution.js?v=3.2"></script>
-    <script src="firebase.js?v=3.2"></script>
-    <script src="dex.js?v=3.2"></script>
-    <script src="inventory.js?v=3.2"></script>
-    <script src="teamSelect.js?v=3.2"></script>
-    <script src="battle.js?v=3.2"></script>
-    <script src="battle3v3.js?v=3.2"></script>
-    <script src="matchmaking.js?v=3.2"></script>
-    <script src="battlePvP.js?v=3.2"></script>
-    <script src="spawner.js?v=3.2"></script>
-    <script src="gyms.js?v=3.2"></script>
-    <script src="revive.js?v=3.2"></script>
-    <script src="shop.js?v=3.2"></script>
-    <script src="account.js?v=3.2"></script>
-    <script src="weather.js?v=3.2"></script>
-    <script src="audio.js?v=3.2"></script>
-    <script src="battlePass.js?v=3.2"></script>
-    <script src="trade.js?v=3.2"></script>
-    <script src="armory.js?v=3.2"></script>
-    <script src="altars.js?v=3.9"></script>
-    <script src="main.js?v=3.2"></script>
+    <script src="database.js?v=4.0"></script>
+    <script src="gear.js?v=4.0"></script>
+    <script src="collision.js?v=4.0"></script>
+    <script src="player.js?v=4.0"></script>
+    <script src="evolution.js?v=4.0"></script>
+    <script src="firebase.js?v=4.0"></script>
+    <script src="dex.js?v=4.0"></script>
+    <script src="inventory.js?v=4.0"></script>
+    <script src="teamSelect.js?v=4.0"></script>
+    <script src="battle.js?v=4.0"></script>
+    <script src="battle3v3.js?v=4.0"></script>
+    <script src="matchmaking.js?v=4.0"></script>
+    <script src="battlePvP.js?v=4.0"></script>
+    <script src="spawner.js?v=4.0"></script>
+    <script src="gyms.js?v=4.0"></script>
+    <script src="revive.js?v=4.0"></script>
+    <script src="shop.js?v=4.0"></script>
+    <script src="account.js?v=4.0"></script>
+    <script src="weather.js?v=4.0"></script>
+    <script src="audio.js?v=4.0"></script>
+    <script src="battlePass.js?v=4.0"></script>
+    <script src="trade.js?v=4.0"></script>
+    <script src="armory.js?v=4.0"></script>
+    <script src="altars.js?v=4.0"></script>
+    <script src="main.js?v=4.0"></script>
 </body>
 </html>

@@ -11,7 +11,7 @@ window.activeCreatures = spawnedCreatures;
 window.currentBattleEntry = null;
 
 // ==========================================
-// 🎲 DETERMINISTIC SEEDED RNG
+// DETERMINISTIC SEEDED RNG
 // ==========================================
 class SeededPRNG {
     constructor(seedStr) {
@@ -72,7 +72,7 @@ function getRarityColor(rarity) {
 }
 
 // ==========================================
-// 🌊 WATER BIOME CHECKER
+// WATER BIOME CHECKER
 // ==========================================
 function checkNearbyWater(lat, lng) {
     if (Date.now() - lastWaterCheckTime < 60000) return;
@@ -85,7 +85,7 @@ function checkNearbyWater(lat, lng) {
 }
 
 // ==========================================
-// 🎬 MAP VFX ANIMATIONS
+// MAP VFX ANIMATIONS
 // ==========================================
 window.injectAnimationStyles = function() {
     if (document.getElementById('mapSpriteAnimations')) return;
@@ -104,7 +104,7 @@ window.injectAnimationStyles = function() {
 window.injectAnimationStyles();
 
 // ==========================================
-// ⚔️ TRUE FIRST-PERSON COMBAT ENGINE
+// TRUE FIRST-PERSON COMBAT ENGINE
 // ==========================================
 function injectBattleStyles() {
     if (document.getElementById('battleDynamicStyles')) return;
@@ -173,7 +173,7 @@ function injectBattleStyles() {
         
         .wpn-swing { animation: fpMeleeSwing 0.4s cubic-bezier(0.1, 0.8, 0.3, 1) forwards, fireFlicker 0.15s infinite !important; }
 
-        /* 🛡️ PLAYER HP UI */
+        /* PLAYER HP UI */
         .player-hp-container {
             position: absolute;
             bottom: 110px;
@@ -213,8 +213,8 @@ function buildBattleScreen() {
             <div id="slashEffect" class="slash-fx"></div>
         </div>
         
-        <!-- MASSIVE FIRST PERSON WEAPON OVERLAY (with fallback handler) -->
-        <img id="battleWeaponImg" class="fp-weapon" src="" alt="Weapon" onerror="if(!this.dataset.retried){this.dataset.retried=true; this.src='gear/rusty.png';}">
+        <!-- MASSIVE FIRST PERSON WEAPON OVERLAY (DYNAMIC) -->
+        <img id="battleWeaponImg" class="fp-weapon" src="" alt="Weapon">
         
         <!-- PLAYER HP BAR -->
         <div class="player-hp-container">
@@ -240,28 +240,40 @@ function buildBattleScreen() {
 window.startBattle = function(spawnId, name, imageUrl, level, rarity) {
     const maxSlots = window.playerData?.maxInventorySlots || 100;
     if ((window.playerData?.inventory?.length || 0) >= maxSlots) {
-        alert(`🚨 Vault is full! Clear some space first.`);
+        alert(`Vault is full! Clear some space first.`);
         return;
     }
 
     buildBattleScreen();
     window.currentBattleEntry = spawnedCreatures.find(c => c.id === spawnId) || null;
 
-    // --- DYNAMIC WEAPON IMAGE RENDERER ---
-    let currentWpnId = window.playerData && window.playerData.equipped ? window.playerData.equipped.weapon : null;
-    let currentWpn = window.gameWeapons ? window.gameWeapons.find(w => w.id === currentWpnId) : null;
+    // --- DYNAMIC WEAPON CHECKER ---
+    // Finds exactly what weapon the player has equipped from gear.js and renders it
+    let activeWeaponImage = 'gear/rusty.png'; // Fallback
     
-    if (!currentWpn && window.gameWeapons && window.gameWeapons.length > 0) {
-        currentWpn = window.gameWeapons[0];
+    if (window.playerData && window.playerData.equipped && window.playerData.equipped.weapon) {
+        let weapons = (typeof weaponDatabase !== 'undefined') ? weaponDatabase : (window.gameWeapons || []);
+        let wpn = weapons.find(w => w.id === window.playerData.equipped.weapon);
+        if (wpn && wpn.image) {
+            activeWeaponImage = wpn.image;
+        }
     }
     
-    let activeWeaponImage = currentWpn ? currentWpn.image : 'gear/rusty.png';
     document.getElementById('battleWeaponImg').src = activeWeaponImage;
 
     // Math for Stats
     const enemyMaxHp = 50 + (level * 15);
     const pLevel = window.playerData?.accountLevel || 1;
-    const gearStats = typeof window.calculatePlayerGearStats === 'function' ? window.calculatePlayerGearStats(window.playerData) : { maxHp: 100 + (pLevel * 10), atk: 15, def: 5 };
+    
+    // Calculate player's total attack, adding the weapon's ATK power
+    let baseAtk = 15;
+    if (window.playerData && window.playerData.equipped && window.playerData.equipped.weapon) {
+        let weapons = (typeof weaponDatabase !== 'undefined') ? weaponDatabase : (window.gameWeapons || []);
+        let wpn = weapons.find(w => w.id === window.playerData.equipped.weapon);
+        if (wpn) baseAtk += Number(wpn.atk || 0);
+    }
+
+    const gearStats = typeof window.calculatePlayerGearStats === 'function' ? window.calculatePlayerGearStats(window.playerData) : { maxHp: 100 + (pLevel * 10), atk: baseAtk, def: 5 };
     const playerMaxHp = gearStats.maxHp || (100 + (pLevel * 10));
 
     window.battleData = {
@@ -269,7 +281,7 @@ window.startBattle = function(spawnId, name, imageUrl, level, rarity) {
         enemyMaxHp: enemyMaxHp, enemyHp: enemyMaxHp,
         enemyAtk: 5 + (level * 4), 
         playerMaxHp: playerMaxHp, playerHp: playerMaxHp,
-        playerAtk: gearStats.atk || 15, playerDef: gearStats.def || 5, 
+        playerAtk: gearStats.atk || baseAtk, playerDef: gearStats.def || 5, 
         isOver: false
     };
 
@@ -290,14 +302,13 @@ window.startBattle = function(spawnId, name, imageUrl, level, rarity) {
     document.getElementById('battlePlayerHp').style.width = '100%';
     document.getElementById('battlePlayerHpText').innerText = `${playerMaxHp} / ${playerMaxHp}`;
     
-    // Make sure the strike button is active when the battle starts
     const strikeBtn = document.getElementById('strikeBtn');
     if (strikeBtn) strikeBtn.disabled = false;
 
     document.getElementById('battleOverlay').style.display = 'flex';
 };
 
-// 🛑 THE TURN-BASED COMBAT MANAGER
+// THE TURN-BASED COMBAT MANAGER
 window.executeTurnBasedCombat = function() {
     const data = window.battleData;
     if (!data || data.isOver) return;
@@ -386,7 +397,7 @@ window.executeTurnBasedCombat = function() {
         if (data.playerHp <= 0) {
             data.isOver = true;
             setTimeout(() => {
-                alert(`💀 YOU DIED! The Level ${data.level} ${data.name} struck you down. Upgrade your armor in the Vault!`);
+                alert(`YOU DIED! The Level ${data.level} ${data.name} struck you down. Upgrade your armor in the Vault!`);
                 fleeBattle();
             }, 300);
         } else {
@@ -429,11 +440,11 @@ function finalizeCapture(data) {
     }
     
     window.currentBattleEntry = null;
-    alert(`⚔️ SLAIN! You captured the essence of the Lvl ${data.level} ${data.name}!`);
+    alert(`SLAIN! You captured the essence of the Lvl ${data.level} ${data.name}!`);
 }
 
 // ==========================================
-// 🧬 MAP SPAWN GENERATION
+// MAP SPAWN GENERATION
 // ==========================================
 function spawnSingleCreature(spawnId, lat, lng, template, level) {
   if (typeof L === 'undefined' || typeof map === 'undefined' || !map) return;

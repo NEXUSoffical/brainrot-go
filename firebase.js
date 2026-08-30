@@ -1,4 +1,4 @@
-// firebase.js - Firebase Initialization and Authentication Handling
+// firebase.js - Cleaned Firebase Initialization, Auth, and Master Cloud Sync
 
 const firebaseConfig = {
     apiKey: "AIzaSyAUpE0pUHZlY6jGZgJIxHg2KnSfMs0iJTo",
@@ -26,12 +26,12 @@ window.toggleAuthMode = function() {
     const starterSec = document.getElementById('starterSection');
 
     if (isSignUpMode) {
-        if (titleEl) titleEl.innerText = "🔐 CREATE ACCOUNT";
+        if (titleEl) titleEl.innerText = "CREATE ACCOUNT";
         if (toggleText) toggleText.innerText = "Already have an account? Click here to Log In";
         if (starterSec) starterSec.style.display = 'block';
         if (typeof renderStarterSelection === 'function') renderStarterSelection();
     } else {
-        if (titleEl) titleEl.innerText = "🔐 BRAINROT GO ACCOUNT";
+        if (titleEl) titleEl.innerText = "HUNTER VAULT LOGIN";
         if (toggleText) toggleText.innerText = "New player? Click here to Sign Up";
         if (starterSec) starterSec.style.display = 'none';
     }
@@ -45,11 +45,11 @@ window.handleAccountAction = function() {
     const password = passwordEl ? passwordEl.value.trim() : "";
 
     if (!username || !password) {
-        alert("❌ Please enter both username and password!");
+        alert("Please enter both username and password!");
         return;
     }
 
-    const email = `${username.toLowerCase().replace(/[^a-z0-9]/g, '')}@brainrotgo.com`;
+    const email = `${username.toLowerCase().replace(/[^a-z0-9]/g, '')}@ghosthuntergo.com`;
 
     if (isSignUpMode) {
         auth.createUserWithEmailAndPassword(email, password)
@@ -61,7 +61,7 @@ window.handleAccountAction = function() {
                 completeLogin();
             })
             .catch((error) => {
-                alert("❌ Sign Up Error: " + error.message);
+                alert("Sign Up Error: " + error.message);
             });
     } else {
         auth.signInWithEmailAndPassword(email, password)
@@ -69,7 +69,7 @@ window.handleAccountAction = function() {
                 completeLogin();
             })
             .catch((error) => {
-                alert("❌ Login Error: " + error.message);
+                alert("Login Error: " + error.message);
             });
     }
 };
@@ -85,10 +85,10 @@ window.signInWithGoogle = function() {
             console.error("Google Sign-In Error:", error);
             if (error.code === 'auth/popup-blocked' || error.code === 'auth/cancelled-popup-request' || error.code === 'auth/popup-closed-by-user') {
                 auth.signInWithRedirect(provider).catch((redirectError) => {
-                    alert("❌ Google Sign-In Redirect Error: " + redirectError.message);
+                    alert("Google Sign-In Redirect Error: " + redirectError.message);
                 });
             } else {
-                alert("❌ Google Sign-In Error: " + error.message);
+                alert("Google Sign-In Error: " + error.message);
             }
         });
 };
@@ -97,12 +97,24 @@ function completeLogin() {
     const loginModal = document.getElementById('loginModal');
     if (loginModal) loginModal.style.display = 'none';
 
-    if (typeof loadGameData === 'function') {
-        loadGameData().then(() => {
-            if (typeof initPlayer === 'function') initPlayer();
-        });
-    } else {
+    // Wait for the cloud save to pull, then forcibly sync the weapon arrays
+    setTimeout(() => {
+        if (typeof window.playerData === 'undefined') window.playerData = {};
+        
+        // If the cloud save is missing the armory/gear arrays, inject them
+        if (!window.playerData.gear || !Array.isArray(window.playerData.gear)) {
+            window.playerData.gear = ["w_01"];
+        }
+        if (!window.playerData.equipped) {
+            window.playerData.equipped = { weapon: "w_01" };
+        }
+
         if (typeof initPlayer === 'function') initPlayer();
+        if (typeof updateTopRightAvatar === 'function') updateTopRightAvatar();
+    }, 800);
+
+    if (typeof loadGameData === 'function') {
+        try { loadGameData(); } catch(e) {}
     }
 }
 
@@ -115,6 +127,40 @@ auth.onAuthStateChanged((user) => {
 
 window.logoutAccount = function() {
     auth.signOut().then(() => {
+        localStorage.removeItem('ghosthunter_logged_in_user');
+        localStorage.removeItem('ghosthunter_local_backup');
         location.reload();
     });
+};
+
+// ==========================================
+// MASTER CLOUD SAVE OVERRIDE
+// ==========================================
+// This guarantees that Firebase will always save your live weapons to the cloud!
+
+window.saveGameData = async function() {
+    // Force Firebase to look at the LIVE playerData, ignoring any cached internal states
+    const liveData = window.playerData || {};
+    if (!liveData.username) return;
+
+    // Failsafe: Ensure gear exists before sending to cloud
+    if (!liveData.gear) liveData.gear = ["w_01"];
+    if (!liveData.equipped) liveData.equipped = { weapon: "w_01" };
+
+    const cleanDataString = JSON.stringify(liveData, (key, value) => {
+        if (key === 'marker' || key === '_popup' || key === '_source') return undefined;
+        return value;
+    });
+    
+    const cleanData = JSON.parse(cleanDataString);
+    localStorage.setItem('ghosthunter_local_backup', cleanDataString);
+
+    try {
+        if (typeof firebase !== 'undefined' && firebase.firestore) {
+            await firebase.firestore().collection('accounts').doc(liveData.username).set(cleanData);
+            console.log("[CLOUD] Game saved successfully with Weapon Vault intact!");
+        }
+    } catch (error) {
+        console.error("[ERROR] Failed to save to cloud:", error);
+    }
 };

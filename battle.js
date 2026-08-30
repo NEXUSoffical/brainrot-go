@@ -1,4 +1,4 @@
-// battle.js - Universal Battle Engine with Vampire Support + QTE & Type Matchups
+// battle.js - Universal Battle Engine (Now with Weapon Graphics & Damage Integration!)
 
 if (typeof window.currentWildCreature === 'undefined') {
     window.currentWildCreature = null;
@@ -98,7 +98,6 @@ function shouldFloat(charName) {
     return lower.includes('vampire') || lower.includes('spirit') || lower.includes('phantom');
 }
 
-// Element & Type Matchup Helpers
 function getEntityElement(name) {
     if (!name) return 'tech';
     const n = name.toLowerCase();
@@ -132,7 +131,7 @@ window.initBattle = function(creature) {
     window.wildHp = window.maxWildHp;
 
     if (typeof playerData === 'undefined') {
-        window.playerData = { username: "Player", currency: 500, inventory: [], activeFighterIndex: 0, revivePotions: 0, candies: {} };
+        window.playerData = { username: "Player", rotBalance: 500, inventory: [], activeFighterIndex: 0, revivePotions: 0, candies: {} };
     }
     if (!playerData.inventory || playerData.inventory.length === 0) {
         playerData.inventory = [{ name: "Vampire", rarity: "common", image: "brainrots/vampire.png", level: 1, hp: 60, maxHp: 60, fainted: false }];
@@ -163,9 +162,9 @@ window.initBattle = function(creature) {
     window.playerHp = activeFighter.fainted ? 0 : window.maxPlayerHp;
 
     const wildElem = getEntityElement(creature.name);
-    document.getElementById('wildName').innerText = `${creature.shiny ? '💎 SHINY ' : ''}${(creature.name || "Unknown").toUpperCase()} (Lvl ${wildLvl}) [${wildElem.toUpperCase()}]`;
-    document.getElementById('wildBadgeName').innerText = `${creature.shiny ? '💎 ' : ''}${creature.name || "Unknown"} (Lvl ${wildLvl})`;
-    document.getElementById('wildRarity').innerText = `TYPE: ${wildElem.toUpperCase()} | RARITY: ${(creature.rarity || 'common').toUpperCase()}${creature.shiny ? ' [💎 SHINY]' : ''}`;
+    document.getElementById('wildName').innerText = `${creature.shiny ? 'SHINY ' : ''}${(creature.name || "Unknown").toUpperCase()} (Lvl ${wildLvl}) [${wildElem.toUpperCase()}]`;
+    document.getElementById('wildBadgeName').innerText = `${creature.shiny ? 'SHINY ' : ''}${creature.name || "Unknown"} (Lvl ${wildLvl})`;
+    document.getElementById('wildRarity').innerText = `TYPE: ${wildElem.toUpperCase()} | RARITY: ${(creature.rarity || 'common').toUpperCase()}${creature.shiny ? ' [SHINY]' : ''}`;
     
     const wildIsFloating = shouldFloat(creature.name);
     const wildCardContainer = document.getElementById('wildCardContainer');
@@ -188,7 +187,7 @@ window.initBattle = function(creature) {
     const battleLog = document.getElementById('battleLog');
     if (battleLog) {
         if (activeFighter.fainted) {
-            battleLog.innerText = `⚠️ Your active fighter is FAINTED! Switch fighters or visit the Revive Station!`;
+            battleLog.innerText = `[!] Your active fighter is FAINTED! Switch fighters or visit the Revive Station!`;
         } else {
             battleLog.innerText = `A wild Level ${wildLvl} ${creature.name} appeared!`;
         }
@@ -201,7 +200,7 @@ function updatePlayerFighterDisplay(activeFighter, fighterLvl) {
     const playerCardContainer = document.getElementById('playerCardContainer');
     
     if (playerFighterInner) {
-        playerFighterInner.className = playerIsFloating ? 'battle-float' : '';
+        playerFighterInner.className = ''; // Remove default classes
     }
 
     let imagePath = activeFighter.image || 'brainrots/vampire.png';
@@ -211,17 +210,36 @@ function updatePlayerFighterDisplay(activeFighter, fighterLvl) {
         playerCardContainer.style.border = 'none';
         playerCardContainer.style.boxShadow = 'none';
         playerCardContainer.style.padding = '0';
+        
+        // PULL THE HUNTER AVATAR WITH THEIR EQUIPPED WEAPON FROM INVENTORY.JS
+        let hunterHtml = typeof window.getHunterDollHtml === 'function' ? window.getHunterDollHtml(0.65) : '';
+
+        // RENDER BOTH THE HUNTER AND THE ENTITY SIDE-BY-SIDE
         playerCardContainer.innerHTML = `
-            <div class="${playerIsFloating ? 'battle-float' : ''}" style="width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; background: transparent !important;">
-                <img src="${imagePath}" style="max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0px 5px 8px rgba(0,0,0,0.8)); ${activeFighter.fainted ? 'filter: grayscale(100%);' : ''}" onerror="this.style.display='none';">
+            <div style="display: flex; align-items: flex-end; justify-content: center; gap: 5px;">
+                <div style="margin-bottom: -10px;">
+                    ${hunterHtml}
+                </div>
+                <div class="${playerIsFloating ? 'battle-float' : ''}" style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; background: transparent !important; z-index: 10;">
+                    <img src="${imagePath}" style="max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0px 5px 8px rgba(0,0,0,0.8)); ${activeFighter.fainted ? 'filter: grayscale(100%);' : ''}" onerror="this.style.display='none';">
+                </div>
             </div>
         `;
     }
 
     const fighterElem = getEntityElement(activeFighter.name);
     const fighterNameEl = document.getElementById('myFighterName');
+    
+    // FETCH WEAPON DATA TO DISPLAY NEXT TO NAME
+    let weaponName = "";
+    if (window.playerData && window.playerData.equipped) {
+        let weapons = (typeof weaponDatabase !== 'undefined') ? weaponDatabase : (window.gameWeapons || []);
+        let wpn = weapons.find(w => w.id === window.playerData.equipped.weapon);
+        if (wpn) weaponName = ` + ${wpn.name}`;
+    }
+
     if (fighterNameEl) {
-        fighterNameEl.innerText = `${activeFighter.name || 'Fighter'} (Lvl ${fighterLvl}) [${fighterElem.toUpperCase()}] ${activeFighter.fainted ? '💀 [FAINTED]' : ''}`;
+        fighterNameEl.innerText = `${activeFighter.name || 'Fighter'} (Lvl ${fighterLvl})${weaponName} [${fighterElem.toUpperCase()}] ${activeFighter.fainted ? '[FAINTED]' : ''}`;
     }
 }
 
@@ -246,10 +264,10 @@ function renderTacticalBattleMenu() {
 
     actionContainer.innerHTML = `
         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; width: 100%;">
-            <button onclick="battleAttack()" style="background: #ff0055; color: #fff; font-weight: bold; border: none; padding: 10px; border-radius: 6px; cursor: pointer;">✨ Signature Strike</button>
-            <button onclick="openQTEPrompt()" style="background: #9900ff; color: #fff; font-weight: bold; border: none; padding: 10px; border-radius: 6px; cursor: pointer;">🎯 Critical QTE</button>
-            <button onclick="openBattleSwitch()" style="background: #00ff80; color: #000; font-weight: bold; border: none; padding: 10px; border-radius: 6px; cursor: pointer;">🔄 Switch</button>
-            <button onclick="battleCatch()" style="background: #ffaa00; color: #000; font-weight: bold; border: none; padding: 10px; border-radius: 6px; cursor: pointer;">📦 Capture</button>
+            <button onclick="battleAttack()" style="background: #ff0055; color: #fff; font-weight: bold; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-family: monospace;">Signature Strike</button>
+            <button onclick="openQTEPrompt()" style="background: #9900ff; color: #fff; font-weight: bold; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-family: monospace;">Critical QTE</button>
+            <button onclick="openBattleSwitch()" style="background: #00ff80; color: #000; font-weight: bold; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-family: monospace;">Switch Entity</button>
+            <button onclick="battleCatch()" style="background: #ffaa00; color: #000; font-weight: bold; border: none; padding: 10px; border-radius: 6px; cursor: pointer; font-family: monospace;">Capture</button>
         </div>
     `;
 }
@@ -258,7 +276,7 @@ window.openQTEPrompt = function() {
     let activeFighter = playerData.inventory[playerData.activeFighterIndex || 0];
     if (activeFighter && (activeFighter.fainted || window.playerHp <= 0)) {
         const battleLog = document.getElementById('battleLog');
-        if (battleLog) battleLog.innerText = `⚠️ Your fighter is fainted! Click 'Switch' to choose another entity.`;
+        if (battleLog) battleLog.innerText = `[!] Your fighter is fainted! Click 'Switch' to choose another entity.`;
         if (typeof openBattleSwitch === 'function') openBattleSwitch();
         return;
     }
@@ -286,7 +304,7 @@ window.openQTEPrompt = function() {
                 <div class="qte-target-zone"></div>
                 <div id="movingQteMarker" class="qte-marker"></div>
             </div>
-            <button onclick="resolveQTE()" style="background: #ff0055; color: #fff; font-weight: bold; border: none; padding: 12px 20px; border-radius: 6px; width: 100%; cursor: pointer; font-size: 1rem;">STRIKE NOW!</button>
+            <button onclick="resolveQTE()" style="background: #ff0055; color: #fff; font-weight: bold; border: none; padding: 12px 20px; border-radius: 6px; width: 100%; cursor: pointer; font-size: 1rem; font-family: monospace;">STRIKE NOW!</button>
         </div>
     `;
     qteModal.style.display = 'flex';
@@ -301,14 +319,14 @@ window.resolveQTE = function() {
     const leftPercent = parseFloat(computedStyle.left);
 
     let multiplier = 0.75; 
-    let resultText = "❌ Weak Timing Strike!";
+    let resultText = "Weak Timing Strike!";
 
     if (leftPercent >= 60 && leftPercent <= 86) {
         multiplier = 2.0; 
-        resultText = "🔥 PERFECT CRITICAL STRIKE! (2x)";
+        resultText = "PERFECT CRITICAL STRIKE! (2x)";
     } else if (leftPercent >= 52 && leftPercent <= 92) {
         multiplier = 1.35;
-        resultText = "⚡ Good Timing Hit! (1.35x)";
+        resultText = "Good Timing Hit! (1.35x)";
     }
 
     if (qteModal) qteModal.style.display = 'none';
@@ -328,7 +346,7 @@ window.battleAttack = function() {
 
     if (activeFighter && (activeFighter.fainted || window.playerHp <= 0)) {
         const battleLog = document.getElementById('battleLog');
-        if (battleLog) battleLog.innerText = `⚠️ Active fighter is fainted! Click 'Switch' to choose another entity.`;
+        if (battleLog) battleLog.innerText = `[!] Active fighter is fainted! Click 'Switch' to choose another entity.`;
         if (typeof openBattleSwitch === 'function') openBattleSwitch();
         return;
     }
@@ -338,13 +356,18 @@ window.battleAttack = function() {
     const wildCombatant = document.getElementById('wildCombatant');
     const arenaField = document.getElementById('arenaField');
     
-    const fighterLvl = activeFighter ? (activeFighter.level || 1) : 1;
-    const wildLvl = window.currentWildCreature ? (window.currentWildCreature.level || 1) : 1;
-
     let pStats = typeof window.calculateEntityStats === 'function' ? window.calculateEntityStats(activeFighter) : {atk: 15, def: 10};
     let wStats = typeof window.calculateEntityStats === 'function' ? window.calculateEntityStats(window.currentWildCreature) : {atk: 10, def: 10};
 
-    // Player Animation & Attack Execution
+    // WEAPON DAMAGE INJECTION - Adds your equipped weapon's ATK to your total damage!
+    let weaponAtk = 5; 
+    if (window.playerData && window.playerData.equipped) {
+        let weapons = (typeof weaponDatabase !== 'undefined') ? weaponDatabase : (window.gameWeapons || []);
+        let wpn = weapons.find(w => w.id === window.playerData.equipped.weapon);
+        if (wpn) weaponAtk = Number(wpn.atk || wpn.attack || wpn.damage || 5);
+    }
+    pStats.atk += weaponAtk; // The weapon officially buffs the entity!
+
     if (arenaField) {
         const projectile = document.createElement('div');
         projectile.className = 'water-projectile-player';
@@ -384,7 +407,8 @@ window.battleAttack = function() {
         const battleLog = document.getElementById('battleLog');
         if (battleLog) {
             let qteSuffix = currentQte > 1.0 ? ` (QTE x${currentQte})` : "";
-            battleLog.innerText = `Vampire attacked for ${damage} damage!${qteSuffix}`;
+            let nameUsed = activeFighter ? activeFighter.name : "Fighter";
+            battleLog.innerText = `${nameUsed} attacked for ${damage} damage!${qteSuffix}`;
         }
 
         setTimeout(() => {
@@ -440,7 +464,7 @@ window.battleAttack = function() {
                     if (activeFighter) activeFighter.fainted = true;
                     if (typeof window.saveGameData === 'function') window.saveGameData();
                     
-                    if (battleLog) battleLog.innerText = `💀 Your fighter was defeated! Fleeing battle...`;
+                    if (battleLog) battleLog.innerText = `[FAINTED] Your fighter was defeated! Fleeing battle...`;
                     
                     setTimeout(() => {
                         if (typeof window.closeBattle === 'function') {
@@ -491,7 +515,7 @@ window.openBattleSwitch = function() {
             <div onclick="selectNewFighter(${index})" style="background: ${isFainted ? '#2a1a1a' : (isCurrent ? '#1a3a1a' : '#222')}; border: 2px solid ${isFainted ? '#ff0055' : (isCurrent ? '#00ff00' : '#555')}; border-radius: 8px; padding: 8px; cursor: pointer; text-align: center; opacity: ${isFainted ? '0.6' : '1'};">
                 <img src="${entityImage}" style="width: 50px; height: 50px; object-fit: contain; ${isFainted ? 'filter: grayscale(100%);' : ''}" onerror="this.style.display='none';">
                 <div style="font-size: 0.75rem; font-weight: bold; margin-top: 4px; color: #fff;">${entity.name}</div>
-                <div style="font-size: 0.65rem; color: ${isFainted ? '#ff0055' : '#00ff00'};">${isFainted ? '💀 FAINTED' : 'Lvl ' + (entity.level || 1)}</div>
+                <div style="font-size: 0.65rem; color: ${isFainted ? '#ff0055' : '#00ff00'};">${isFainted ? 'FAINTED' : 'Lvl ' + (entity.level || 1)}</div>
                 ${isCurrent ? '<div style="font-size: 0.55rem; color: #00ff00; font-weight: bold; margin-top: 2px;">(ACTIVE)</div>' : ''}
             </div>
         `;
@@ -513,7 +537,7 @@ window.selectNewFighter = function(index) {
     const newEntity = playerData.inventory[index];
     if (newEntity.fainted) {
         const battleLog = document.getElementById('battleLog');
-        if (battleLog) battleLog.innerText = `❌ ${newEntity.name} has fainted! Revive them first.`;
+        if (battleLog) battleLog.innerText = `[!] ${newEntity.name} has fainted! Revive them first.`;
         const switchModal = document.getElementById('battleSwitchModal');
         if (switchModal) switchModal.style.display = 'none';
         return;
@@ -548,8 +572,8 @@ window.battleCatch = function() {
     const maxSlots = 100;
     const currentSlots = (typeof playerData !== 'undefined' && playerData.inventory) ? playerData.inventory.length : 0;
     if (currentSlots >= maxSlots) {
-        if (battleLog) battleLog.innerText = `🚨 Inventory is full (100 / 100)! Release some entities before capturing more.`;
-        alert("🚨 Inventory is full (100 / 100)! Release some entities from your inventory before capturing more.");
+        if (battleLog) battleLog.innerText = `[WARNING] Inventory is full (100 / 100)!`;
+        alert("Inventory is full (100 / 100)! Release some entities from your inventory before capturing more.");
         return;
     }
 
@@ -620,7 +644,7 @@ window.battleCatch = function() {
             }
         }
 
-        if (battleLog) battleLog.innerText = `Captured Lvl ${caughtLevel} ${caughtName}! (+3 Essence🔮)`;
+        if (battleLog) battleLog.innerText = `Captured Lvl ${caughtLevel} ${caughtName}! (+3 Essence)`;
         window.currentWildCreature = null;
         setTimeout(window.closeBattle, 1500);
     }

@@ -75,6 +75,8 @@ window.handleAccountAction = async function() {
                     accountXp: 0,
                     dex: [starterInstance.name],
                     inventory: [starterInstance],
+                    gear: ["w_01"], // Inject starting weapon to new accounts
+                    equipped: { weapon: "w_01" }, // Auto-equip starting weapon
                     activeFighterIndex: 0,
                     revivePotions: 3,
                     luckyEggs: 0
@@ -97,8 +99,12 @@ window.handleAccountAction = async function() {
 
             if (doc.exists && typeof setPlayerData === 'function') {
                 setPlayerData(doc.data());
+                
+                // Protect and initialize arrays for older cloud saves
                 if (window.playerData && !window.playerData.dex) window.playerData.dex = [];
                 if (window.playerData && !window.playerData.inventory) window.playerData.inventory = [];
+                if (window.playerData && !window.playerData.gear) window.playerData.gear = ["w_01"];
+                if (window.playerData && !window.playerData.equipped) window.playerData.equipped = { weapon: "w_01" };
             }
             
             localStorage.setItem('ghosthunter_logged_in_user', rawUsername);
@@ -160,6 +166,8 @@ window.signInWithGoogle = async function() {
                     accountXp: 0,
                     dex: [starterInstance.name],
                     inventory: [starterInstance],
+                    gear: ["w_01"], // Inject starting weapon
+                    equipped: { weapon: "w_01" }, // Auto-equip starting weapon
                     activeFighterIndex: 0,
                     revivePotions: 3,
                     luckyEggs: 0
@@ -173,8 +181,12 @@ window.signInWithGoogle = async function() {
             await docRef.set(JSON.parse(cleanDataString));
         } else if (typeof setPlayerData === 'function') {
             setPlayerData(doc.data());
+            
+            // Protect and initialize arrays for older cloud saves
             if (window.playerData && !window.playerData.dex) window.playerData.dex = [];
             if (window.playerData && !window.playerData.inventory) window.playerData.inventory = [];
+            if (window.playerData && !window.playerData.gear) window.playerData.gear = ["w_01"];
+            if (window.playerData && !window.playerData.equipped) window.playerData.equipped = { weapon: "w_01" };
         }
 
         localStorage.setItem('ghosthunter_logged_in_user', rawUsername);
@@ -215,9 +227,11 @@ window.logoutAccount = async function() {
 // ==========================================
 
 window.saveGameData = async function() {
-    if (typeof playerData === 'undefined' || !playerData.username) return;
+    // Pull from the safest internal player object to guarantee fresh arrays
+    const targetData = window._internalPlayerData || window.playerData;
+    if (typeof targetData === 'undefined' || !targetData.username) return;
 
-    const cleanDataString = JSON.stringify(playerData, (key, value) => {
+    const cleanDataString = JSON.stringify(targetData, (key, value) => {
         if (key === 'marker' || key === '_popup' || key === '_source') return undefined;
         return value;
     });
@@ -227,11 +241,11 @@ window.saveGameData = async function() {
 
     try {
         if (typeof firebase !== 'undefined' && firebase.firestore) {
-            await firebase.firestore().collection('accounts').doc(playerData.username).set(cleanData);
-            console.log("☁️ Game saved to the Cloud perfectly!");
+            await firebase.firestore().collection('accounts').doc(targetData.username).set(cleanData);
+            console.log("[CLOUD] Game saved to the database perfectly!");
         }
     } catch (error) {
-        console.error("❌ Failed to save to cloud:", error);
+        console.error("[ERROR] Failed to save to cloud:", error);
     }
 };
 
@@ -241,9 +255,9 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const parsedData = JSON.parse(localBackup);
             setPlayerData(parsedData);
-            console.log("⚡ Loaded local game backup successfully!");
+            console.log("[LOCAL] Loaded offline game backup successfully!");
         } catch (e) {
-            console.error("Failed to load local backup", e);
+            console.error("[ERROR] Failed to load local backup", e);
         }
     }
 });

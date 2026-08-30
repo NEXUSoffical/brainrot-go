@@ -11,23 +11,22 @@ if (typeof window.currentDexTab === 'undefined') {
 }
 
 // ==========================================
-// 📖 THE COMPLETE 50-ENTITY LORE DATABASE 📖
+// THE COMPLETE 50-ENTITY LORE DATABASE
 // ==========================================
 window.beastLoreDatabase = {
-    // 🟢 TIER 1 (COMMON)
+    // TIER 1 (COMMON)
     "Goblin": { origin: "European Folklore", class: "Subterranean Trickster", story: "Greedy, chaotic little creatures that dwell in dark caves and underground tunnels. They love hoarding shiny trinkets, causing headaches for travelers, and setting traps in the dark." },
     "Kappa": { origin: "Japanese Folklore", class: "Aquatic Yokai", story: "A reptilian humanoid that inhabits the ponds and rivers of Japan. They have a bowl-like depression on their heads filled with water, which is the source of their incredible power." },
     "Chupacabra": { origin: "Latin American Folklore", class: "Cryptid Predator", story: "The infamous 'goat-sucker.' A terrifying, spine-backed beast that prowls the night, completely draining livestock of their blood before vanishing back into the shadows." },
     "Kelpie": { origin: "Scottish Mythology", class: "Shape-Shifting Water Spirit", story: "A malevolent aquatic entity that takes the form of a beautiful, tame horse. It tricks weary travelers onto its back before its skin becomes adhesive, dragging them down to a watery grave." },
-    "Gremlin": { origin: "20th Century Aviation Lore", class: "Mechanical Saboteur", story: "Mischievous little creatures that specifically love to dismantle, break, and sabotage complex machinery—especially airplanes, engines, and modern electronics." },
+    "Gremlin": { origin: "20th Century Aviation Lore", class: "Mechanical Saboteur", story: "Mischievous little creatures that specifically love to dismantle, break, and sabotage complex machinery, especially airplanes, engines, and modern electronics." },
     "Imp": { origin: "Germanic Folklore", class: "Minor Demon", story: "Tiny, chaotic entities that are more annoying than truly dangerous. They thrive on playing pranks, hiding important items, and tripping people when they aren't looking." },
     "Boggart": { origin: "English Folklore", class: "Household Poltergeist", story: "A malicious household spirit that causes things to disappear, milk to sour, and dogs to go lame. They hide in dark cupboards and under beds, waiting to strike." },
-    "Puca": { origin: "Celtic Mythology", class: "Shape-Shifting Fae", story: "Mischievous and unpredictable spirits of the mountains and hills. They can take the form of wild dark horses, goats, or hares. They are chaotic neutral—sometimes bringing great fortune, and sometimes leading travelers to a muddy doom." },
-    "PÃºca": { origin: "Celtic Mythology", class: "Shape-Shifting Fae", story: "Mischievous and unpredictable spirits of the mountains and hills. They can take the form of wild dark horses, goats, or hares. They are chaotic neutral—sometimes bringing great fortune, and sometimes leading travelers to a muddy doom." },
+    "Puca": { origin: "Celtic Mythology", class: "Shape-Shifting Fae", story: "Mischievous and unpredictable spirits of the mountains and hills. They can take the form of wild dark horses, goats, or hares. They are chaotic neutral, sometimes bringing great fortune, and sometimes leading travelers to a muddy doom." },
     "Satyr": { origin: "Greek Mythology", class: "Woodland Spirit", story: "Wild nature spirits with the upper half of a man and the lower half of a goat. They live in the deep woods and love wine, music, playing the flute, and causing chaotic revelry." },
     "Jackalope": { origin: "North American Folklore", class: "Fearsome Critter", story: "A strange creature of the American West described as a large jackrabbit with antelope horns. It is said they can perfectly mimic human voices to throw hunters off their trail." },
 
-    // 🟡 TIER 2 (UNCOMMON)
+    // TIER 2 (UNCOMMON)
     "Vampire": { origin: "Eastern Europe", class: "Undead Blood-Drinker", story: "Aristocratic creatures of the night that sustain their immortality by draining the life essence from the living. They possess superhuman strength, can command creatures of the dark, and despise sunlight." },
     "Werewolf": { origin: "European Folklore", class: "Lycanthrope", story: "Humans cursed to transform into ravenous, bloodthirsty wolf-beasts beneath the light of the full moon. They are apex predators bound only by an aversion to silver." },
     "Wendigo": { origin: "Algonquian Folklore", class: "Cursed Spirit", story: "A terrifying, emaciated spirit of the frozen north. Born from the desperation of winter starvation, it possesses an insatiable, endless hunger for human flesh that can never be satisfied." },
@@ -39,7 +38,7 @@ window.beastLoreDatabase = {
     "Skinwalker": { origin: "Navajo Folklore", class: "Dark Shaman", story: "A malevolent witch capable of possessing, disguising themselves as, or terrifyingly mimicking animals. They are masters of psychological terror and dark magic." },
     "Tengu": { origin: "Japanese Folklore", class: "Mountain Yokai", story: "Fearsome avian humanoids and legendary martial artists who fiercely guard their mountain domains. They are known to possess supernatural speed and swordsmanship." },
 
-    // 🔵 TIER 3 (RARE)
+    // TIER 3 (RARE)
     "Griffin": { origin: "Ancient Middle East", class: "Majestic Apex Hybrid", story: "A noble but deadly beast possessing the body of a lion and the head and wings of a giant eagle. They are known to hoard gold and fiercely protect ancient treasures." },
     "Manticore": { origin: "Persian Mythology", class: "Lethal Chimera", story: "A nightmarish predator with a lion's body, a human face, and a scorpion's tail that shoots venomous spines. It devours its prey whole, leaving absolutely nothing behind." },
     "Basilisk": { origin: "European Bestiaries", class: "Serpent King", story: "A highly venomous reptilian horror capable of killing with a single, petrifying glance. Even the trails it leaves behind are considered lethally toxic." },
@@ -51,7 +50,7 @@ window.beastLoreDatabase = {
     "Yeti": { origin: "Himalayan Folklore", class: "Cryptid Ape", story: "A massive, elusive hominid that prowls the frozen, highest peaks of the world, crushing those who wander too far into the snowy wilderness." },
     "Nuckelavee": { origin: "Orcadian Mythology", class: "Plagued Flesh-Demon", story: "A horrific, skinless fusion of man and horse that rises from the sea to spread plague, drought, and death. Its breath alone wilts crops and sickens livestock." },
 
-    // 🟣 TIER 4 (EPIC)
+    // TIER 4 (EPIC)
     "Kraken": { origin: "Scandinavian Folklore", class: "Deep Sea Terror", story: "A colossal cephalopod capable of dragging entire warships and their screaming crews down into the abyssal depths. When it submerges, it creates a whirlpool that consumes everything." },
     "Hydra": { origin: "Greek Mythology", class: "Regenerating Serpent", story: "A toxic, multi-headed reptilian horror. Cut off one head, and two more will violently erupt from the bloody stump to take its place." },
     "Cerberus": { origin: "Greek Mythology", class: "Underworld Hound", story: "The fearsome, three-headed demonic dog that stands eternal guard at the gates of the Underworld, ensuring the dead can never leave, and the living can never enter." },
@@ -63,11 +62,10 @@ window.beastLoreDatabase = {
     "Gashadokuro": { origin: "Japanese Folklore", class: "Starving Skeleton", story: "A gigantic, rattling skeleton formed from the bones of those who died of starvation. It wanders the countryside, biting the heads off lone travelers in the dead of night." },
     "Grootslang": { origin: "South African Mythology", class: "Primordial Serpent", story: "An ancient, elephant-sized serpent created by the gods. Realizing they made it too powerful, the gods locked it away in a deep diamond cave, but it managed to escape." },
 
-    // 🌟 TIER 5 (SECRET / WORLD-ENDERS)
+    // TIER 5 (SECRET / WORLD-ENDERS)
     "Typhon": { origin: "Greek Mythology", class: "Father of All Monsters", story: "A cosmic terror so immense that his head brushes the stars. With a hundred dragon heads and burning eyes, he is a world-ender who once successfully challenged the gods themselves." },
     "Behemoth": { origin: "Biblical Lore", class: "Primordial Land Beast", story: "An unstoppable, earth-shaking titan of muscle and bone. Its bones are like tubes of bronze, and its very footsteps are capable of reshaping the continental landscape." },
     "Jormungandr": { origin: "Norse Mythology", class: "World Serpent", story: "An apocalyptic sea serpent so colossally massive that it wraps around the entire planet, grasping its own tail. When it lets go, the world will end." },
-    "JÃ¶rmungandr": { origin: "Norse Mythology", class: "World Serpent", story: "An apocalyptic sea serpent so colossally massive that it wraps around the entire planet, grasping its own tail. When it lets go, the world will end." },
     "Cipactli": { origin: "Aztec Mythology", class: "Primeval Leviathan", story: "A primeval sea monster, part crocodilian, part fish, and part toad. Always hungry, every single joint on its massive body is adorned with an extra, snapping mouth." },
     "Tiamat": { origin: "Mesopotamian Mythology", class: "Draconic Goddess", story: "The primordial goddess of the salt sea, taking the form of an apocalyptic dragon. She birthed the first generation of monsters to wage war upon the heavens." },
     "Leviathan": { origin: "Biblical Lore", class: "Apex Deep-Dweller", story: "An unstoppable, armored sea serpent whose breath boils the ocean and whose golden eyes illuminate the darkest, crushing depths of the abyssal trenches." },
@@ -82,7 +80,8 @@ if (!window._internalPlayerData) {
     window._internalPlayerData = {
         username: "", rotBalance: 500, accountLevel: 1, accountXp: 0,
         dex: [], shinyDex: [], inventory: [], activeFighterIndex: 0,
-        revivePotions: 3, luckyEggs: 0, maxInventorySlots: 100
+        revivePotions: 3, luckyEggs: 0, maxInventorySlots: 100,
+        gear: ["w_01"], equipped: { weapon: "w_01" } // Default Weapon
     };
 }
 
@@ -90,7 +89,7 @@ if (!window.playerData) {
     window.playerData = new Proxy(window._internalPlayerData, {
         set(target, property, value) {
             if (property === 'rotBalance' && value > (target.rotBalance + 10000)) {
-                console.warn("ANTI-CHEAT: Unauthorized balance modification blocked!");
+                console.warn("[ANTI-CHEAT] Unauthorized balance modification blocked!");
                 alert("Nice try! Anti-cheat blocked your hack.");
                 return false;
             }
@@ -103,7 +102,7 @@ if (!window.playerData) {
     });
 }
 
-// 🧼 AUTO-CLEANSER HELPER FUNCTION
+// AUTO-CLEANSER HELPER FUNCTION
 function cleanseInventory(rawInventory) {
     if (!rawInventory || !Array.isArray(rawInventory)) return [];
     if (typeof paranormalSpawns === 'undefined') return rawInventory; // Failsafe if DB isn't loaded
@@ -115,7 +114,7 @@ function cleanseInventory(rawInventory) {
     const cleanInventory = rawInventory.filter(entity => validNames.includes(entity.name));
     
     if (cleanInventory.length < rawInventory.length) {
-        console.log(`🧹 Auto-Cleanser removed ${rawInventory.length - cleanInventory.length} deprecated entities!`);
+        console.log(`[SYSTEM] Auto-Cleanser removed ${rawInventory.length - cleanInventory.length} deprecated entities!`);
     }
     return cleanInventory;
 }
@@ -143,8 +142,12 @@ function setPlayerData(newData) {
     window._internalPlayerData.dex = newData.dex || window._internalPlayerData.dex || [];
     window._internalPlayerData.shinyDex = newData.shinyDex || window._internalPlayerData.shinyDex || [];
     
-    // 🔥 RUN THE INVENTORY CLEANSER HERE
+    // RUN THE INVENTORY CLEANSER HERE
     window._internalPlayerData.inventory = cleanseInventory(newData.inventory || window._internalPlayerData.inventory || []);
+    
+    // WEAPON SYNC INTEGRATION
+    window._internalPlayerData.gear = newData.gear || window._internalPlayerData.gear || ["w_01"];
+    window._internalPlayerData.equipped = newData.equipped || window._internalPlayerData.equipped || { weapon: "w_01" };
     
     window._internalPlayerData.activeFighterIndex = typeof newData.activeFighterIndex !== 'undefined' ? newData.activeFighterIndex : (window._internalPlayerData.activeFighterIndex || 0);
     window._internalPlayerData.revivePotions = typeof newData.revivePotions !== 'undefined' ? newData.revivePotions : (window._internalPlayerData.revivePotions || 3);
@@ -222,6 +225,12 @@ window.loadGameData = async function() {
                 let cloudInv = cloudData.inventory || [];
                 let finalInventory = localInv.length >= cloudInv.length ? localInv : cloudInv;
 
+                // Safely load Weapons from Cloud, defaulting to local or basic starter sword
+                let localGear = localData?.gear || ["w_01"];
+                let cloudGear = cloudData.gear || ["w_01"];
+                let finalGear = cloudGear.length >= localGear.length ? cloudGear : localGear;
+                let finalEquipped = cloudData.equipped || localData?.equipped || { weapon: "w_01" };
+
                 const bestAccountLevel = Math.max(
                     cloudData.accountLevel || cloudData.accLvl || 1, 
                     localData?.accountLevel || localData?.accLvl || 1,
@@ -251,8 +260,10 @@ window.loadGameData = async function() {
                     accountXp: bestAccountXp,
                     dex: mergedDex,
                     shinyDex: mergedShinyDex,
-                    // 🔥 RUN THE INVENTORY CLEANSER ON CLOUD LOAD TOO
+                    // RUN THE INVENTORY CLEANSER ON CLOUD LOAD TOO
                     inventory: cleanseInventory(finalInventory),
+                    gear: finalGear,
+                    equipped: finalEquipped,
                     activeFighterIndex: cloudData.activeFighterIndex || localData?.activeFighterIndex || 0,
                     revivePotions: bestRevives,
                     luckyEggs: bestEggs,
@@ -267,6 +278,8 @@ window.loadGameData = async function() {
     if (!window.playerData.dex) window.playerData.dex = [];
     if (!window.playerData.shinyDex) window.playerData.shinyDex = [];
     if (!window.playerData.inventory) window.playerData.inventory = [];
+    if (!window.playerData.gear) window.playerData.gear = ["w_01"];
+    if (!window.playerData.equipped) window.playerData.equipped = { weapon: "w_01" };
 };
 
 (async function checkExistingSession() {
@@ -371,6 +384,8 @@ window.handleAccountAction = async function() {
                 dex: [window.selectedStarter.name],
                 shinyDex: [],
                 inventory: [starterInstance],
+                gear: ["w_01"],
+                equipped: { weapon: "w_01" },
                 activeFighterIndex: 0,
                 revivePotions: 3,
                 luckyEggs: 0,
@@ -390,6 +405,8 @@ window.handleAccountAction = async function() {
                 if (!window.playerData.dex) window.playerData.dex = [];
                 if (!window.playerData.shinyDex) window.playerData.shinyDex = [];
                 if (!window.playerData.inventory) window.playerData.inventory = [];
+                if (!window.playerData.gear) window.playerData.gear = ["w_01"];
+                if (!window.playerData.equipped) window.playerData.equipped = { weapon: "w_01" };
             }
             
             localStorage.setItem('brainrot_logged_in_user', rawUsername);
@@ -445,6 +462,8 @@ window.signInWithGoogle = async function() {
                 dex: [window.selectedStarter.name],
                 shinyDex: [],
                 inventory: [starterInstance],
+                gear: ["w_01"],
+                equipped: { weapon: "w_01" },
                 activeFighterIndex: 0,
                 revivePotions: 3,
                 luckyEggs: 0,
@@ -461,6 +480,8 @@ window.signInWithGoogle = async function() {
             if (!window.playerData.dex) window.playerData.dex = [];
             if (!window.playerData.shinyDex) window.playerData.shinyDex = [];
             if (!window.playerData.inventory) window.playerData.inventory = [];
+            if (!window.playerData.gear) window.playerData.gear = ["w_01"];
+            if (!window.playerData.equipped) window.playerData.equipped = { weapon: "w_01" };
         }
 
         localStorage.setItem('brainrot_logged_in_user', rawUsername);
@@ -545,7 +566,7 @@ window.getRarityColor = function(rarity) {
 };
 
 function updateHUD() {
-    // 🔧 AUTO-SYNC DEX WITH INVENTORY 🔧
+    // AUTO-SYNC DEX WITH INVENTORY
     if (window.playerData && window.playerData.inventory) {
         if (!window.playerData.dex) window.playerData.dex = [];
         if (!window.playerData.shinyDex) window.playerData.shinyDex = [];
@@ -581,7 +602,7 @@ function updateHUD() {
     if (totalBrainrotsEl) totalBrainrotsEl.innerText = totalPossible;
     if (inventoryCountEl) inventoryCountEl.innerText = inventoryCount;
     if (rotBalanceEl) rotBalanceEl.innerText = window.playerData.rotBalance || 500;
-    if (hudTitle && window.playerData.username) hudTitle.innerText = `📺 ${window.playerData.username.toUpperCase()}`;
+    if (hudTitle && window.playerData.username) hudTitle.innerText = `[HUD] ${window.playerData.username.toUpperCase()}`;
     
     const currentLevel = window.playerData.accountLevel || 1;
     const currentXp = window.playerData.accountXp || 0;
@@ -668,20 +689,20 @@ function renderDexGrid() {
             card.onmouseout = () => { card.style.transform = 'scale(1)'; card.style.boxShadow = `0 0 10px ${isShinyTab ? 'rgba(0,255,255,0.4)' : rarityColor + '44'}`; };
 
             card.innerHTML = `
-                ${isShinyTab ? '<div style="font-size: 0.6rem; color: #00ffff; font-family: monospace; font-weight: bold; margin-bottom: 2px;">💎 SHINY</div>' : ''}
+                ${isShinyTab ? '<div style="font-size: 0.6rem; color: #00ffff; font-family: monospace; font-weight: bold; margin-bottom: 2px;">[SHINY]</div>' : ''}
                 <div style="font-size: 0.75rem; font-weight: bold; color: ${isShinyTab ? '#00ffff' : rarityColor}; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${char.name}</div>
                 <div style="font-size: 0.65rem; color: #888; margin-bottom: 4px;">${(char.rarity || 'common').toUpperCase()}</div>
                 <div style="width: 100%; height: 90px; background: rgba(0,0,0,0.4); border-radius: 8px; overflow: hidden; margin-bottom: 6px; display: flex; align-items: center; justify-content: center; padding: 4px; box-sizing: border-box;">
                     <img src="${char.image || ''}" style="max-width: 100%; max-height: 100%; object-fit: contain; filter: drop-shadow(0 5px 5px rgba(0,0,0,0.8)) ${isShinyTab ? 'brightness(1.2) contrast(2)' : ''};" onerror="this.style.display='none';">
                 </div>
-                <div style="font-size: 0.6rem; color: #fff; background: rgba(255,255,255,0.1); border-radius: 4px; padding: 3px; font-weight: bold; margin-top: 5px;">🔍 READ LORE</div>
+                <div style="font-size: 0.6rem; color: #fff; background: rgba(255,255,255,0.1); border-radius: 4px; padding: 3px; font-weight: bold; margin-top: 5px;">[READ LORE]</div>
             `;
         } else {
             card.innerHTML = `
                 <div style="font-size: 0.75rem; font-weight: bold; color: #666; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">???</div>
                 <div style="font-size: 0.65rem; color: #888; margin-bottom: 4px;">${(char.rarity || 'common').toUpperCase()}</div>
                 <div style="width: 100%; height: 90px; background: rgba(0,0,0,0.4); border-radius: 8px; overflow: hidden; margin-bottom: 6px; display: flex; align-items: center; justify-content: center;">
-                    <span style="font-size: 1.8rem; color: #444; font-weight: bold;">🔒</span>
+                    <span style="font-size: 1.8rem; color: #444; font-weight: bold;">[LOCKED]</span>
                 </div>
                 <div style="font-size: 0.65rem; color: #555; font-weight: bold;">LOCKED</div>
             `;
@@ -692,7 +713,7 @@ function renderDexGrid() {
 }
 
 // ==========================================
-// 🔍 LORE MODAL SYSTEM 🔍
+// LORE MODAL SYSTEM
 // ==========================================
 window.openDexLoreModal = function(beastName) {
     const masterList = (typeof paranormalSpawns !== 'undefined' && paranormalSpawns.length) ? paranormalSpawns : ((typeof brainrotCharacters !== 'undefined' && brainrotCharacters) ? brainrotCharacters : []);
@@ -700,7 +721,7 @@ window.openDexLoreModal = function(beastName) {
     
     if (!char) return; // Failsafe
 
-    // Clean name for database lookup (e.g. "Púca" -> "Puca")
+    // Clean name for database lookup
     const cleanName = beastName.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
     
     // Grab lore from DB, checking both clean and exact strings just in case!
@@ -738,7 +759,7 @@ window.openDexLoreModal = function(beastName) {
 
             <!-- Image Header Area -->
             <div style="width: 100%; height: 220px; background: radial-gradient(circle, ${isShinyTab ? 'rgba(0,255,255,0.2)' : rarityColor + '33'} 0%, #000 100%); display: flex; align-items: center; justify-content: center; border-bottom: 2px solid #333; position: relative; overflow: hidden;">
-                ${isShinyTab ? '<div style="position: absolute; top: 15px; left: 15px; background: rgba(0,0,0,0.6); padding: 5px 10px; border-radius: 6px; border: 1px solid #00ffff; color: #00ffff; font-family: monospace; font-weight: bold; font-size: 0.8rem;">💎 SHINY VARIANT</div>' : ''}
+                ${isShinyTab ? '<div style="position: absolute; top: 15px; left: 15px; background: rgba(0,0,0,0.6); padding: 5px 10px; border-radius: 6px; border: 1px solid #00ffff; color: #00ffff; font-family: monospace; font-weight: bold; font-size: 0.8rem;">[SHINY VARIANT]</div>' : ''}
                 <img src="${char.image}" style="max-height: 180px; max-width: 80%; object-fit: contain; filter: drop-shadow(0 15px 15px rgba(0,0,0,0.9)) ${isShinyTab ? 'brightness(1.2) contrast(2)' : ''};">
             </div>
 
@@ -749,11 +770,11 @@ window.openDexLoreModal = function(beastName) {
                 
                 <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
                     <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; border-left: 4px solid #00ccff;">
-                        <span style="color: #00ccff; font-weight: bold; font-size: 0.8rem;">📍 ORIGIN</span>
+                        <span style="color: #00ccff; font-weight: bold; font-size: 0.8rem;">[ORIGIN]</span>
                         <div style="color: #fff; font-size: 1rem; margin-top: 4px;">${lore.origin}</div>
                     </div>
                     <div style="background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; border-left: 4px solid #ff0055;">
-                        <span style="color: #ff0055; font-weight: bold; font-size: 0.8rem;">🧬 CLASS</span>
+                        <span style="color: #ff0055; font-weight: bold; font-size: 0.8rem;">[CLASS]</span>
                         <div style="color: #fff; font-size: 1rem; margin-top: 4px;">${lore.class}</div>
                     </div>
                 </div>
@@ -807,7 +828,7 @@ window.openDex = function() {
     modal.innerHTML = `
         <div style="width: 100%; max-width: 800px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
             <div>
-                <h2 style="margin: 0; color: #00ccff; text-transform: uppercase; font-size: 1.5rem;">📖 ROT-DEX STICKER BOOK</h2>
+                <h2 style="margin: 0; color: #00ccff; text-transform: uppercase; font-size: 1.5rem;">[ROT-DEX STICKER BOOK]</h2>
                 <div style="font-size: 0.85rem; color: #aaa; margin-top: 2px;">Collected: <span style="color: #00ff55; font-weight: bold;" id="dexHeaderCount">${window.currentDexTab === 'shiny' ? shinyCount : standardCount} / ${totalCount}</span></div>
             </div>
             <button onclick="closeDex()" style="background: #ff0055; color: #fff; border: 2px solid #fff; border-radius: 50%; width: 35px; height: 35px; font-weight: bold; cursor: pointer; font-size: 1.1rem;">X</button>
@@ -819,14 +840,14 @@ window.openDex = function() {
                 color: ${window.currentDexTab === 'standard' ? '#000' : '#00ccff'};
                 border: 2px solid #00ccff; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: monospace;
                 box-shadow: ${window.currentDexTab === 'standard' ? '0 0 10px #00ccff' : 'none'};
-            ">📖 STANDARD DEX (${standardCount})</button>
+            ">[STANDARD DEX] (${standardCount})</button>
             
             <button onclick="switchDexTab('shiny')" id="btnDexShiny" style="
                 flex: 1; padding: 10px; background: ${window.currentDexTab === 'shiny' ? '#00ffff' : '#222'};
                 color: ${window.currentDexTab === 'shiny' ? '#000' : '#00ffff'};
                 border: 2px solid #00ffff; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: monospace;
                 box-shadow: ${window.currentDexTab === 'shiny' ? '0 0 10px #00ffff' : 'none'};
-            ">💎 SHINY DEX (${shinyCount})</button>
+            ">[SHINY DEX] (${shinyCount})</button>
         </div>
 
         <div id="dexGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 12px; width: 100%; max-width: 800px; max-height: calc(100vh - 180px); overflow-y: auto; padding: 5px; padding-bottom: 50px;"></div>
@@ -883,7 +904,7 @@ window.openAdminPanel = function() {
                 font-family: monospace !important;
                 color: #fff !important;
             ">
-                <h2 style="color: #ff0055; font-size: 1.3rem; margin-bottom: 10px;">🛠️ ADMIN PANEL</h2>
+                <h2 style="color: #ff0055; font-size: 1.3rem; margin-bottom: 10px;">[ADMIN PANEL]</h2>
                 <div id="adminAccountsList" style="display: flex; flex-direction: column; gap: 8px; max-height: 250px; overflow-y: auto; margin-bottom: 15px; text-align: left;"></div>
                 <button onclick="clearAllAccounts()" style="background: #ff0055; color: #fff; border: none; padding: 8px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-bottom: 8px;">WIPE ALL CLOUD ACCOUNTS</button>
                 <button onclick="closeAdminPanel()" style="background: #333; color: #fff; border: none; padding: 8px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%;">CLOSE</button>
@@ -934,7 +955,7 @@ window.renderAdminPanel = async function() {
             card.innerHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <b style="color:${isCurrent ? '#00ff00' : '#fff'}; font-size:0.9rem;">${username} ${isCurrent ? '(ACTIVE)' : ''}</b>
-                    <span style="font-size:0.75rem; color:#ffaa00;">💰 ${acc.rotBalance || 0} Rot</span>
+                    <span style="font-size:0.75rem; color:#ffaa00;">[COINS] ${acc.rotBalance || 0} Rot</span>
                 </div>
                 <span style="font-size:0.75rem; color:#00ccff;">Inventory: ${invCount} | Dex: ${dexCount} | Shiny: ${shinyCount}</span>
             `;
