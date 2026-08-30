@@ -155,12 +155,12 @@ window.openWardrobeModal = function() {
     `;
 
     modal.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; width: 100%; max-width: 1200px; margin-left: auto; margin-right: auto;">
             <h2 style="margin: 0; color: #00ff80; font-size: 1.5rem;">HUNTER PROFILE</h2>
             <button onclick="document.getElementById('wardrobeModal').style.display='none'" style="background: #ff0055; border: 2px solid #fff; color: #fff; width: 35px; height: 35px; border-radius: 50%; font-weight: bold; cursor: pointer;">X</button>
         </div>
 
-        <div style="display: flex; gap: 15px; margin-bottom: 20px; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; border: 1px solid #333;">
+        <div style="display: flex; gap: 15px; margin-bottom: 20px; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; border: 1px solid #333; width: 100%; max-width: 1200px; margin-left: auto; margin-right: auto;">
             <div style="flex: 1; display: flex; justify-content: center; align-items: center; min-height: 200px; background: #000; border-radius: 8px; border: 1px inset #222; position: relative;">
                 ${dollHtml}
             </div>
@@ -171,9 +171,11 @@ window.openWardrobeModal = function() {
             </div>
         </div>
 
-        <h3 style="color: #ff0055; font-size: 1rem; border-bottom: 1px solid #333; padding-bottom: 5px; margin-bottom: 15px;">ARMORY COLLECTION</h3>
-        
-        <div id="armoryListContainer" style="width: 100%; max-width: 500px; margin: 0 auto; padding-bottom: 30px;"></div>
+        <div style="width: 100%; max-width: 1200px; margin-left: auto; margin-right: auto;">
+            <h3 style="color: #ff0055; font-size: 1rem; border-bottom: 1px solid #333; padding-bottom: 5px; margin-bottom: 15px;">ARMORY COLLECTION</h3>
+            <!-- FULL-WIDTH RESPONSIVE GRID -->
+            <div id="armoryListContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 15px; width: 100%; padding-bottom: 30px;"></div>
+        </div>
     `;
     modal.style.display = 'flex';
 
@@ -187,18 +189,20 @@ window.openWardrobeModal = function() {
             const displayAtk = wpn.atk || wpn.attack || wpn.damage || 5; 
             
             let card = document.createElement('div');
-            card.style.cssText = `background: #110a1c; border: 2px solid ${isEquipped ? '#00ff80' : '#333'}; border-radius: 12px; padding: 12px; display: flex; align-items: center; gap: 15px; margin-bottom: 12px; box-shadow: ${isEquipped ? '0 0 20px rgba(0,255,128,0.2)' : 'none'}; transition: transform 0.1s;`;
+            card.style.cssText = `background: #110a1c; border: 2px solid ${isEquipped ? '#00ff80' : '#333'}; border-radius: 12px; padding: 12px; display: flex; align-items: center; justify-content: space-between; box-shadow: ${isEquipped ? '0 0 20px rgba(0,255,128,0.2)' : 'none'}; transition: transform 0.1s; height: 100%; box-sizing: border-box;`;
             
             card.innerHTML = `
-                <div style="width: 70px; height: 70px; background: #000; border-radius: 8px; border: 1px solid ${rarityColor}; display: flex; justify-content: center; align-items: center; overflow: hidden; flex-shrink: 0;">
-                    <img src="${wpn.image}" style="height: 120%; object-fit: contain; filter: drop-shadow(0 0 5px ${rarityColor});" onerror="if(!this.dataset.retried){this.dataset.retried=true; this.src='gear/rusty.png';}else{this.src='https://placehold.co/70x70/222/ff0055.png?text=?';}">
+                <div style="display: flex; align-items: center; gap: 15px; flex-grow: 1;">
+                    <div style="width: 70px; height: 70px; background: #000; border-radius: 8px; border: 1px solid ${rarityColor}; display: flex; justify-content: center; align-items: center; overflow: hidden; flex-shrink: 0;">
+                        <img src="${wpn.image}" style="height: 120%; object-fit: contain; filter: drop-shadow(0 0 5px ${rarityColor});" onerror="if(!this.dataset.retried){this.dataset.retried=true; this.src='gear/rusty.png';}else{this.src='https://placehold.co/70x70/222/ff0055.png?text=?';}">
+                    </div>
+                    <div style="text-align: left; overflow: hidden;">
+                        <div style="font-weight: bold; font-size: 1.1rem; color: #fff; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">${wpn.name}</div>
+                        <div style="font-size: 0.75rem; color: ${rarityColor}; text-transform: uppercase; font-weight: bold; margin-bottom: 4px;">${wpn.rarity}</div>
+                        <div style="font-size: 0.9rem; color: #aaa;">ATK: <span style="color: #ff0055; font-weight: bold;">+${displayAtk}</span></div>
+                    </div>
                 </div>
-                <div style="flex-grow: 1; text-align: left;">
-                    <div style="font-weight: bold; font-size: 1.1rem; color: #fff;">${wpn.name}</div>
-                    <div style="font-size: 0.75rem; color: ${rarityColor}; text-transform: uppercase; font-weight: bold; margin-bottom: 4px;">${wpn.rarity}</div>
-                    <div style="font-size: 0.9rem; color: #aaa;">ATK: <span style="color: #ff0055; font-weight: bold;">+${displayAtk}</span></div>
-                </div>
-                <button id="equipBtn_${wpn.id}" style="background: ${isEquipped ? '#00ff80' : 'transparent'}; color: ${isEquipped ? '#000' : '#00ff80'}; border: 2px solid #00ff80; padding: 12px 18px; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: monospace; font-size: 1rem;">
+                <button id="equipBtn_${wpn.id}" style="background: ${isEquipped ? '#00ff80' : 'transparent'}; color: ${isEquipped ? '#000' : '#00ff80'}; border: 2px solid #00ff80; padding: 12px 18px; border-radius: 8px; font-weight: bold; cursor: pointer; font-family: monospace; font-size: 1rem; flex-shrink: 0; margin-left: 10px;">
                     ${isEquipped ? 'EQUIPPED' : 'EQUIP'}
                 </button>
             `;

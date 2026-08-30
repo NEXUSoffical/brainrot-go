@@ -247,15 +247,17 @@ window.startBattle = function(spawnId, name, imageUrl, level, rarity) {
     buildBattleScreen();
     window.currentBattleEntry = spawnedCreatures.find(c => c.id === spawnId) || null;
 
-    // --- DYNAMIC WEAPON CHECKER ---
-    // Finds exactly what weapon the player has equipped from gear.js and renders it
+    // --- DYNAMIC WEAPON RENDER & DAMAGE FIX ---
     let activeWeaponImage = 'gear/rusty.png'; // Fallback
+    let weaponAtk = 5; // Default absolute minimum if unarmed
     
     if (window.playerData && window.playerData.equipped && window.playerData.equipped.weapon) {
         let weapons = (typeof weaponDatabase !== 'undefined') ? weaponDatabase : (window.gameWeapons || []);
         let wpn = weapons.find(w => w.id === window.playerData.equipped.weapon);
-        if (wpn && wpn.image) {
-            activeWeaponImage = wpn.image;
+        if (wpn) {
+            if (wpn.image) activeWeaponImage = wpn.image;
+            // Get the weapon's exact damage, stripping out any hidden buffs!
+            weaponAtk = Number(wpn.atk || wpn.attack || wpn.damage || 5); 
         }
     }
     
@@ -265,23 +267,18 @@ window.startBattle = function(spawnId, name, imageUrl, level, rarity) {
     const enemyMaxHp = 50 + (level * 15);
     const pLevel = window.playerData?.accountLevel || 1;
     
-    // Calculate player's total attack, adding the weapon's ATK power
-    let baseAtk = 15;
-    if (window.playerData && window.playerData.equipped && window.playerData.equipped.weapon) {
-        let weapons = (typeof weaponDatabase !== 'undefined') ? weaponDatabase : (window.gameWeapons || []);
-        let wpn = weapons.find(w => w.id === window.playerData.equipped.weapon);
-        if (wpn) baseAtk += Number(wpn.atk || 0);
-    }
-
-    const gearStats = typeof window.calculatePlayerGearStats === 'function' ? window.calculatePlayerGearStats(window.playerData) : { maxHp: 100 + (pLevel * 10), atk: baseAtk, def: 5 };
-    const playerMaxHp = gearStats.maxHp || (100 + (pLevel * 10));
+    // FORCE the math right here to exactly match your Hunter Profile Screen
+    const finalPlayerMaxHp = 100 + (pLevel * 15); 
+    const finalPlayerAtk = weaponAtk; // COMPLETELY REMOVED THE SECRET +15 BUFF
+    const finalPlayerDef = pLevel * 2;
 
     window.battleData = {
         spawnId, name, image: imageUrl, level, rarity,
         enemyMaxHp: enemyMaxHp, enemyHp: enemyMaxHp,
         enemyAtk: 5 + (level * 4), 
-        playerMaxHp: playerMaxHp, playerHp: playerMaxHp,
-        playerAtk: gearStats.atk || baseAtk, playerDef: gearStats.def || 5, 
+        playerMaxHp: finalPlayerMaxHp, playerHp: finalPlayerMaxHp,
+        playerAtk: finalPlayerAtk, 
+        playerDef: finalPlayerDef, 
         isOver: false
     };
 
@@ -300,7 +297,7 @@ window.startBattle = function(spawnId, name, imageUrl, level, rarity) {
     document.getElementById('battleMonsterMaxHpText').innerText = enemyMaxHp;
 
     document.getElementById('battlePlayerHp').style.width = '100%';
-    document.getElementById('battlePlayerHpText').innerText = `${playerMaxHp} / ${playerMaxHp}`;
+    document.getElementById('battlePlayerHpText').innerText = `${finalPlayerMaxHp} / ${finalPlayerMaxHp}`;
     
     const strikeBtn = document.getElementById('strikeBtn');
     if (strikeBtn) strikeBtn.disabled = false;
@@ -313,7 +310,6 @@ window.executeTurnBasedCombat = function() {
     const data = window.battleData;
     if (!data || data.isOver) return;
 
-    // 1. Instantly lock the button so the player can't cheat/spam
     const strikeBtn = document.getElementById('strikeBtn');
     if (strikeBtn) strikeBtn.disabled = true;
 
@@ -339,7 +335,7 @@ window.executeTurnBasedCombat = function() {
 
     if (window.gameAudio && typeof window.gameAudio.playHit === 'function') window.gameAudio.playHit();
 
-    // Player deals damage
+    // Player deals exact weapon damage (variance is just 0.9x to 1.1x so it's not identical every hit)
     const variance = (Math.random() * 0.2) + 0.9; 
     data.enemyHp -= Math.floor(data.playerAtk * variance);
     if (data.enemyHp < 0) data.enemyHp = 0;
@@ -348,7 +344,6 @@ window.executeTurnBasedCombat = function() {
     document.getElementById('battleMonsterHp').style.width = eHpPercent + '%';
     document.getElementById('battleMonsterHpText').innerText = Math.ceil(data.enemyHp);
 
-    // Check if Monster Dies
     if (data.enemyHp <= 0) {
         data.isOver = true;
         monster.style.transition = 'all 0.5s ease-in';
@@ -361,28 +356,24 @@ window.executeTurnBasedCombat = function() {
             monster.style.opacity = '1';
             finalizeCapture(data);
         }, 600);
-        return; // Stop the sequence, the monster is dead!
+        return; 
     }
 
     // --- PHASE 2: MONSTER ATTACKS BACK ---
-    // Wait 1000ms (1 second) to let the player's swing finish, then counter-attack
     setTimeout(() => {
         if (data.isOver) return;
 
-        // Enemy Lunge Animation
         if (monster) {
             monster.classList.remove('enemy-attacking');
             void monster.offsetWidth;
             monster.classList.add('enemy-attacking');
         }
         
-        // Screen Flashes Red
         if (overlay) {
             overlay.style.boxShadow = "inset 0 0 150px rgba(255,0,0,0.8)";
             setTimeout(() => { if(overlay) overlay.style.boxShadow = "none"; }, 200);
         }
 
-        // Enemy deals damage to Player
         let dmg = Math.max(1, data.enemyAtk - Math.floor(data.playerDef * 0.3));
         dmg = Math.floor(dmg * ((Math.random() * 0.4) + 0.8)); 
         
@@ -393,7 +384,6 @@ window.executeTurnBasedCombat = function() {
         document.getElementById('battlePlayerHp').style.width = pPercent + '%';
         document.getElementById('battlePlayerHpText').innerText = `${data.playerHp} / ${data.playerMaxHp}`;
 
-        // Check if Player Dies
         if (data.playerHp <= 0) {
             data.isOver = true;
             setTimeout(() => {
@@ -401,7 +391,6 @@ window.executeTurnBasedCombat = function() {
                 fleeBattle();
             }, 300);
         } else {
-            // Player survived! Turn the STRIKE button back on for the next turn.
             if (strikeBtn) strikeBtn.disabled = false;
         }
 
