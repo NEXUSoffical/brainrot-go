@@ -2,7 +2,6 @@
 
 window.injectAnimationStyles = window.injectAnimationStyles || function() {};
 
-// Use the new weaponDatabase from gear.js if it exists, otherwise use fallback
 const getGlobalWeapons = () => {
     return (typeof weaponDatabase !== 'undefined') ? weaponDatabase : (window.gameWeapons || []);
 };
@@ -10,27 +9,23 @@ const getGlobalWeapons = () => {
 if (typeof window.currentInventoryTab === 'undefined') window.currentInventoryTab = 'rots';
 if (typeof window.currentInventorySort === 'undefined') window.currentInventorySort = 'newest';
 
-// ==========================================
-// MASTER CHARACTER RENDERING ENGINE
-// ==========================================
 window.getHunterDollHtml = function(scale = 1) {
     const weapons = getGlobalWeapons();
     let eqWpn = null;
+    let filterStr = "";
     if (weapons && weapons.length > 0) {
         eqWpn = weapons.find(w => w.id === window.playerData?.equipped?.weapon) || weapons[0];
+        if (eqWpn.cssFilter && eqWpn.cssFilter !== 'none') filterStr = eqWpn.cssFilter;
     }
 
     return `
     <div style="position: relative; width: ${140 * scale}px; height: ${180 * scale}px; display: flex; justify-content: center; align-items: flex-end;">
         <img src="gear/base_body_sprite.png" style="position: absolute; bottom: 0; left: 0; width: 100%; height: 100%; object-fit: cover; object-position: left center; z-index: 1;" onerror="this.src='https://placehold.co/140x180/111/444.png?text=HUNTER'">
-        ${eqWpn ? `<img id="playerWeaponSprite" src="${eqWpn.image}" style="position: absolute; left: ${70 * scale}px; bottom: ${40 * scale}px; height: ${90 * scale}px; width: ${45 * scale}px; object-fit: contain; transform-origin: bottom center; transform: rotate(20deg) scale(1.6); filter: drop-shadow(0 0 10px #ff0055); z-index: 5;" onerror="if(!this.dataset.retried){this.dataset.retried=true; this.src='gear/rusty.png';}else{this.style.display='none';}">` : ''}
+        ${eqWpn ? `<img id="playerWeaponSprite" src="${eqWpn.image}" style="position: absolute; left: ${70 * scale}px; bottom: ${40 * scale}px; height: ${90 * scale}px; width: ${45 * scale}px; object-fit: contain; transform-origin: bottom center; transform: rotate(20deg) scale(1.6); filter: drop-shadow(0 0 10px #ff0055) ${filterStr}; z-index: 5;" onerror="if(!this.dataset.retried){this.dataset.retried=true; this.src='gear/rusty.png';}else{this.style.display='none';}">` : ''}
     </div>
     `;
 };
 
-// ==========================================
-// TOP RIGHT AVATAR UPDATER
-// ==========================================
 window.updateTopRightAvatar = function() {
     const widget = document.getElementById('playerProfileWidget');
     if (!widget) return;
@@ -64,9 +59,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 1000);
 });
 
-// ==========================================
-// WEAPON VAULT 
-// ==========================================
 window.equipWeapon = function(weaponId) {
     if (!window.playerData.equipped) window.playerData.equipped = {};
     window.playerData.equipped.weapon = weaponId;
@@ -79,6 +71,7 @@ window.equipWeapon = function(weaponId) {
 
 function getGearRarityColor(rarity) {
     switch ((rarity || '').toLowerCase()) {
+        case 'mythic': return '#ff00ea';
         case 'secret': return '#ff00ea'; 
         case 'legendary': return '#ffcc00';
         case 'epic': return '#ff007f';      
@@ -112,7 +105,6 @@ window.openWardrobeModal = function() {
         window.playerData.equipped = { weapon: starterId };
     }
 
-    // SYNC UNBOXED WEAPONS FROM SHOP INTO GEAR ARRAY
     if (window.playerData.armory && window.playerData.armory.length > 0) {
         window.playerData.armory.forEach(w => {
             if (w && w.id && !window.playerData.gear.includes(w.id)) {
@@ -131,7 +123,6 @@ window.openWardrobeModal = function() {
     window.playerData.gear = [...new Set(validGear)];
     if (typeof window.saveGameData === 'function') window.saveGameData();
 
-    // STRICT STATS CALCULATION
     let stats = { maxHp: 100, atk: 5, def: 0 };
     let pLevel = Number(window.playerData.accountLevel) || 1;
     stats.maxHp = 100 + (pLevel * 15);
@@ -173,7 +164,6 @@ window.openWardrobeModal = function() {
 
         <div style="width: 100%; max-width: 1200px; margin-left: auto; margin-right: auto;">
             <h3 style="color: #ff0055; font-size: 1rem; border-bottom: 1px solid #333; padding-bottom: 5px; margin-bottom: 15px;">ARMORY COLLECTION</h3>
-            <!-- FULL-WIDTH RESPONSIVE GRID -->
             <div id="armoryListContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 15px; width: 100%; padding-bottom: 30px;"></div>
         </div>
     `;
@@ -185,8 +175,8 @@ window.openWardrobeModal = function() {
         if (window.playerData.gear.includes(wpn.id)) {
             const isEquipped = window.playerData.equipped.weapon === wpn.id;
             const rarityColor = getGearRarityColor(wpn.rarity);
-            
             const displayAtk = wpn.atk || wpn.attack || wpn.damage || 5; 
+            let filterStr = (wpn.cssFilter && wpn.cssFilter !== 'none') ? wpn.cssFilter : '';
             
             let card = document.createElement('div');
             card.style.cssText = `background: #110a1c; border: 2px solid ${isEquipped ? '#00ff80' : '#333'}; border-radius: 12px; padding: 12px; display: flex; align-items: center; justify-content: space-between; box-shadow: ${isEquipped ? '0 0 20px rgba(0,255,128,0.2)' : 'none'}; transition: transform 0.1s; height: 100%; box-sizing: border-box;`;
@@ -194,7 +184,7 @@ window.openWardrobeModal = function() {
             card.innerHTML = `
                 <div style="display: flex; align-items: center; gap: 15px; flex-grow: 1;">
                     <div style="width: 70px; height: 70px; background: #000; border-radius: 8px; border: 1px solid ${rarityColor}; display: flex; justify-content: center; align-items: center; overflow: hidden; flex-shrink: 0;">
-                        <img src="${wpn.image}" style="height: 120%; object-fit: contain; filter: drop-shadow(0 0 5px ${rarityColor});" onerror="if(!this.dataset.retried){this.dataset.retried=true; this.src='gear/rusty.png';}else{this.src='https://placehold.co/70x70/222/ff0055.png?text=?';}">
+                        <img src="${wpn.image}" style="height: 120%; object-fit: contain; filter: drop-shadow(0 0 5px ${rarityColor}) ${filterStr};" onerror="if(!this.dataset.retried){this.dataset.retried=true; this.src='gear/rusty.png';}else{this.src='https://placehold.co/70x70/222/ff0055.png?text=?';}">
                     </div>
                     <div style="text-align: left; overflow: hidden;">
                         <div style="font-weight: bold; font-size: 1.1rem; color: #fff; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">${wpn.name}</div>
@@ -216,9 +206,6 @@ window.openWardrobeModal = function() {
     });
 };
 
-// ==========================================
-// INVENTORY UI (ENTITIES & ITEMS)
-// ==========================================
 window.setInventorySort = function(sortType) { window.currentInventorySort = sortType; renderInventoryGrid(); };
 window.switchInventoryTab = function(tabName) { window.currentInventoryTab = tabName; renderInventoryGrid(); };
 

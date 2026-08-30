@@ -23,134 +23,128 @@ function openShopModal() {
   `;
 
   modal.innerHTML = `
-    <!-- Header -->
     <div style="width: 100%; display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #ffcc00; padding-bottom: 15px; flex-shrink: 0;">
       <div>
-        <h2 style="color: #ffcc00; font-size: 1.8rem; text-shadow: 0 0 15px rgba(255,204,0,0.6); margin: 0 0 5px 0;">&#128722; HUNTER SHOP</h2>
+        <h2 style="color: #ffcc00; font-size: 1.8rem; text-shadow: 0 0 15px rgba(255,204,0,0.6); margin: 0 0 5px 0;">🛒 HUNTER SHOP</h2>
         <p style="font-size: 0.75rem; color: #aaa; margin: 0 0 10px 0;">Spend coins, open crates, or grab upgrades</p>
         <div style="display: inline-block; background: rgba(255,204,0,0.15); border: 2px solid #ffcc00; padding: 6px 16px; border-radius: 30px; font-size: 1rem; font-weight: bold; color: #ffcc00; box-shadow: 0 0 15px rgba(255,204,0,0.2);">
-          &#129689; <span id="shopCoinBalance">${currentCoins}</span>
+          🪙 <span id="shopCoinBalance">${currentCoins}</span>
         </div>
       </div>
       <button onclick="document.getElementById('shopModal').remove()" style="background: #ff0055; color: #fff; border: 2px solid #fff; border-radius: 50%; width: 40px; height: 40px; font-weight: bold; font-size: 1.2rem; cursor: pointer; flex-shrink: 0; box-shadow: 0 0 10px rgba(255,0,85,0.5);">X</button>
     </div>
 
-    <!-- Scrollable Content -->
     <div style="width: 100%; flex: 1; overflow-y: auto; margin-top: 15px; padding-right: 5px; padding-bottom: 30px; display: flex; flex-direction: column; gap: 20px; text-align: left;">
       
-      <!-- WEAPON CRATES -->
       <div style="font-size: 0.85rem; color: #ff0000; font-weight: bold; letter-spacing: 1.5px;">ARSENAL WEAPON CRATES</div>
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px;">
         
         <div style="background: #16161a; border: 2px solid #ff5500; border-radius: 12px; padding: 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
           <div style="display: flex; align-items: center; gap: 10px;">
-            <div style="font-size: 2.2rem;">&#9876;&#65039;</div>
+            <div style="font-size: 2.2rem;">⚔️</div>
             <div>
               <div style="font-weight: bold; font-size: 1rem; color: #fff;">Standard Arsenal</div>
               <div style="font-size: 0.7rem; color: #aaa; margin-top: 2px;">Drops Common to Epic Weapons</div>
             </div>
           </div>
           <button onclick="openWeaponCrate('standard', 400)" style="background: #ffcc00; color: #000; border: none; padding: 10px 14px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 0.9rem; box-shadow: 0 0 12px rgba(255,204,0,0.4); white-space: nowrap;">
-            &#129689; 400
+            🪙 400
           </button>
         </div>
 
         <div style="background: #16161a; border: 2px solid #ffcc00; border-radius: 12px; padding: 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
           <div style="display: flex; align-items: center; gap: 10px;">
-            <div style="font-size: 2.2rem;">&#128293;</div>
+            <div style="font-size: 2.2rem;">🔥</div>
             <div>
               <div style="font-weight: bold; font-size: 1rem; color: #fff;">Premium Arsenal</div>
               <div style="font-size: 0.7rem; color: #ffcc00; margin-top: 2px;">Guaranteed Rare or Better!</div>
             </div>
           </div>
           <button onclick="openWeaponCrate('premium', 1200)" style="background: #ffcc00; color: #000; border: none; padding: 10px 14px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 0.9rem; box-shadow: 0 0 12px rgba(255,204,0,0.4); white-space: nowrap;">
-            &#129689; 1200
+            🪙 1200
           </button>
         </div>
       </div>
 
-      <!-- ENTITY CRATES -->
       <div style="font-size: 0.85rem; color: #ff00ff; font-weight: bold; letter-spacing: 1.5px; margin-top: 10px;">ENTITY CONTAINMENT CRATES</div>
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px;">
         
         <div style="background: #16161a; border: 2px solid #aaa; border-radius: 12px; padding: 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
           <div style="display: flex; align-items: center; gap: 10px;">
-            <div style="font-size: 2.2rem;">&#128230;</div>
+            <div style="font-size: 2.2rem;">📦</div>
             <div>
               <div style="font-weight: bold; font-size: 1rem; color: #fff;">Common Crate</div>
               <div style="font-size: 0.7rem; color: #aaa; margin-top: 2px;">Guaranteed Common Entity</div>
             </div>
           </div>
           <button onclick="buyCrate('common', 300)" style="background: #ffcc00; color: #000; border: none; padding: 10px 14px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 0.9rem; box-shadow: 0 0 12px rgba(255,204,0,0.4); white-space: nowrap;">
-            &#129689; 300
+            🪙 300
           </button>
         </div>
 
         <div style="background: #16161a; border: 2px solid #ff007f; border-radius: 12px; padding: 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
           <div style="display: flex; align-items: center; gap: 10px;">
-            <div style="font-size: 2.2rem;">&#127873;</div>
+            <div style="font-size: 2.2rem;">🎁</div>
             <div>
               <div style="font-weight: bold; font-size: 1rem; color: #fff;">Epic Crate</div>
               <div style="font-size: 0.7rem; color: #ff007f; margin-top: 2px;">Chance for Epic / Rare</div>
             </div>
           </div>
           <button onclick="buyCrate('epic', 1000)" style="background: #ffcc00; color: #000; border: none; padding: 10px 14px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 0.9rem; box-shadow: 0 0 12px rgba(255,204,0,0.4); white-space: nowrap;">
-            &#129689; 1000
+            🪙 1000
           </button>
         </div>
 
         <div style="background: #16161a; border: 2px solid #00ff55; border-radius: 12px; padding: 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
           <div style="display: flex; align-items: center; gap: 10px;">
-            <div style="font-size: 2.2rem;">&#127775;</div>
+            <div style="font-size: 2.2rem;">🌟</div>
             <div>
               <div style="font-weight: bold; font-size: 1rem; color: #fff;">Legendary Crate</div>
               <div style="font-size: 0.7rem; color: #00ff55; margin-top: 2px;">High chance for Legends!</div>
             </div>
           </div>
           <button onclick="buyCrate('legendary', 2500)" style="background: #ffcc00; color: #000; border: none; padding: 10px 14px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 0.9rem; box-shadow: 0 0 12px rgba(255,204,0,0.4); white-space: nowrap;">
-            &#129689; 2500
+            🪙 2500
           </button>
         </div>
       </div>
 
-      <!-- UTILITY & UPGRADES -->
       <div style="font-size: 0.85rem; color: #76ff03; font-weight: bold; letter-spacing: 1.5px; margin-top: 10px;">UTILITY & UPGRADES</div>
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px;">
         
         <div style="background: #16161a; border: 2px solid #00ccff; border-radius: 12px; padding: 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
           <div style="display: flex; align-items: center; gap: 10px;">
-            <div style="font-size: 2.2rem;">&#127890;</div>
+            <div style="font-size: 2.2rem;">🎒</div>
             <div>
               <div style="font-weight: bold; font-size: 1rem; color: #fff;">Vault Expansion</div>
               <div style="font-size: 0.7rem; color: #00ccff; margin-top: 2px;">Capacity: ${currentMaxSlots} Slots (+5)</div>
             </div>
           </div>
           <button onclick="buyBackpackUpgrade()" style="background: #00ccff; color: #000; border: none; padding: 10px 14px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 0.9rem; box-shadow: 0 0 12px rgba(0,204,255,0.4); white-space: nowrap;">
-            &#129689; 1000
+            🪙 1000
           </button>
         </div>
 
         <div style="background: #16161a; border: 2px solid #00ccff; border-radius: 12px; padding: 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
           <div style="display: flex; align-items: center; gap: 10px;">
-            <div style="font-size: 2.2rem;">&#129514;</div>
+            <div style="font-size: 2.2rem;">🧪</div>
             <div>
               <div style="font-weight: bold; font-size: 1rem; color: #fff;">Revive Potion (1x)</div>
               <div style="font-size: 0.7rem; color: #00ccff; margin-top: 2px;">Wakes up a fainted entity!</div>
             </div>
           </div>
           <button onclick="buyItem('revive', 150)" style="background: #ffcc00; color: #000; border: none; padding: 10px 14px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 0.9rem; box-shadow: 0 0 12px rgba(255,204,0,0.4); white-space: nowrap;">
-            &#129689; 150
+            🪙 150
           </button>
         </div>
       </div>
 
-      <!-- STRIPE REAL-MONEY PURCHASES -->
       <div style="font-size: 0.85rem; color: #ff0055; font-weight: bold; letter-spacing: 1.5px; margin-top: 10px;">SEASON PASS & CURRENCY</div>
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px;">
         
         <div style="background: #16161a; border: 2px solid #ff0055; border-radius: 12px; padding: 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
           <div style="display: flex; align-items: center; gap: 10px;">
-            <div style="font-size: 2.2rem;">&#127915;</div>
+            <div style="font-size: 2.2rem;">🎟️</div>
             <div>
               <div style="font-weight: bold; font-size: 1rem; color: #fff;">Season 1 Hunter Pass</div>
               <div style="font-size: 0.7rem; color: #ff0055; margin-top: 2px;">Unlock all 100 reward tiers</div>
@@ -163,7 +157,7 @@ function openShopModal() {
 
         <div style="background: #16161a; border: 2px solid #ff0055; border-radius: 12px; padding: 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
           <div style="display: flex; align-items: center; gap: 10px;">
-            <div style="font-size: 2.2rem;">&#129689;</div>
+            <div style="font-size: 2.2rem;">🪙</div>
             <div>
               <div style="font-weight: bold; font-size: 1rem; color: #fff;">5,000 Coin Pack</div>
               <div style="font-size: 0.7rem; color: #ff0055; margin-top: 2px;">Instant Currency Bundle</div>
@@ -176,7 +170,7 @@ function openShopModal() {
 
         <div style="background: #16161a; border: 2px solid #ff0055; border-radius: 12px; padding: 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
           <div style="display: flex; align-items: center; gap: 10px;">
-            <div style="font-size: 2.2rem;">&#128176;</div>
+            <div style="font-size: 2.2rem;">💰</div>
             <div>
               <div style="font-weight: bold; font-size: 1rem; color: #fff;">15,000 Coin Pack</div>
               <div style="font-size: 0.7rem; color: #ff0055; margin-top: 2px;">Massive Currency Bundle</div>
@@ -193,10 +187,6 @@ function openShopModal() {
   document.body.appendChild(modal);
 }
 
-// =========================================================
-// CS:GO STYLE WEAPON UNBOXING SYSTEM
-// =========================================================
-
 window.openWeaponCrate = function(tier, cost) {
     if (!playerData) return;
     
@@ -211,12 +201,10 @@ window.openWeaponCrate = function(tier, cost) {
         return;
     }
 
-    // Deduct coins & close shop
     playerData.rotBalance -= cost;
     if (typeof updateShopBalances === 'function') updateShopBalances();
     document.getElementById('shopModal').remove(); 
 
-    // Determine Drop Rates
     let roll = Math.random() * 100;
     let targetRarity = "Common";
     
@@ -228,7 +216,8 @@ window.openWeaponCrate = function(tier, cost) {
     } else if (tier === 'premium') {
         targetRarity = "Rare"; 
         if (roll > 60 && roll <= 90) targetRarity = "Epic";
-        else if (roll > 90) targetRarity = "Legendary";
+        else if (roll > 90 && roll <= 98) targetRarity = "Legendary";
+        else if (roll > 98) targetRarity = "Mythic";
     }
 
     let possibleWinners = weaponDatabase.filter(w => w.rarity === targetRarity);
@@ -242,6 +231,7 @@ window.openWeaponCrate = function(tier, cost) {
         if(rarity === "Rare") return "#9900ff";
         if(rarity === "Epic") return "#ff007f";
         if(rarity === "Legendary") return "#ffcc00";
+        if(rarity === "Mythic") return "#ff00ea";
         return "#fff";
     };
 
@@ -273,6 +263,7 @@ window.openWeaponCrate = function(tier, cost) {
     for (let i = 0; i < 60; i++) {
         let itemToRender = (i === 45) ? winner : weaponDatabase[Math.floor(Math.random() * weaponDatabase.length)];
         let color = getRarityColor(itemToRender.rarity);
+        let filterStr = (itemToRender.cssFilter && itemToRender.cssFilter !== 'none') ? itemToRender.cssFilter : '';
         
         let card = document.createElement('div');
         card.style.cssText = `
@@ -281,7 +272,7 @@ window.openWeaponCrate = function(tier, cost) {
             border-bottom: 8px solid ${color}; border-right: 2px solid #0a0a0a; flex-shrink: 0;
         `;
         card.innerHTML = `
-            <img src="${itemToRender.image}" style="width: 70px; height: 70px; object-fit: contain; margin-bottom: 10px; filter: drop-shadow(0 0 5px ${color}88);" onerror="this.style.display='none'">
+            <img src="${itemToRender.image}" style="width: 70px; height: 70px; object-fit: contain; margin-bottom: 10px; filter: drop-shadow(0 0 5px ${color}88) ${filterStr};" onerror="this.style.display='none'">
             <div style="color: #fff; font-family: monospace; font-size: 0.75rem; font-weight: bold; text-align: center; padding: 0 5px; text-shadow: 0 0 5px #000;">${itemToRender.name}</div>
         `;
         track.appendChild(card);
@@ -315,10 +306,6 @@ window.openWeaponCrate = function(tier, cost) {
         };
     }, 6500); 
 };
-
-// =========================================================
-// STANDARD SHOP FUNCTIONS
-// =========================================================
 
 window.buyItem = function(itemType, cost) {
   if (!playerData) return;
@@ -380,10 +367,6 @@ function updateShopBalances() {
   const mainBalanceEl = document.getElementById('rotBalance');
   if (mainBalanceEl && playerData) mainBalanceEl.innerText = playerData.rotBalance;
 }
-
-// =========================================================
-// STRIPE CHECKOUT CONNECTOR
-// =========================================================
 
 window.buyRotCurrency = async function(packageId, priceInCents) {
     try {

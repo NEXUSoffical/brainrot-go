@@ -10,9 +10,6 @@ let spawnerInterval = null;
 window.activeCreatures = spawnedCreatures;
 window.currentBattleEntry = null;
 
-// ==========================================
-// DETERMINISTIC SEEDED RNG
-// ==========================================
 class SeededPRNG {
     constructor(seedStr) {
         let h = 0;
@@ -71,9 +68,6 @@ function getRarityColor(rarity) {
   }
 }
 
-// ==========================================
-// WATER BIOME CHECKER
-// ==========================================
 function checkNearbyWater(lat, lng) {
     if (Date.now() - lastWaterCheckTime < 60000) return;
     lastWaterCheckTime = Date.now();
@@ -84,9 +78,6 @@ function checkNearbyWater(lat, lng) {
         .catch(err => { isNearWater = false; });
 }
 
-// ==========================================
-// MAP VFX ANIMATIONS
-// ==========================================
 window.injectAnimationStyles = function() {
     if (document.getElementById('mapSpriteAnimations')) return;
     const style = document.createElement('style');
@@ -103,9 +94,6 @@ window.injectAnimationStyles = function() {
 };
 window.injectAnimationStyles();
 
-// ==========================================
-// TRUE FIRST-PERSON COMBAT ENGINE
-// ==========================================
 function injectBattleStyles() {
     if (document.getElementById('battleDynamicStyles')) return;
     let style = document.createElement('style');
@@ -156,8 +144,8 @@ function injectBattleStyles() {
             bottom: 12vh; 
             right: 15vw; 
             height: 55vh; 
+            width: 55vh; 
             max-width: 50vw;
-            object-fit: contain;
             transform-origin: center 90%; 
             z-index: 50; 
             pointer-events: none; 
@@ -173,7 +161,6 @@ function injectBattleStyles() {
         
         .wpn-swing { animation: fpMeleeSwing 0.4s cubic-bezier(0.1, 0.8, 0.3, 1) forwards, fireFlicker 0.15s infinite !important; }
 
-        /* PLAYER HP UI */
         .player-hp-container {
             position: absolute;
             bottom: 110px;
@@ -213,10 +200,11 @@ function buildBattleScreen() {
             <div id="slashEffect" class="slash-fx"></div>
         </div>
         
-        <!-- MASSIVE FIRST PERSON WEAPON OVERLAY (DYNAMIC) -->
-        <img id="battleWeaponImg" class="fp-weapon" src="" alt="Weapon">
+        <!-- MASSIVE FIRST PERSON WEAPON OVERLAY (DYNAMIC WITH FILTERS) -->
+        <div id="battleWeaponWrapper" class="fp-weapon">
+            <img id="battleWeaponImg" src="" alt="Weapon" style="width: 100%; height: 100%; object-fit: contain; transform-origin: center 90%;">
+        </div>
         
-        <!-- PLAYER HP BAR -->
         <div class="player-hp-container">
             <div class="player-hp-box">
                 <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: bold; margin-bottom: 5px; color: #00ff80;">
@@ -247,29 +235,29 @@ window.startBattle = function(spawnId, name, imageUrl, level, rarity) {
     buildBattleScreen();
     window.currentBattleEntry = spawnedCreatures.find(c => c.id === spawnId) || null;
 
-    // --- DYNAMIC WEAPON RENDER & DAMAGE FIX ---
-    let activeWeaponImage = 'gear/rusty.png'; // Fallback
-    let weaponAtk = 5; // Default absolute minimum if unarmed
+    let activeWeaponImage = 'gear/rusty.png'; 
+    let weaponAtk = 5; 
+    let weaponFilter = '';
     
     if (window.playerData && window.playerData.equipped && window.playerData.equipped.weapon) {
         let weapons = (typeof weaponDatabase !== 'undefined') ? weaponDatabase : (window.gameWeapons || []);
         let wpn = weapons.find(w => w.id === window.playerData.equipped.weapon);
         if (wpn) {
             if (wpn.image) activeWeaponImage = wpn.image;
-            // Get the weapon's exact damage, stripping out any hidden buffs!
             weaponAtk = Number(wpn.atk || wpn.attack || wpn.damage || 5); 
+            if (wpn.cssFilter && wpn.cssFilter !== 'none') weaponFilter = wpn.cssFilter;
         }
     }
     
-    document.getElementById('battleWeaponImg').src = activeWeaponImage;
+    const weaponImgEl = document.getElementById('battleWeaponImg');
+    weaponImgEl.src = activeWeaponImage;
+    weaponImgEl.style.filter = weaponFilter;
 
-    // Math for Stats
     const enemyMaxHp = 50 + (level * 15);
     const pLevel = window.playerData?.accountLevel || 1;
     
-    // FORCE the math right here to exactly match your Hunter Profile Screen
     const finalPlayerMaxHp = 100 + (pLevel * 15); 
-    const finalPlayerAtk = weaponAtk; // COMPLETELY REMOVED THE SECRET +15 BUFF
+    const finalPlayerAtk = weaponAtk;
     const finalPlayerDef = pLevel * 2;
 
     window.battleData = {
@@ -305,7 +293,6 @@ window.startBattle = function(spawnId, name, imageUrl, level, rarity) {
     document.getElementById('battleOverlay').style.display = 'flex';
 };
 
-// THE TURN-BASED COMBAT MANAGER
 window.executeTurnBasedCombat = function() {
     const data = window.battleData;
     if (!data || data.isOver) return;
@@ -313,17 +300,16 @@ window.executeTurnBasedCombat = function() {
     const strikeBtn = document.getElementById('strikeBtn');
     if (strikeBtn) strikeBtn.disabled = true;
 
-    // --- PHASE 1: PLAYER ATTACKS ---
     const overlay = document.getElementById('battleOverlay');
     const monster = document.getElementById('battleMonsterImg');
     const slash = document.getElementById('slashEffect');
-    const weapon = document.getElementById('battleWeaponImg');
+    const weaponWrapper = document.getElementById('battleWeaponWrapper');
 
     slash.classList.remove('slash-active');
-    weapon.classList.remove('wpn-swing');
+    weaponWrapper.classList.remove('wpn-swing');
     void slash.offsetWidth; 
     slash.classList.add('slash-active');
-    weapon.classList.add('wpn-swing');
+    weaponWrapper.classList.add('wpn-swing');
     
     overlay.classList.add('shake-active');
     monster.classList.add('monster-hit');
@@ -335,7 +321,6 @@ window.executeTurnBasedCombat = function() {
 
     if (window.gameAudio && typeof window.gameAudio.playHit === 'function') window.gameAudio.playHit();
 
-    // Player deals exact weapon damage (variance is just 0.9x to 1.1x so it's not identical every hit)
     const variance = (Math.random() * 0.2) + 0.9; 
     data.enemyHp -= Math.floor(data.playerAtk * variance);
     if (data.enemyHp < 0) data.enemyHp = 0;
@@ -359,7 +344,6 @@ window.executeTurnBasedCombat = function() {
         return; 
     }
 
-    // --- PHASE 2: MONSTER ATTACKS BACK ---
     setTimeout(() => {
         if (data.isOver) return;
 
@@ -404,7 +388,6 @@ window.fleeBattle = function() {
 
 function finalizeCapture(data) {
     if (typeof playerData !== 'undefined') {
-        // Roll the dice! 0.02 means a 2% (1-in-50) chance to be Shiny
         const isShiny = Math.random() < 0.02; 
 
         const caughtEntity = {
@@ -441,9 +424,6 @@ function finalizeCapture(data) {
     window.currentBattleEntry = null;
 }
 
-// ==========================================
-// MAP SPAWN GENERATION
-// ==========================================
 function spawnSingleCreature(spawnId, lat, lng, template, level) {
   if (typeof L === 'undefined' || typeof map === 'undefined' || !map) return;
 
