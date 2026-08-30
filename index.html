@@ -227,7 +227,8 @@
         left: 0 !important;
         width: 100vw !important;
         height: 100vh !important;
-        background: radial-gradient(circle at center, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.2) 100%), url('monster_bg.jpg') !important;
+        background-color: #05020a !important; 
+        background-image: radial-gradient(circle at center, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.2) 100%), url('monster_bg.jpeg') !important; 
         background-size: cover !important;
         background-position: center !important;
         background-repeat: no-repeat !important;
@@ -367,7 +368,10 @@
             <button class="btn-hud" style="width: 100%;" onclick="closeGameMenu(); openInventory()">📦 INVENTORY & GEAR</button>
             <button class="btn-hud" style="width: 100%; background: #00ccff; color: #000;" onclick="closeGameMenu(); openDex()">📖 PARANORMAL DEX (<span id="dexCountModal">0</span>/<span id="totalBrainrotsModal">0</span>)</button>
             <button class="btn-hud" style="width: 100%; background: #00ff80; color: #000;" onclick="closeGameMenu(); openReviveModal()">🧪 REVIVE POTIONS (<span id="potionHudCountModal">3</span>)</button>
-            <button class="btn-hud" style="width: 100%; background: #ffcc00; color: #000;" onclick="closeGameMenu(); openShopModal()">🛒 WAND SHOP</button>
+            
+            <!-- CHANGED BUTTON BELOW TO REMOVE "WAND" -->
+            <button class="btn-hud" style="width: 100%; background: #ffcc00; color: #000;" onclick="closeGameMenu(); openShopModal()">🛒 SHOP</button>
+            
             <button class="btn-hud" style="width: 100%; background: #9900ff; color: #fff;" onclick="closeGameMenu(); openTeamSelect('ai')">⚔️ 3v3 ANOMALY BATTLE</button>
             <button class="btn-hud" style="width: 100%; background: #ff007f; color: #fff;" onclick="closeGameMenu(); openTeamSelect('pvp')">🌐 ONLINE PVP DUEL</button>
             

@@ -13,70 +13,73 @@ function openShopModal() {
 
   const modal = document.createElement('div');
   modal.id = 'shopModal';
+  
+  // Adjusted height to work perfectly on mobile browsers without cutting off
   modal.style.cssText = `
-    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100%; max-height: -webkit-fill-available;
     background: rgba(10, 10, 15, 0.98); backdrop-filter: blur(12px);
     z-index: 999999; display: flex; flex-direction: column; align-items: center;
-    justify-content: space-between; color: #fff; font-family: monospace; padding: 30px 40px;
-    box-sizing: border-box;
+    color: #fff; font-family: monospace; padding: 20px;
+    box-sizing: border-box; overflow: hidden;
   `;
 
   modal.innerHTML = `
-    <!-- Top Full-Width Header -->
-    <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #ffcc00; padding-bottom: 20px;">
+    <!-- Top Full-Width Header with Top-Right X Button -->
+    <div style="width: 100%; display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #ffcc00; padding-bottom: 15px; flex-shrink: 0;">
       <div>
-        <h2 style="color: #ffcc00; font-size: 2rem; text-shadow: 0 0 15px rgba(255,204,0,0.6); margin-bottom: 4px;">🛒 THE ITEM SHOP</h2>
-        <p style="font-size: 0.85rem; color: #aaa;">Spend coins, open character crates, or grab currency packs</p>
+        <h2 style="color: #ffcc00; font-size: 1.8rem; text-shadow: 0 0 15px rgba(255,204,0,0.6); margin: 0 0 5px 0;">🛒 HUNTER SHOP</h2>
+        <p style="font-size: 0.75rem; color: #aaa; margin: 0 0 10px 0;">Spend coins, open crates, or grab currency</p>
+        <div style="display: inline-block; background: rgba(255,204,0,0.15); border: 2px solid #ffcc00; padding: 6px 16px; border-radius: 30px; font-size: 1rem; font-weight: bold; color: #ffcc00; box-shadow: 0 0 15px rgba(255,204,0,0.2);">
+          🪙 <span id="shopCoinBalance">${currentCoins}</span>
+        </div>
       </div>
-      <div style="background: rgba(255,204,0,0.15); border: 2px solid #ffcc00; padding: 10px 22px; border-radius: 30px; font-size: 1.1rem; font-weight: bold; color: #ffcc00; box-shadow: 0 0 15px rgba(255,204,0,0.2);">
-        🪙 <span id="shopCoinBalance">${currentCoins}</span>
-      </div>
+      <button onclick="document.getElementById('shopModal').remove()" style="background: #ff0055; color: #fff; border: 2px solid #fff; border-radius: 50%; width: 40px; height: 40px; font-weight: bold; font-size: 1.2rem; cursor: pointer; flex-shrink: 0; box-shadow: 0 0 10px rgba(255,0,85,0.5);">X</button>
     </div>
 
     <!-- Full-Width Scrollable Grid Content Area -->
-    <div style="width: 100%; flex: 1; overflow-y: auto; margin: 25px 0; padding-right: 10px; display: flex; flex-direction: column; gap: 20px; text-align: left;">
+    <div style="width: 100%; flex: 1; overflow-y: auto; margin-top: 15px; padding-right: 5px; padding-bottom: 30px; display: flex; flex-direction: column; gap: 20px; text-align: left;">
       
-      <div style="font-size: 0.85rem; color: #ff00ff; font-weight: bold; letter-spacing: 1.5px;">MYSTERY CHARACTER CRATES</div>
+      <div style="font-size: 0.85rem; color: #ff00ff; font-weight: bold; letter-spacing: 1.5px;">ENTITY CONTAINMENT CRATES</div>
 
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 15px;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px;">
         <!-- Common Crate -->
-        <div style="background: #16161a; border: 2px solid #aaa; border-radius: 12px; padding: 18px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
-          <div style="display: flex; align-items: center; gap: 15px;">
-            <div style="font-size: 2.5rem;">📦</div>
+        <div style="background: #16161a; border: 2px solid #aaa; border-radius: 12px; padding: 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="font-size: 2.2rem;">📦</div>
             <div>
-              <div style="font-weight: bold; font-size: 1.05rem; color: #fff;">Common Crate</div>
-              <div style="font-size: 0.75rem; color: #aaa; margin-top: 2px;">Guaranteed Common Rot</div>
+              <div style="font-weight: bold; font-size: 1rem; color: #fff;">Common Crate</div>
+              <div style="font-size: 0.7rem; color: #aaa; margin-top: 2px;">Guaranteed Common Entity</div>
             </div>
           </div>
-          <button onclick="buyCrate('common', 300)" style="background: #ffcc00; color: #000; border: none; padding: 10px 18px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 0.9rem; box-shadow: 0 0 12px rgba(255,204,0,0.4); white-space: nowrap;">
+          <button onclick="buyCrate('common', 300)" style="background: #ffcc00; color: #000; border: none; padding: 10px 14px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 0.9rem; box-shadow: 0 0 12px rgba(255,204,0,0.4); white-space: nowrap;">
             🪙 300
           </button>
         </div>
 
         <!-- Epic Crate -->
-        <div style="background: #16161a; border: 2px solid #ff007f; border-radius: 12px; padding: 18px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
-          <div style="display: flex; align-items: center; gap: 15px;">
-            <div style="font-size: 2.5rem;">🎁</div>
+        <div style="background: #16161a; border: 2px solid #ff007f; border-radius: 12px; padding: 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="font-size: 2.2rem;">🎁</div>
             <div>
-              <div style="font-weight: bold; font-size: 1.05rem; color: #fff;">Epic Crate</div>
-              <div style="font-size: 0.75rem; color: #ff007f; margin-top: 2px;">Chance for Epic / Rare Rots</div>
+              <div style="font-weight: bold; font-size: 1rem; color: #fff;">Epic Crate</div>
+              <div style="font-size: 0.7rem; color: #ff007f; margin-top: 2px;">Chance for Epic / Rare Entities</div>
             </div>
           </div>
-          <button onclick="buyCrate('epic', 1000)" style="background: #ffcc00; color: #000; border: none; padding: 10px 18px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 0.9rem; box-shadow: 0 0 12px rgba(255,204,0,0.4); white-space: nowrap;">
+          <button onclick="buyCrate('epic', 1000)" style="background: #ffcc00; color: #000; border: none; padding: 10px 14px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 0.9rem; box-shadow: 0 0 12px rgba(255,204,0,0.4); white-space: nowrap;">
             🪙 1000
           </button>
         </div>
 
-        <!-- Legendary Titan Crate -->
-        <div style="background: #16161a; border: 2px solid #00ff55; border-radius: 12px; padding: 18px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
-          <div style="display: flex; align-items: center; gap: 15px;">
-            <div style="font-size: 2.5rem;">🌟</div>
+        <!-- Legendary Crate -->
+        <div style="background: #16161a; border: 2px solid #00ff55; border-radius: 12px; padding: 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="font-size: 2.2rem;">🌟</div>
             <div>
-              <div style="font-weight: bold; font-size: 1.05rem; color: #fff;">Legendary Titan Crate</div>
-              <div style="font-size: 0.75rem; color: #00ff55; margin-top: 2px;">High chance for Titan Mech & Legends!</div>
+              <div style="font-weight: bold; font-size: 1rem; color: #fff;">Legendary Crate</div>
+              <div style="font-size: 0.7rem; color: #00ff55; margin-top: 2px;">High chance for Legends!</div>
             </div>
           </div>
-          <button onclick="buyCrate('legendary', 2500)" style="background: #ffcc00; color: #000; border: none; padding: 10px 18px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 0.9rem; box-shadow: 0 0 12px rgba(255,204,0,0.4); white-space: nowrap;">
+          <button onclick="buyCrate('legendary', 2500)" style="background: #ffcc00; color: #000; border: none; padding: 10px 14px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 0.9rem; box-shadow: 0 0 12px rgba(255,204,0,0.4); white-space: nowrap;">
             🪙 2500
           </button>
         </div>
@@ -84,45 +87,45 @@ function openShopModal() {
 
       <div style="font-size: 0.85rem; color: #76ff03; font-weight: bold; letter-spacing: 1.5px; margin-top: 10px;">UTILITY & UPGRADES</div>
 
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 15px;">
-        <!-- Backpack / Inventory Upgrade -->
-        <div style="background: #16161a; border: 2px solid #00ccff; border-radius: 12px; padding: 18px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
-          <div style="display: flex; align-items: center; gap: 15px;">
-            <div style="font-size: 2.5rem;">🎒</div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px;">
+        <!-- Vault Upgrade -->
+        <div style="background: #16161a; border: 2px solid #00ccff; border-radius: 12px; padding: 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="font-size: 2.2rem;">🎒</div>
             <div>
-              <div style="font-weight: bold; font-size: 1.05rem; color: #fff;">Backpack Expansion</div>
-              <div style="font-size: 0.75rem; color: #00ccff; margin-top: 2px;">Capacity: ${currentMaxSlots} Slots (+5 Slots)</div>
+              <div style="font-weight: bold; font-size: 1rem; color: #fff;">Vault Expansion</div>
+              <div style="font-size: 0.7rem; color: #00ccff; margin-top: 2px;">Capacity: ${currentMaxSlots} Slots (+5)</div>
             </div>
           </div>
-          <button onclick="buyBackpackUpgrade()" style="background: #00ccff; color: #000; border: none; padding: 10px 18px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 0.9rem; box-shadow: 0 0 12px rgba(0,204,255,0.4); white-space: nowrap;">
+          <button onclick="buyBackpackUpgrade()" style="background: #00ccff; color: #000; border: none; padding: 10px 14px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 0.9rem; box-shadow: 0 0 12px rgba(0,204,255,0.4); white-space: nowrap;">
             🪙 1000
           </button>
         </div>
 
         <!-- Revive Potion -->
-        <div style="background: #16161a; border: 2px solid #00ccff; border-radius: 12px; padding: 18px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
-          <div style="display: flex; align-items: center; gap: 15px;">
-            <div style="font-size: 2.5rem;">🧪</div>
+        <div style="background: #16161a; border: 2px solid #00ccff; border-radius: 12px; padding: 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="font-size: 2.2rem;">🧪</div>
             <div>
-              <div style="font-weight: bold; font-size: 1.05rem; color: #fff;">Revive Potion (1x)</div>
-              <div style="font-size: 0.75rem; color: #00ccff; margin-top: 2px;">Wakes up a fainted rot!</div>
+              <div style="font-weight: bold; font-size: 1rem; color: #fff;">Revive Potion (1x)</div>
+              <div style="font-size: 0.7rem; color: #00ccff; margin-top: 2px;">Wakes up a fainted entity!</div>
             </div>
           </div>
-          <button onclick="buyItem('revive', 150)" style="background: #ffcc00; color: #000; border: none; padding: 10px 18px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 0.9rem; box-shadow: 0 0 12px rgba(255,204,0,0.4); white-space: nowrap;">
+          <button onclick="buyItem('revive', 150)" style="background: #ffcc00; color: #000; border: none; padding: 10px 14px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 0.9rem; box-shadow: 0 0 12px rgba(255,204,0,0.4); white-space: nowrap;">
             🪙 150
           </button>
         </div>
 
         <!-- Lucky Egg -->
-        <div style="background: #16161a; border: 2px solid #ff00ff; border-radius: 12px; padding: 18px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
-          <div style="display: flex; align-items: center; gap: 15px;">
-            <div style="font-size: 2.5rem;">🥚</div>
+        <div style="background: #16161a; border: 2px solid #ff00ff; border-radius: 12px; padding: 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="font-size: 2.2rem;">🥚</div>
             <div>
-              <div style="font-weight: bold; font-size: 1.05rem; color: #fff;">Lucky Egg (1x)</div>
-              <div style="font-size: 0.75rem; color: #ff00ff; margin-top: 2px;">Double Account XP for 1hr!</div>
+              <div style="font-weight: bold; font-size: 1rem; color: #fff;">Lucky Egg (1x)</div>
+              <div style="font-size: 0.7rem; color: #ff00ff; margin-top: 2px;">Double Account XP for 1hr!</div>
             </div>
           </div>
-          <button onclick="buyItem('egg', 500)" style="background: #ffcc00; color: #000; border: none; padding: 10px 18px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 0.9rem; box-shadow: 0 0 12px rgba(255,204,0,0.4); white-space: nowrap;">
+          <button onclick="buyItem('egg', 500)" style="background: #ffcc00; color: #000; border: none; padding: 10px 14px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 0.9rem; box-shadow: 0 0 12px rgba(255,204,0,0.4); white-space: nowrap;">
             🪙 500
           </button>
         </div>
@@ -130,87 +133,85 @@ function openShopModal() {
 
       <div style="font-size: 0.85rem; color: #00ff55; font-weight: bold; letter-spacing: 1.5px; margin-top: 10px;">VALUE BUNDLES</div>
 
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 15px;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px;">
         <!-- Potion Bundle (5x Revive) -->
-        <div style="background: #16161a; border: 2px solid #00ff55; border-radius: 12px; padding: 18px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
-          <div style="display: flex; align-items: center; gap: 15px;">
-            <div style="font-size: 2.5rem;">📦🧪</div>
+        <div style="background: #16161a; border: 2px solid #00ff55; border-radius: 12px; padding: 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="font-size: 2.2rem;">📦🧪</div>
             <div>
-              <div style="font-weight: bold; font-size: 1.05rem; color: #fff;">Potion Bundle (5x)</div>
-              <div style="font-size: 0.75rem; color: #00ff55; margin-top: 2px;">Stock up on revive potions!</div>
+              <div style="font-weight: bold; font-size: 1rem; color: #fff;">Potion Bundle (5x)</div>
+              <div style="font-size: 0.7rem; color: #00ff55; margin-top: 2px;">Stock up on revive potions!</div>
             </div>
           </div>
-          <button onclick="buyBundle('potions_5', 600)" style="background: #ffcc00; color: #000; border: none; padding: 10px 18px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 0.9rem; box-shadow: 0 0 12px rgba(255,204,0,0.4); white-space: nowrap;">
+          <button onclick="buyBundle('potions_5', 600)" style="background: #ffcc00; color: #000; border: none; padding: 10px 14px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 0.9rem; box-shadow: 0 0 12px rgba(255,204,0,0.4); white-space: nowrap;">
             🪙 600
           </button>
         </div>
 
         <!-- Egg Bundle (3x Lucky Eggs) -->
-        <div style="background: #16161a; border: 2px solid #00ff55; border-radius: 12px; padding: 18px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
-          <div style="display: flex; align-items: center; gap: 15px;">
-            <div style="font-size: 2.5rem;">📦🥚</div>
+        <div style="background: #16161a; border: 2px solid #00ff55; border-radius: 12px; padding: 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="font-size: 2.2rem;">📦🥚</div>
             <div>
-              <div style="font-weight: bold; font-size: 1.05rem; color: #fff;">Egg Bundle (3x)</div>
-              <div style="font-size: 0.75rem; color: #00ff55; margin-top: 2px;">Triple XP Boost Pack!</div>
+              <div style="font-weight: bold; font-size: 1rem; color: #fff;">Egg Bundle (3x)</div>
+              <div style="font-size: 0.7rem; color: #00ff55; margin-top: 2px;">Triple XP Boost Pack!</div>
             </div>
           </div>
-          <button onclick="buyBundle('eggs_3', 1200)" style="background: #ffcc00; color: #000; border: none; padding: 10px 18px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 0.9rem; box-shadow: 0 0 12px rgba(255,204,0,0.4); white-space: nowrap;">
+          <button onclick="buyBundle('eggs_3', 1200)" style="background: #ffcc00; color: #000; border: none; padding: 10px 14px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 0.9rem; box-shadow: 0 0 12px rgba(255,204,0,0.4); white-space: nowrap;">
             🪙 1200
           </button>
         </div>
       </div>
 
-      <div style="font-size: 0.85rem; color: #ff0055; font-weight: bold; letter-spacing: 1.5px; margin-top: 10px;">SEASON PASS & CURRENCY (STRIPE CARD)</div>
+      <div style="font-size: 0.85rem; color: #ff0055; font-weight: bold; letter-spacing: 1.5px; margin-top: 10px;">SEASON PASS & CURRENCY (STRIPE)</div>
 
-      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 15px;">
-        <!-- Season 1 Battle Pass -->
-        <div style="background: #16161a; border: 2px solid #ff0055; border-radius: 12px; padding: 18px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
-          <div style="display: flex; align-items: center; gap: 15px;">
-            <div style="font-size: 2.5rem;">🏆</div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px;">
+        <!-- Season 1 Hunter Pass -->
+        <div style="background: #16161a; border: 2px solid #ff0055; border-radius: 12px; padding: 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="font-size: 2.2rem;">🏆</div>
             <div>
-              <div style="font-weight: bold; font-size: 1.05rem; color: #fff;">Season 1 Battle Pass</div>
-              <div style="font-size: 0.75rem; color: #ff0055; margin-top: 2px;">Unlock all 100 reward tiers</div>
+              <div style="font-weight: bold; font-size: 1rem; color: #fff;">Season 1 Hunter Pass</div>
+              <div style="font-size: 0.7rem; color: #ff0055; margin-top: 2px;">Unlock all 100 reward tiers</div>
             </div>
           </div>
-          <button onclick="buyRotCurrency('battle_pass', 999)" style="background: #ff0055; color: #fff; border: none; padding: 10px 18px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 0.9rem; box-shadow: 0 0 12px rgba(255,0,85,0.4); white-space: nowrap;">
+          <button onclick="buyRotCurrency('battle_pass', 999)" style="background: #ff0055; color: #fff; border: none; padding: 10px 14px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 0.9rem; box-shadow: 0 0 12px rgba(255,0,85,0.4); white-space: nowrap;">
             $9.99
           </button>
         </div>
 
-        <!-- 5,000 Rot Pack -->
-        <div style="background: #16161a; border: 2px solid #ff0055; border-radius: 12px; padding: 18px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
-          <div style="display: flex; align-items: center; gap: 15px;">
-            <div style="font-size: 2.5rem;">💰</div>
+        <!-- 5,000 Coin Pack -->
+        <div style="background: #16161a; border: 2px solid #ff0055; border-radius: 12px; padding: 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="font-size: 2.2rem;">💰</div>
             <div>
-              <div style="font-weight: bold; font-size: 1.05rem; color: #fff;">5,000 Rot Pack</div>
-              <div style="font-size: 0.75rem; color: #ff0055; margin-top: 2px;">Instant Currency Bundle</div>
+              <div style="font-weight: bold; font-size: 1rem; color: #fff;">5,000 Coin Pack</div>
+              <div style="font-size: 0.7rem; color: #ff0055; margin-top: 2px;">Instant Currency Bundle</div>
             </div>
           </div>
-          <button onclick="buyRotCurrency('5000_rot_pack', 499)" style="background: #ff0055; color: #fff; border: none; padding: 10px 18px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 0.9rem; box-shadow: 0 0 12px rgba(255,0,85,0.4); white-space: nowrap;">
+          <button onclick="buyRotCurrency('5000_rot_pack', 499)" style="background: #ff0055; color: #fff; border: none; padding: 10px 14px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 0.9rem; box-shadow: 0 0 12px rgba(255,0,85,0.4); white-space: nowrap;">
             $4.99
           </button>
         </div>
 
-        <!-- 15,000 Rot Pack -->
-        <div style="background: #16161a; border: 2px solid #ff0055; border-radius: 12px; padding: 18px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
-          <div style="display: flex; align-items: center; gap: 15px;">
-            <div style="font-size: 2.5rem;">💎</div>
+        <!-- 15,000 Coin Pack -->
+        <div style="background: #16161a; border: 2px solid #ff0055; border-radius: 12px; padding: 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 20px rgba(0,0,0,0.6);">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="font-size: 2.2rem;">📦</div>
             <div>
-              <div style="font-weight: bold; font-size: 1.05rem; color: #fff;">15,000 Rot Pack</div>
-              <div style="font-size: 0.75rem; color: #ff0055; margin-top: 2px;">Massive Currency Bundle</div>
+              <div style="font-weight: bold; font-size: 1rem; color: #fff;">15,000 Coin Pack</div>
+              <div style="font-size: 0.7rem; color: #ff0055; margin-top: 2px;">Massive Currency Bundle</div>
             </div>
           </div>
-          <button onclick="buyRotCurrency('15000_rot_pack', 999)" style="background: #ff0055; color: #fff; border: none; padding: 10px 18px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 0.9rem; box-shadow: 0 0 12px rgba(255,0,85,0.4); white-space: nowrap;">
+          <button onclick="buyRotCurrency('15000_rot_pack', 999)" style="background: #ff0055; color: #fff; border: none; padding: 10px 14px; font-weight: bold; border-radius: 8px; cursor: pointer; font-size: 0.9rem; box-shadow: 0 0 12px rgba(255,0,85,0.4); white-space: nowrap;">
             $9.99
           </button>
         </div>
       </div>
+      
+      <!-- Fallback Bottom Button just in case -->
+      <button onclick="document.getElementById('shopModal').remove()" style="background: #333; color: #fff; border: none; padding: 16px; border-radius: 10px; cursor: pointer; font-weight: bold; width: 100%; font-size: 1.05rem; font-family: monospace; box-shadow: 0 4px 15px rgba(0,0,0,0.5); margin-top: 10px;">LEAVE SHOP</button>
 
-    </div>
-
-    <!-- Bottom Full-Width Close Button -->
-    <div style="width: 100%;">
-      <button onclick="document.getElementById('shopModal').remove()" style="background: #333; color: #fff; border: none; padding: 16px; border-radius: 10px; cursor: pointer; font-weight: bold; width: 100%; font-size: 1.05rem; font-family: monospace; box-shadow: 0 4px 15px rgba(0,0,0,0.5);">LEAVE SHOP</button>
     </div>
   `;
 
@@ -221,7 +222,7 @@ window.buyItem = function(itemType, cost) {
   if (!playerData) return;
   
   if ((playerData.rotBalance || 0) < cost) {
-    alert("❌ Not enough coins! Go defeat some wild brain rots to earn more!");
+    alert("❌ Not enough coins! Go defeat some wild anomalies to earn more!");
     return;
   }
 
@@ -271,12 +272,12 @@ window.buyCrate = function(tier, cost) {
   const maxSlots = playerData.maxInventorySlots || 20;
   if (!playerData.inventory) playerData.inventory = [];
   if (playerData.inventory.length >= maxSlots) {
-    alert("❌ Your backpack is full! Upgrade your backpack capacity or transfer rots before opening crates.");
+    alert("❌ Your vault is full! Upgrade your capacity or transfer entities before opening crates.");
     return;
   }
 
   if (typeof brainrotCharacters === 'undefined') {
-    alert("❌ Character database not loaded.");
+    alert("❌ Entity database not loaded.");
     return;
   }
 
@@ -317,7 +318,7 @@ window.buyCrate = function(tier, cost) {
 
   playerData.inventory.push(newRot);
 
-  alert(`🎉 Crate Opened! You pulled a Lvl ${newRot.level} ${newRot.name} (${newRot.rarity.toUpperCase()}) with ${newRot.quality}% IV!`);
+  alert(`🎉 Crate Opened! You contained a Lvl ${newRot.level} ${newRot.name} (${newRot.rarity.toUpperCase()}) with ${newRot.quality}% IV!`);
   updateShopBalances();
 };
 
@@ -326,14 +327,14 @@ window.buyBackpackUpgrade = function() {
   
   const upgradeCost = 1000;
   if ((playerData.rotBalance || 0) < upgradeCost) {
-    alert("❌ You need 1,000 coins to expand your backpack!");
+    alert("❌ You need 1,000 coins to expand your vault!");
     return;
   }
 
   playerData.rotBalance -= upgradeCost;
   playerData.maxInventorySlots = (playerData.maxInventorySlots || 20) + 5;
 
-  alert(`🎒 Backpack successfully upgraded! New max capacity: ${playerData.maxInventorySlots} slots.`);
+  alert(`🎒 Vault successfully expanded! New max capacity: ${playerData.maxInventorySlots} slots.`);
   updateShopBalances();
 };
 
