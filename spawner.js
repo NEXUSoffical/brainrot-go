@@ -404,10 +404,14 @@ window.fleeBattle = function() {
 
 function finalizeCapture(data) {
     if (typeof playerData !== 'undefined') {
+        // Roll the dice! 0.02 means a 2% (1-in-50) chance to be Shiny
+        const isShiny = Math.random() < 0.02; 
+
         const caughtEntity = {
             name: data.name, rarity: data.rarity, image: data.image, level: data.level,
             quality: 85, maxHp: data.enemyMaxHp, hp: data.enemyMaxHp, currentHp: data.enemyMaxHp,
-            atk: 15 + (data.level * 3), def: 10 + (data.level * 2), fainted: false
+            atk: 15 + (data.level * 3), def: 10 + (data.level * 2), fainted: false,
+            shiny: isShiny
         };
 
         if (!playerData.inventory) playerData.inventory = [];
@@ -419,6 +423,12 @@ function finalizeCapture(data) {
         localStorage.setItem('deadSpawns', JSON.stringify(deadSpawns));
         
         if (typeof window.saveGameData === 'function') window.saveGameData();
+
+        if (isShiny) {
+            alert(`✨ CRITICAL CAPTURE! You caught a SHINY Lvl ${data.level} ${data.name}! ✨`);
+        } else {
+            alert(`SLAIN! You captured the essence of the Lvl ${data.level} ${data.name}!`);
+        }
     }
 
     if (window.currentBattleEntry && window.currentBattleEntry.marker) {
@@ -429,7 +439,6 @@ function finalizeCapture(data) {
     }
     
     window.currentBattleEntry = null;
-    alert(`SLAIN! You captured the essence of the Lvl ${data.level} ${data.name}!`);
 }
 
 // ==========================================
