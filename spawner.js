@@ -136,7 +136,6 @@ function injectBattleStyles() {
         
         .battle-ui { width: 100%; padding: 30px; background: linear-gradient(to top, rgba(0,0,0,1), rgba(0,0,0,0)); display: flex; justify-content: center; align-items: flex-end; gap: 30px; box-sizing: border-box; z-index: 60; position: relative;}
         
-        /* THE STRIKE BUTTON - Includes a disabled state for turns */
         .attack-btn { background: #111; color: #ff0055; font-family: monospace; font-size: 2rem; font-weight: bold; border: 2px solid #ff0055; border-radius: 15px; width: 220px; height: 80px; cursor: pointer; box-shadow: 0 0 15px rgba(255, 0, 85, 0.4); transition: all 0.2s; display: flex; align-items: center; justify-content: center; text-shadow: 0 0 10px #ff0055; z-index: 70;}
         .attack-btn:active:not(:disabled) { transform: scale(0.95); box-shadow: 0 0 40px rgba(255, 0, 85, 0.9); background: #ff0055; color: #111; }
         .attack-btn:disabled { opacity: 0.3; filter: grayscale(1); cursor: not-allowed; border-color: #555; color: #555; box-shadow: none; text-shadow: none; }
@@ -214,8 +213,8 @@ function buildBattleScreen() {
             <div id="slashEffect" class="slash-fx"></div>
         </div>
         
-        <!-- MASSIVE FIRST PERSON WEAPON OVERLAY -->
-        <img id="battleWeaponImg" class="fp-weapon" src="" alt="Weapon">
+        <!-- MASSIVE FIRST PERSON WEAPON OVERLAY (with fallback handler) -->
+        <img id="battleWeaponImg" class="fp-weapon" src="" alt="Weapon" onerror="if(!this.dataset.retried){this.dataset.retried=true; this.src='gear/rusty.png';}">
         
         <!-- PLAYER HP BAR -->
         <div class="player-hp-container">
@@ -248,7 +247,16 @@ window.startBattle = function(spawnId, name, imageUrl, level, rarity) {
     buildBattleScreen();
     window.currentBattleEntry = spawnedCreatures.find(c => c.id === spawnId) || null;
 
-    document.getElementById('battleWeaponImg').src = 'gear/fire_sword.png';
+    // --- DYNAMIC WEAPON IMAGE RENDERER ---
+    let currentWpnId = window.playerData && window.playerData.equipped ? window.playerData.equipped.weapon : null;
+    let currentWpn = window.gameWeapons ? window.gameWeapons.find(w => w.id === currentWpnId) : null;
+    
+    if (!currentWpn && window.gameWeapons && window.gameWeapons.length > 0) {
+        currentWpn = window.gameWeapons[0];
+    }
+    
+    let activeWeaponImage = currentWpn ? currentWpn.image : 'gear/rusty.png';
+    document.getElementById('battleWeaponImg').src = activeWeaponImage;
 
     // Math for Stats
     const enemyMaxHp = 50 + (level * 15);

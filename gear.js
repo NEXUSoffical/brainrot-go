@@ -1,4 +1,4 @@
-// gear.js - Weapons, Armor, and Player Stat Calculations
+// gear.js - Weapons and Player Stat Calculations
 
 window.gameWeapons = [
     // 🟢 COMMONS 
@@ -18,33 +18,20 @@ window.gameWeapons = [
     { id: "wpn_09", name: "Blazing Sun-Sword", rarity: "legendary", atk: 120, image: "gear/fire_sword.png" }
 ];
 
-window.gameArmor = [
-    { id: "arm_01", name: "Torn Trenchcoat", rarity: "common", bonusHp: 0, def: 5, image: "gear/arm_01.png" },
-    { id: "arm_02", name: "Reinforced Kevlar", rarity: "uncommon", bonusHp: 40, def: 15, image: "gear/arm_02.png" },
-    { id: "arm_03", name: "Inquisitor's Robes", rarity: "epic", bonusHp: 100, def: 30, image: "gear/arm_03.png" },
-    { id: "arm_04", name: "Mecha-Exosuit V1", rarity: "legendary", bonusHp: 250, def: 60, image: "gear/arm_04.png" }
-];
-
-// Calculates the player's total health and damage based on their equipped gear
+// Calculates the player's total stats based on Level + Weapon
 window.calculatePlayerGearStats = function(playerData) {
     let pLevel = playerData?.accountLevel || 1;
-    let baseHp = 100 + (pLevel * 10); // Base HP scales with account level
+    
+    // HP and Defense naturally scale up with the player's level
+    let totalHp = 100 + (pLevel * 15); 
+    let totalDef = pLevel * 2; 
     
     let totalAtk = 10; // Base damage with bare fists
-    let totalDef = 0;
-    let totalHp = baseHp;
 
-    if (playerData?.equipped) {
-        // Add Weapon Damage
+    // Only add weapon stats
+    if (playerData?.equipped?.weapon) {
         let wpn = window.gameWeapons.find(w => w.id === playerData.equipped.weapon);
         if (wpn) totalAtk = wpn.atk;
-
-        // Add Armor Defense and Bonus HP
-        let chest = window.gameArmor.find(a => a.id === playerData.equipped.chest);
-        if (chest) {
-            totalHp += chest.bonusHp;
-            totalDef += chest.def;
-        }
     }
 
     return { maxHp: totalHp, atk: totalAtk, def: totalDef };
